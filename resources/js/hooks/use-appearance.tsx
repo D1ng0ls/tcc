@@ -22,6 +22,13 @@ const setCookie = (name: string, value: string, days = 365) => {
 const applyTheme = (appearance: Appearance) => {
     const isDark = appearance === 'dark' || (appearance === 'system' && prefersDark());
 
+
+    if (appearance === 'dark') {
+        import('primereact/resources/themes/lara-dark-blue/theme.css');
+    } else {
+        import('primereact/resources/themes/lara-light-blue/theme.css');
+    }
+
     document.documentElement.classList.toggle('dark', isDark);
 };
 

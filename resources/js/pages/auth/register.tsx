@@ -1,116 +1,251 @@
-import { Head, useForm } from '@inertiajs/react';
-import { LoaderCircle } from 'lucide-react';
+import { Head, useForm, usePage } from '@inertiajs/react';
+import { useState } from 'react';
+import { ArrowLeft, ArrowRight, LoaderCircle } from 'lucide-react';
 import { FormEventHandler } from 'react';
 
 import InputError from '@/components/input-error';
 import TextLink from '@/components/text-link';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { InputText } from 'primereact/inputtext';
 import { Label } from '@/components/ui/label';
 import AuthLayout from '@/layouts/auth-layout';
-
-type RegisterForm = {
-    name: string;
-    email: string;
-    password: string;
-    password_confirmation: string;
-};
+import { InputMask } from 'primereact/inputmask';
+import { Dropdown } from 'primereact/dropdown';
+import { Calendar } from 'primereact/calendar';
 
 export default function Register() {
+    const { cidades, estados } = usePage().props;
+    const [step, setStep] = useState(1);
+
+    const [state, setClientState] = useState<number | null>(null);
+
+    type RegisterForm = {
+        name: string;
+        email: string;
+        password: string;
+        password_confirmation: string;
+        cpf: string;
+        data_nascimento: Date | null;
+        cidade_id: number | null;
+        address: string;
+    };
+
     const { data, setData, post, processing, errors, reset } = useForm<Required<RegisterForm>>({
         name: '',
         email: '',
         password: '',
         password_confirmation: '',
+        cpf: '',
+        data_nascimento: null,
+        cidade_id: null,
+        address: '',
     });
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
         post(route('register'), {
             onFinish: () => reset('password', 'password_confirmation'),
+            onError: () => setStep(1),
         });
     };
 
     return (
-        <AuthLayout title="Create an account" description="Enter your details below to create your account">
-            <Head title="Register" />
+        <AuthLayout title="Cadastre-se" description="">
+            <Head title="Cadastrar" />
             <form className="flex flex-col gap-6" onSubmit={submit}>
                 <div className="grid gap-6">
-                    <div className="grid gap-2">
-                        <Label htmlFor="name">Name</Label>
-                        <Input
-                            id="name"
-                            type="text"
-                            required
-                            autoFocus
-                            tabIndex={1}
-                            autoComplete="name"
-                            value={data.name}
-                            onChange={(e) => setData('name', e.target.value)}
-                            disabled={processing}
-                            placeholder="Full name"
-                        />
-                        <InputError message={errors.name} className="mt-2" />
+                    <div className="grid gap-6" style={{ display: step === 1 ? 'grid' : 'none' }}>
+                        <div className="grid gap-2">
+                            <Label htmlFor="name">Nome</Label>
+                            <InputText
+                                id="name"
+                                type="text"
+                                required
+                                autoFocus
+                                tabIndex={1}
+                                autoComplete="name"
+                                value={data.name}
+                                onChange={(e) => setData('name', e.target.value)}
+                                disabled={processing}
+                                placeholder="Nome completo"
+                                className="w-full border border-border! rounded-xl! p-2 bg-background! text-foreground!"
+                            />
+                            <InputError message={errors.name} className="mt-2" />
+                        </div>
+
+                        <div className="grid gap-2">
+                            <Label htmlFor="document">Documento</Label>
+                            <InputMask
+                                type="text"
+                                name="document"
+                                id="document"
+                                placeholder="CPF"
+                                className="w-full border border-border! rounded-xl! p-2 bg-background! text-foreground!"
+                                required
+                                value={data.cpf}
+                                onChange={(e) => setData('cpf', e.target.value as string)}
+                                mask={'999.999.999-99'}
+                                slotChar="_"
+                                maxLength={18}
+                                autoClear={false}
+                            />
+                            <InputError message={errors.cpf} />
+                        </div>
+
+                        <div className="grid gap-2">
+                            <Label htmlFor="date">Data de nascimento</Label>
+                            <Calendar
+                                name="date"
+                                id="date"
+                                placeholder="Data de nascimento"
+                                required
+                                value={data.data_nascimento ? new Date(data.data_nascimento) : null}
+                                onChange={(e) => setData('data_nascimento', e.value as Date)}
+                                dateFormat="dd/mm/yy"
+                                inputClassName='rounded-xl!'
+                                maxDate={new Date(new Date().setFullYear(new Date().getFullYear() - 18))}
+                            />
+                            <InputError message={errors.data_nascimento} />
+                        </div>
+
+                        <div className="grid gap-2">
+                            <Label htmlFor="email">E-mail</Label>
+                            <InputText
+                                id="email"
+                                type="email"
+                                required
+                                tabIndex={2}
+                                autoComplete="email"
+                                value={data.email}
+                                onChange={(e) => setData('email', e.target.value)}
+                                disabled={processing}
+                                placeholder="email@example.com"
+                                className="w-full border border-border! rounded-xl! p-2 bg-background! text-foreground!"
+                            />
+                            <InputError message={errors.email} />
+                        </div>
+
+                        <div className="flex gap-2">
+                            <Button type="button" className="mt-2 w-full text-md cursor-pointer" tabIndex={5} disabled={processing || !data.name || !data.cpf || !data.email} onClick={() => setStep(2)}>
+                                Próxima <ArrowRight className="h-4 w-4" />
+                            </Button>
+                        </div>
                     </div>
 
-                    <div className="grid gap-2">
-                        <Label htmlFor="email">Email address</Label>
-                        <Input
-                            id="email"
-                            type="email"
-                            required
-                            tabIndex={2}
-                            autoComplete="email"
-                            value={data.email}
-                            onChange={(e) => setData('email', e.target.value)}
-                            disabled={processing}
-                            placeholder="email@example.com"
-                        />
-                        <InputError message={errors.email} />
+                    <div className="grid gap-6" style={{ display: step === 2 ? 'grid' : 'none' }}>
+                        <div className='grid gap-2'>
+                            <Label htmlFor="state">Estado</Label>
+                            <Dropdown
+                                id="state"
+                                value={state}
+                                options={estados as any}
+                                optionLabel="nome"
+                                optionValue="id"
+                                onChange={(e) => setClientState(e.value)}
+                                placeholder="Selecione um estado"
+                                filter
+                                showClear
+                                className="w-full! rounded-xl! bg-background!"
+                                panelClassName="bg-background!"
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="city">Cidade</Label>
+                            <Dropdown
+                                id="city"
+                                value={data.cidade_id}
+                                options={(cidades as any).filter((city: any) => city.estado_id === state)}
+                                optionLabel="nome"
+                                optionValue="id"
+                                onChange={(e) => setData({ ...data, cidade_id: e.value })}
+                                placeholder="Selecione uma cidade"
+                                filter
+                                showClear
+                                className="w-full! rounded-xl! bg-background!"
+                                panelClassName="bg-background!"
+                                disabled={!state}
+                            />
+                            <InputError message={errors.cidade_id} />
+                        </div>
+
+                        <div className="grid gap-2">
+                            <Label htmlFor="address">Endereço</Label>
+                            <InputText
+                                id="address"
+                                type="text"
+                                required
+                                tabIndex={4}
+                                autoComplete="address"
+                                value={data.address}
+                                onChange={(e) => setData('address', e.target.value)}
+                                disabled={processing}
+                                placeholder="Endereço"
+                                className="w-full border border-border! rounded-xl! p-2 bg-background! text-foreground!"
+                            />
+                            <InputError message={errors.address} />
+                        </div>
+
+                        <div className="flex gap-2">
+                            <Button type="button" className="mt-2 text-md cursor-pointer" tabIndex={5} disabled={processing} onClick={() => setStep(1)}>
+                                <ArrowLeft className="h-4 w-4" />
+                            </Button>
+                            <Button type="button" className="mt-2 w-full text-md cursor-pointer" tabIndex={5} disabled={processing || !data.cidade_id || !data.address} onClick={() => setStep(3)}>
+                                Próxima <ArrowRight className="h-4 w-4" />
+                            </Button>
+                        </div>
                     </div>
 
-                    <div className="grid gap-2">
-                        <Label htmlFor="password">Password</Label>
-                        <Input
-                            id="password"
-                            type="password"
-                            required
-                            tabIndex={3}
-                            autoComplete="new-password"
-                            value={data.password}
-                            onChange={(e) => setData('password', e.target.value)}
-                            disabled={processing}
-                            placeholder="Password"
-                        />
-                        <InputError message={errors.password} />
-                    </div>
+                    <div className="grid gap-6" style={{ display: step === 3 ? 'grid' : 'none' }}>
+                        <div className="grid gap-2">
+                            <Label htmlFor="password">Senha</Label>
+                            <InputText
+                                id="password"
+                                type="password"
+                                required
+                                tabIndex={3}
+                                autoComplete="new-password"
+                                value={data.password}
+                                onChange={(e) => setData('password', e.target.value)}
+                                disabled={processing}
+                                placeholder="Senha"
+                                className="w-full border border-border! rounded-xl! p-2 bg-background! text-foreground!"
+                            />
+                            <InputError message={errors.password} />
+                        </div>
 
-                    <div className="grid gap-2">
-                        <Label htmlFor="password_confirmation">Confirm password</Label>
-                        <Input
-                            id="password_confirmation"
-                            type="password"
-                            required
-                            tabIndex={4}
-                            autoComplete="new-password"
-                            value={data.password_confirmation}
-                            onChange={(e) => setData('password_confirmation', e.target.value)}
-                            disabled={processing}
-                            placeholder="Confirm password"
-                        />
-                        <InputError message={errors.password_confirmation} />
-                    </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="password_confirmation">Confirmar senha</Label>
+                            <InputText
+                                id="password_confirmation"
+                                type="password"
+                                required
+                                tabIndex={4}
+                                autoComplete="new-password"
+                                value={data.password_confirmation}
+                                onChange={(e) => setData('password_confirmation', e.target.value)}
+                                disabled={processing}
+                                placeholder="Confirmar Senha"
+                                className="w-full border border-border! rounded-xl! p-2 bg-background! text-foreground!"
+                            />
+                            <InputError message={errors.password_confirmation} />
+                        </div>
 
-                    <Button type="submit" className="mt-2 w-full" tabIndex={5} disabled={processing}>
-                        {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
-                        Create account
-                    </Button>
+                        <div className="flex gap-2">
+                            <Button type="button" className="mt-2 text-md cursor-pointer" tabIndex={5} disabled={processing} onClick={() => setStep(2)}>
+                                <ArrowLeft className="h-4 w-4" />
+                            </Button>
+                            <Button type="submit" className="mt-2 w-full text-md cursor-pointer" tabIndex={5} disabled={processing || !data.password || !data.password_confirmation}>
+                                {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
+                                Criar conta
+                            </Button>
+                        </div>
+                    </div>
                 </div>
 
                 <div className="text-muted-foreground text-center text-sm">
-                    Already have an account?{' '}
+                    Já possui uma conta?{' '}
                     <TextLink href={route('login')} tabIndex={6}>
-                        Log in
+                        Faça login
                     </TextLink>
                 </div>
             </form>

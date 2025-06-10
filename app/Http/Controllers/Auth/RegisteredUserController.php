@@ -34,12 +34,18 @@ class RegisteredUserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'cpf' => 'required|string|max:14|unique:'.User::class,
+            'data_nascimento' => 'required|date',
+            'cidade_id' => 'required|exists:cidades,id',
         ]);
 
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
+            'cpf' => $request->cpf,
+            'data_nascimento' => \Carbon\Carbon::parse($request->data_nascimento)->format('Y-m-d'),
+            'cidade_id' => $request->cidade_id,
         ]);
 
         event(new Registered($user));

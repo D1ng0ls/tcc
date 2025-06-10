@@ -17,10 +17,17 @@ class User extends Authenticatable
      *
      * @var list<string>
      */
+    protected $table = 'usuarios';
+
     protected $fillable = [
         'name',
         'email',
         'password',
+        'cpf',
+        'data_nascimento',
+        'endereco',
+        'cidade_id',
+        'foto_url',
     ];
 
     /**
@@ -44,5 +51,15 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function cidade()
+    {
+        return $this->belongsTo(Cidade::class);
+    }
+
+    public function reclamacaos()
+    {
+        return $this->hasMany(Reclamacao::class);
     }
 }
