@@ -139,7 +139,7 @@ export default function Register() {
                                 id="state"
                                 value={state}
                                 options={estados as any}
-                                optionLabel="nome"
+                                optionLabel="name"
                                 optionValue="id"
                                 onChange={(e) => setClientState(e.value)}
                                 placeholder="Selecione um estado"
@@ -154,8 +154,8 @@ export default function Register() {
                             <Dropdown
                                 id="city"
                                 value={data.cidade_id}
-                                options={(cidades as any).filter((city: any) => city.estado_id === state)}
-                                optionLabel="nome"
+                                options={(cidades as any).filter((city: any) => city.state_id === state)}
+                                optionLabel="name"
                                 optionValue="id"
                                 onChange={(e) => setData({ ...data, cidade_id: e.value })}
                                 placeholder="Selecione uma cidade"

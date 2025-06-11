@@ -6,7 +6,6 @@ import { useRef } from 'react';
 import { useEffect } from 'react';
 import { Toast } from 'primereact/toast';
 
-
 interface AppLayoutProps {
   children: ReactNode;
   breadcrumbs?: BreadcrumbItem[];

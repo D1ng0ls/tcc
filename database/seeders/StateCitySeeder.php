@@ -3,34 +3,33 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use App\Models\Cidade;
-use App\Models\Estado;
+use App\Models\City;
+use App\Models\State;
 
-class EstadosCidadesSeeder extends Seeder
+class StateCitySeeder extends Seeder
 {
     public function run()
     {
-        $json = file_get_contents(database_path('data/distritos.json'));
-        $dados = json_decode($json, true);
+        $estadosCidades = json_decode(file_get_contents(database_path('data/distritos.json')), true);
 
         $estados = [];
 
-        foreach ($dados as $item) {
+        foreach ($estadosCidades as $item) {
             $ufSigla = $item['UF-sigla'];
             $ufNome = $item['UF-nome'];
             $cidadeNome = $item['municipio-nome'];
 
             if (!isset($estados[$ufSigla])) {
-                $estado = Estado::firstOrCreate([
+                $estado = State::firstOrCreate([
                     'uf' => $ufSigla,
-                    'nome' => $ufNome,
+                    'name' => $ufNome,
                 ]);
                 $estados[$ufSigla] = $estado->id;
             }
 
-            Cidade::firstOrCreate([
-                'nome' => $cidadeNome,
-                'estado_id' => $estados[$ufSigla],
+            City::firstOrCreate([
+                'name' => $cidadeNome,
+                'state_id' => $estados[$ufSigla],
             ]);
         }
     }

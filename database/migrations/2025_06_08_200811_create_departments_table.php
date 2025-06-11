@@ -11,15 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('prefeituras', function (Blueprint $table) {
+        Schema::create('departments', function (Blueprint $table) {
             $table->id();
             $table->string('nome');
-            $table->string('email')->unique();
-            $table->string('senha');
-            $table->string('cnpj')->unique();
-            $table->string('foto_url');
-            $table->string('banner_url');
-            $table->foreignId('cidade_id')->nullable()->constrained('cidades')->onDelete('set null');
+            $table->foreignId('municipality_id')->nullable()->constrained('municipalities')->onDelete('set null');
             $table->softDeletes();
             $table->timestamps();
         });
@@ -30,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('prefeituras');
+        Schema::dropIfExists('departments');
     }
 };

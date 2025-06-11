@@ -2,8 +2,8 @@
 
 namespace App\Http\Middleware;
 
-use App\Models\Cidade;
-use App\Models\Estado;
+use App\Models\City;
+use App\Models\State;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -48,8 +48,8 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
             ],
-            'estados' => Estado::all(),
-            'cidades' => Cidade::all(),
+            'estados' => State::all(),
+            'cidades' => City::all(),
             'ziggy' => fn (): array => [
                 ...(new Ziggy)->toArray(),
                 'location' => $request->url(),
@@ -60,7 +60,7 @@ class HandleInertiaRequests extends Middleware
         if ($request->user()) {
             $shared = array_merge($shared, [
                 'auth' => [
-                    'user' => $request->user()->loadMissing('cidade.estado'),
+                    'user' => $request->user()->loadMissing('city.state'),
                 ],
             ]);
         }

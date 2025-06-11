@@ -28,7 +28,7 @@ export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: 
     const getInitials = useInitials();
 
     const inputRef = useRef(null);
-    const [preview, setPreview] = useState(auth.user.foto_url || null);
+    const [preview, setPreview] = useState(auth.user.photo_url || null);
 
     const { data, setData, post, errors, processing, recentlySuccessful } = useForm({
         _method: 'patch',
@@ -36,8 +36,6 @@ export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: 
         email: auth.user.email || '',
         photo: null,
     });
-
-    console.log(data);
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();

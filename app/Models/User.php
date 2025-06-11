@@ -17,17 +17,17 @@ class User extends Authenticatable
      *
      * @var list<string>
      */
-    protected $table = 'usuarios';
+    protected $table = 'users';
 
     protected $fillable = [
         'name',
         'email',
         'password',
         'cpf',
-        'data_nascimento',
-        'endereco',
-        'cidade_id',
-        'foto_url',
+        'birth_date',
+        'address',
+        'city_id',
+        'photo_url',
     ];
 
     /**
@@ -53,13 +53,13 @@ class User extends Authenticatable
         ];
     }
 
-    public function cidade()
+    public function city()
     {
-        return $this->belongsTo(Cidade::class);
+        return $this->belongsTo(City::class);
     }
 
-    public function reclamacaos()
+    public function complaints()
     {
-        return $this->hasMany(Reclamacao::class);
+        return $this->hasMany(Complaint::class);
     }
 }

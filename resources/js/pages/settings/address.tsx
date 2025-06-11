@@ -19,33 +19,15 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-type City = {
-    id: number;
-    estado_id: number;
-};
-
-type User = {
-    cidade?: any;
-    endereco?: string | null;
-};
-
-type SharedData = {
-    auth: {
-        user: User;
-    };
-    cidades: City[]; 
-    estados: any[];  
-};
-
 export default function Address() {
-    const { auth, cidades, estados } = usePage<SharedData>().props;
-    const [state, setState] = useState<number | null>(auth.user.cidade?.estado.id || null);
+    const { auth, cidades, estados } = usePage().props;
+    const [state, setState] = useState<number | null>(auth.user.city?.state.id || null);
 
     console.log(auth.user);
 
     const { data, setData, put, errors, processing, recentlySuccessful } = useForm({
-        address: auth.user.endereco ? String(auth.user.endereco) : '',
-        city: auth.user.cidade ? Number(auth.user.cidade.id) : null,
+        address: auth.user.address ? String(auth.user.address) : '',
+        city: auth.user.city ? Number(auth.user.city.id) : null,
     });
     
     const submit: FormEventHandler = (e) => {
@@ -71,7 +53,7 @@ export default function Address() {
                                 id="state"
                                 value={state}
                                 options={estados as any}
-                                optionLabel="nome"
+                                optionLabel="name"
                                 optionValue="id"
                                 onChange={(e) => setState(e.value)}
                                 placeholder="Selecione um estado"
@@ -86,8 +68,8 @@ export default function Address() {
                             <Dropdown
                                 id="city"
                                 value={data.city}
-                                options={(cidades as any).filter((city: any) => city.estado_id === state)}
-                                optionLabel="nome"
+                                options={(cidades as any).filter((city: any) => city.state_id === state)}
+                                optionLabel="name"
                                 optionValue="id"
                                 onChange={(e) => setData({ ...data, city: e.value })}
                                 placeholder="Selecione uma cidade"

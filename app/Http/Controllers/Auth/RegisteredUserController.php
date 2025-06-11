@@ -35,8 +35,21 @@ class RegisteredUserController extends Controller
             'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'cpf' => 'required|string|max:14|unique:'.User::class,
-            'data_nascimento' => 'required|date',
-            'cidade_id' => 'required|exists:cidades,id',
+            'birth_date' => 'required|date',
+            'city_id' => 'required|exists:cities,id',
+            'address' => 'required|string|max:255',
+        ], [
+            'name.required' => 'O nome é obrigatório.',
+            'email.required' => 'O email é obrigatório.',
+            'email.email' => 'O email informado não é válido.',
+            'password.required' => 'A senha é obrigatória.',
+            'password.confirmed' => 'As senhas não coincidem.',
+            'cpf.required' => 'O cpf é obrigatório.',
+            'cpf.unique' => 'O cpf informado já está cadastrado.',
+            'birth_date.required' => 'A data de nascimento é obrigatória.',
+            'city_id.required' => 'A cidade é obrigatória.',
+            'city_id.exists' => 'A cidade informada não existe.',
+            'address.required' => 'O endereço é obrigatório.',
         ]);
 
         $user = User::create([
@@ -44,8 +57,9 @@ class RegisteredUserController extends Controller
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'cpf' => $request->cpf,
-            'data_nascimento' => \Carbon\Carbon::parse($request->data_nascimento)->format('Y-m-d'),
-            'cidade_id' => $request->cidade_id,
+            'birth_date' => \Carbon\Carbon::parse($request->birth_date)->format('Y-m-d'),
+            'city_id' => $request->city_id,
+            'address' => $request->address,
         ]);
 
         event(new Registered($user));

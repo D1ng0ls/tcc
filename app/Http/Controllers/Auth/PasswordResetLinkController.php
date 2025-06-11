@@ -30,6 +30,9 @@ class PasswordResetLinkController extends Controller
     {
         $request->validate([
             'email' => 'required|email',
+        ], [
+            'email.required' => 'O email é obrigatório.',
+            'email.email' => 'O email informado não é válido.',
         ]);
 
         Password::sendResetLink(

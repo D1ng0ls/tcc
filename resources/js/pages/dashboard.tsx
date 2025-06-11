@@ -2,7 +2,6 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, usePage, Link } from '@inertiajs/react';
 import { Plus, FileWarning, Hourglass, Check, Radar } from 'lucide-react';
-import React from 'react';
 
 export default function Dashboard() {
     const { auth } = usePage().props;
@@ -48,7 +47,7 @@ export default function Dashboard() {
                 <div className="flex flex-row flex-wrap justify-between items-center gap-4 p-8 border border-border rounded-xl bg-primary-foreground">
                     <div>
                         <h1 className="text-2xl font-bold">Bem vindo, {auth.user.name.split(' ')[0] as string}! 👋</h1>
-                        <p>Voce tem {10} reclamações pendentes e {2} nova(s) resposta da prefeitura</p>
+                        <p className="text-md text-muted-foreground">Voce tem {10} reclamações pendentes e {2} nova(s) resposta da prefeitura</p>
                     </div>
                     <div>
                         <Link href="/reclamacoes/criar" className="flex items-center gap-2 rounded-xl bg-blue-500 text-white hover:bg-blue-600 cursor-pointer transition-all px-4 py-2 " as='button'>
@@ -70,7 +69,136 @@ export default function Dashboard() {
                             </div>
                         )
                     })}
-
+                </div>
+                <div className='grid grid-cols-1 lg:grid-cols-3 gap-4'>
+                    <div className='col-span-2 border border-border rounded-xl p-6 bg-primary-foreground'>
+                        <div className='border-b border-border pb-2'>
+                            <h2 className="text-xl font-bold">Atividade recente</h2>
+                            <p className="text-md text-muted-foreground">Veja suas atividades recentes</p>
+                        </div>
+                        <div className='flex flex-col gap-4 mt-4'>
+                            <div className='flex flex-row justify-between items-center gap-4'>
+                                <div>
+                                    <Check />
+                                </div>
+                                <div className='w-full'>
+                                    <p>
+                                        Buraco na Rua das Flores foi resolvido
+                                    </p>
+                                    <p className='text-xs text-muted-foreground'>
+                                        Centro • Há 2 horas
+                                    </p>
+                                </div>
+                                <span className='bg-green-400/40 text-green-700 dark:text-green-500 font-semibold px-2 py-1 rounded-full'>
+                                    Resolvido
+                                </span>
+                            </div>
+                            <div className='flex flex-row justify-between items-center gap-4'>
+                                <div>
+                                    <Check />
+                                </div>
+                                <div className='w-full'>
+                                    <p>
+                                        Buraco na Rua das Flores foi resolvido
+                                    </p>
+                                    <p className='text-xs text-muted-foreground'>
+                                        Centro • Há 2 horas
+                                    </p>
+                                </div>
+                                <span className='bg-green-400/40 text-green-700 dark:text-green-500 font-semibold px-2 py-1 rounded-full'>
+                                    Resolvido
+                                </span>
+                            </div>
+                            <div className='flex flex-row justify-between items-center gap-4'>
+                                <div>
+                                    <Check />
+                                </div>
+                                <div className='w-full'>
+                                    <p>
+                                        Buraco na Rua das Flores foi resolvido
+                                    </p>
+                                    <p className='text-xs text-muted-foreground'>
+                                        Centro • Há 2 horas
+                                    </p>
+                                </div>
+                                <span className='bg-green-400/40 text-green-700 dark:text-green-500 font-semibold px-2 py-1 rounded-full'>
+                                    Resolvido
+                                </span>
+                            </div>
+                            <div className='flex flex-row justify-between items-center gap-4'>
+                                <div>
+                                    <Check />
+                                </div>
+                                <div className='w-full'>
+                                    <p>
+                                        Buraco na Rua das Flores foi resolvido
+                                    </p>
+                                    <p className='text-xs text-muted-foreground'>
+                                        Centro • Há 2 horas
+                                    </p>
+                                </div>
+                                <span className='bg-green-400/40 text-green-700 dark:text-green-500 font-semibold px-2 py-1 rounded-full'>
+                                    Resolvido
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div className='border border-border rounded-xl p-6 bg-primary-foreground'>
+                        <div className='border-b border-border pb-2'>
+                            <h2 className="text-xl font-bold">Notificações</h2>
+                            <p className="text-md text-muted-foreground">Veja suas notificações</p>
+                        </div>
+                        <div className='flex flex-col gap-4 mt-4'>
+                            <div className='flex flex-row items-center gap-4'>
+                                <span className='bg-blue-400 font-semibold p-1 rounded-full'>
+                                </span>
+                                <div>
+                                    <p>
+                                        Sua reclamação #1234 foi atualizada pela prefeitura
+                                    </p>
+                                    <p className='text-xs text-muted-foreground'>
+                                        Há 1 hora
+                                    </p>
+                                </div>
+                            </div>
+                            <div className='flex flex-row items-center gap-4'>
+                                <span className='bg-blue-400 font-semibold p-1 rounded-full'>
+                                </span>
+                                <div>
+                                    <p>
+                                        Sua reclamação #1234 foi atualizada pela prefeitura
+                                    </p>
+                                    <p className='text-xs text-muted-foreground'>
+                                        Há 1 hora
+                                    </p>
+                                </div>
+                            </div>
+                            <div className='flex flex-row items-center gap-4'>
+                                <span className='bg-blue-400 font-semibold p-1 rounded-full'>
+                                </span>
+                                <div>
+                                    <p>
+                                        Sua reclamação #1234 foi atualizada pela prefeitura
+                                    </p>
+                                    <p className='text-xs text-muted-foreground'>
+                                        Há 1 hora
+                                    </p>
+                                </div>
+                            </div>
+                            <div className='flex flex-row items-center gap-4'>
+                                <span className='bg-gray-400 font-semibold p-1 rounded-full'>
+                                </span>
+                                <div>
+                                    <p>
+                                        Sua reclamação #1234 foi atualizada pela prefeitura
+                                    </p>
+                                    <p className='text-xs text-muted-foreground'>
+                                        Há 1 hora
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </AppLayout>

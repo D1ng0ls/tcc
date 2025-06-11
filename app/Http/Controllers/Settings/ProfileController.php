@@ -52,7 +52,7 @@ class ProfileController extends Controller
 
             $path = $file->storeAs('profiles', $filename, 'public');
 
-            $user->foto_url = '/storage/'.$path;
+            $user->photo_url = '/storage/'.$path;
         }
 
         $user->save();
@@ -64,7 +64,7 @@ class ProfileController extends Controller
     {
         $request->validate([
             'address' => 'required|string|max:255',
-            'city' => 'required|exists:cidades,id',
+            'city' => 'required|exists:cities,id',
         ], [
             'address.required' => 'O endereço é obrigatório.',
             'city.required' => 'A cidade é obrigatória.',
@@ -72,8 +72,8 @@ class ProfileController extends Controller
         ]);
 
         Auth::user()->update([
-            'endereco' => $request->address,
-            'cidade_id' => $request->city,
+            'address' => $request->address,
+            'city_id' => $request->city,
         ]);
 
         return redirect()->route('address.edit')->with('success', 'Endereço atualizado com sucesso!');
