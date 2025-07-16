@@ -25,8 +25,8 @@ export default function Register() {
         password: string;
         password_confirmation: string;
         cpf: string;
-        data_nascimento: Date | null;
-        cidade_id: number | null;
+        birth_date: Date | null;
+        city_id: number | null;
         address: string;
     };
 
@@ -36,8 +36,8 @@ export default function Register() {
         password: '',
         password_confirmation: '',
         cpf: '',
-        data_nascimento: null,
-        cidade_id: null,
+        birth_date: null,
+        city_id: null,
         address: '',
     });
 
@@ -99,13 +99,13 @@ export default function Register() {
                                 id="date"
                                 placeholder="Data de nascimento"
                                 required
-                                value={data.data_nascimento ? new Date(data.data_nascimento) : null}
-                                onChange={(e) => setData('data_nascimento', e.value as Date)}
+                                value={data.birth_date ? new Date(data.birth_date) : null}
+                                onChange={(e) => setData('birth_date', e.value as Date)}
                                 dateFormat="dd/mm/yy"
                                 inputClassName='rounded-xl!'
                                 maxDate={new Date(new Date().setFullYear(new Date().getFullYear() - 18))}
                             />
-                            <InputError message={errors.data_nascimento} />
+                            <InputError message={errors.birth_date} />
                         </div>
 
                         <div className="grid gap-2">
@@ -153,11 +153,11 @@ export default function Register() {
                             <Label htmlFor="city">Cidade</Label>
                             <Dropdown
                                 id="city"
-                                value={data.cidade_id}
+                                value={data.city_id}
                                 options={(cidades as any).filter((city: any) => city.state_id === state)}
                                 optionLabel="name"
                                 optionValue="id"
-                                onChange={(e) => setData({ ...data, cidade_id: e.value })}
+                                onChange={(e) => setData({ ...data, city_id: e.value })}
                                 placeholder="Selecione uma cidade"
                                 filter
                                 showClear
@@ -165,7 +165,7 @@ export default function Register() {
                                 panelClassName="bg-background!"
                                 disabled={!state}
                             />
-                            <InputError message={errors.cidade_id} />
+                            <InputError message={errors.city_id} />
                         </div>
 
                         <div className="grid gap-2">
@@ -189,7 +189,7 @@ export default function Register() {
                             <Button type="button" className="mt-2 text-md cursor-pointer" tabIndex={5} disabled={processing} onClick={() => setStep(1)}>
                                 <ArrowLeft className="h-4 w-4" />
                             </Button>
-                            <Button type="button" className="mt-2 w-full text-md cursor-pointer" tabIndex={5} disabled={processing || !data.cidade_id || !data.address} onClick={() => setStep(3)}>
+                            <Button type="button" className="mt-2 w-full text-md cursor-pointer" tabIndex={5} disabled={processing || !data.city_id || !data.address} onClick={() => setStep(3)}>
                                 Próxima <ArrowRight className="h-4 w-4" />
                             </Button>
                         </div>
