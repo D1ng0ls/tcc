@@ -10,7 +10,7 @@ class Department extends Model
 
     protected $fillable = [
         'name',
-        'prefeitura_id',
+        'municipality_id',
     ];
 
     public function municipality()

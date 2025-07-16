@@ -15,17 +15,17 @@ const mainNavItems: NavItem[] = [
     },
     {
         title: 'Minhas Reclamações',
-        href: '/reclamacoes',
+        href: '/complaints',
         icon: Files,
     },
     {
         title: 'Nova Reclamação',
-        href: '/reclamacoes/criar',
+        href: '/complaints/create',
         icon: Plus,
     },
     {
         title: 'Estatísticas',
-        href: '/estatisticas',
+        href: '/statics',
         icon: ChartNoAxesCombined,
     },
     {
@@ -38,7 +38,7 @@ const mainNavItems: NavItem[] = [
 const footerNavItems: NavItem[] = [
     {
         title: 'Ajuda',
-        href: '/ajuda',
+        href: '/help',
         icon: LucideHelpCircle,
     },
 ];

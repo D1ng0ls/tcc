@@ -24,9 +24,9 @@ const applyTheme = (appearance: Appearance) => {
 
 
     if (appearance === 'dark') {
-        import('primereact/resources/themes/lara-dark-blue/theme.css');
+        import('primereact/resources/themes/lara-dark-indigo/theme.css');
     } else {
-        import('primereact/resources/themes/lara-light-blue/theme.css');
+        import('primereact/resources/themes/lara-light-indigo/theme.css');
     }
 
     document.documentElement.classList.toggle('dark', isDark);
