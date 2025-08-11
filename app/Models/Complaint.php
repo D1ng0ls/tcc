@@ -11,9 +11,12 @@ class Complaint extends Model
     protected $fillable = [
         'title',
         'description',
-        'status',
+        'address',
         'user_id',
         'department_id',
+        'municipality_id',
+        'neighborhood_id',
+        'status_id',
     ];
 
     public function user()
@@ -29,5 +32,15 @@ class Complaint extends Model
     public function department()
     {
         return $this->belongsTo(Department::class);
+    }
+
+    public function status()
+    {
+        return $this->belongsTo(Status::class);
+    }
+
+    public function municipality()
+    {
+        return $this->belongsTo(Municipality::class);
     }
 }

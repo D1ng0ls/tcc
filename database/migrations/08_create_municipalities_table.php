@@ -16,9 +16,9 @@ return new class extends Migration
             $table->string('name');
             $table->string('email')->unique();
             $table->string('password');
-            $table->string('cnpj')->unique();
+            $table->string('cnpj')->nullable()->unique();
             $table->string('photo_url');
-            $table->string('banner_url');
+            $table->boolean('active')->default(false);
             $table->foreignId('city_id')->nullable()->constrained('cities')->onDelete('set null');
             $table->softDeletes();
             $table->timestamps();

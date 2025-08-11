@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('archives', function (Blueprint $table) {
             $table->id();
             $table->string('photo_url');
+            $table->enum('type', ['image', 'video'])->default('image');
             $table->timestamps();
         });
     }

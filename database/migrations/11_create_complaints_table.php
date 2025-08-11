@@ -15,9 +15,10 @@ return new class extends Migration
             $table->id();
             $table->string('title');
             $table->text('description');
-            $table->enum('status', ['open', 'in_progress', 'closed'])->default('open');
             $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('set null');
             $table->foreignId('department_id')->nullable()->constrained('departments')->onDelete('set null');
+            $table->foreignId('neighborhood_id')->nullable()->constrained('neighborhoods')->onDelete('set null');
+            $table->foreignId('status_id')->nullable()->constrained('statuses')->onDelete('set null');
             $table->softDeletes();
             $table->timestamps();
         });

@@ -20,6 +20,7 @@ return new class extends Migration
             $table->string('cpf')->unique();
             $table->date('birth_date');
             $table->string('photo_url')->nullable();
+            $table->enum('role', ['user', 'admin'])->default('user');
             $table->rememberToken();
             $table->timestamps();
             $table->softDeletes();

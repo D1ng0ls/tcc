@@ -11,6 +11,7 @@ class Department extends Model
     protected $fillable = [
         'name',
         'municipality_id',
+        'is_default'
     ];
 
     public function municipality()

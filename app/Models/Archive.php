@@ -10,5 +10,7 @@ class Archive extends Model
 
     protected $fillable = [
         'photo_url',
+        'type',
+        'complaint_id'
     ];
 }

@@ -26,8 +26,9 @@ class User extends Authenticatable
         'cpf',
         'birth_date',
         'address',
-        'city_id',
         'photo_url',
+        'role',
+        'city_id',
     ];
 
     /**

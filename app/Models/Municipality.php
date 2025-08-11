@@ -14,7 +14,7 @@ class Municipality extends Model
         'senha',
         'cnpj',
         'photo_url',
-        'banner_url',
+        'active',
         'city_id',
     ];
 
