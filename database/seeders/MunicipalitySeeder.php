@@ -6,8 +6,9 @@ use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
-use App\Models\Municipality;
 use App\Models\City;
+use App\Models\Municipality;
+use App\Models\Department;
 
 class MunicipalitySeeder extends Seeder
 {
@@ -18,6 +19,19 @@ class MunicipalitySeeder extends Seeder
     {
         $cities = City::all();
 
+        $departments = [
+            'Meio Ambiente',
+            'Saúde',
+            'Infraestrutura',
+            'Segurança Pública',
+            'Educação',
+            'Economia',
+            'Justiça',
+            'Cultura',
+            'Esporte',
+            'Outros',
+        ];
+
         foreach ($cities as $city) {
             Municipality::create([
                 'name' => $city->name,
@@ -27,6 +41,14 @@ class MunicipalitySeeder extends Seeder
                 'photo_url' => null,
                 'city_id' => $city->id,
             ]);
+
+            foreach ($departments as $department) {
+                Department::create([
+                    'name' => $department,
+                    'municipality_id' => $city->id,
+                    'is_default' => true,
+                ]);
+            }
         }
     }
 }

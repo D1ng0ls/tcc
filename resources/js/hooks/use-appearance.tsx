@@ -23,7 +23,7 @@ const applyTheme = (appearance: Appearance) => {
     const isDark = appearance === 'dark' || (appearance === 'system' && prefersDark());
 
 
-    if (appearance === 'dark') {
+    if (isDark) {
         import('primereact/resources/themes/lara-dark-indigo/theme.css');
     } else {
         import('primereact/resources/themes/lara-light-indigo/theme.css');
