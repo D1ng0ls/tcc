@@ -33,7 +33,7 @@ class MunicipalitySeeder extends Seeder
         ];
 
         foreach ($cities as $city) {
-            Municipality::create([
+            $m = Municipality::create([
                 'name' => $city->name,
                 'email' => $city->name . '@mail.com',
                 'password' => Hash::make(Str::random(32)),
@@ -45,7 +45,7 @@ class MunicipalitySeeder extends Seeder
             foreach ($departments as $department) {
                 Department::create([
                     'name' => $department,
-                    'municipality_id' => $city->id,
+                    'municipality_id' => $m->id,
                     'is_default' => true,
                 ]);
             }
