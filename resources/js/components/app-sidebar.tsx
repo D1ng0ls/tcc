@@ -3,47 +3,83 @@ import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
-import { Link } from '@inertiajs/react';
-import { LucideHome, LucideHelpCircle, Plus, ChartNoAxesCombined, Files, Award } from 'lucide-react';
+import { Link, usePage } from '@inertiajs/react';
+import { LucideHome, LucideHelpCircle, Plus, ChartNoAxesCombined, Files, Award, Landmark, LayoutDashboard, Users, Inbox } from 'lucide-react';
 import AppLogo from './app-logo';
 
-const mainNavItems: NavItem[] = [
+const mainNavItems: any[] = [
     {
-        title: 'Início',
-        href: '/dashboard',
-        icon: LucideHome,
+        category: 'Painel',
+        items: [
+            {
+                title: 'Início',
+                href: route('dashboard'),
+                icon: LucideHome,
+            },
+            {
+                title: 'Minhas Reclamações',
+                href: route('complaints.index'),
+                icon: Files,
+            },
+            {
+                title: 'Nova Reclamação',
+                href: route('complaints.create'),
+                icon: Plus,
+            },
+            {
+                title: 'Estatísticas',
+                href: '',
+                icon: ChartNoAxesCombined,
+            },
+            {
+                title: 'Ranking',
+                href: '',
+                icon: Award,
+            },
+        ]
     },
     {
-        title: 'Minhas Reclamações',
-        href: '/complaints',
-        icon: Files,
-    },
-    {
-        title: 'Nova Reclamação',
-        href: '/complaints/create',
-        icon: Plus,
-    },
-    {
-        title: 'Estatísticas',
-        href: '/statics',
-        icon: ChartNoAxesCombined,
-    },
-    {
-        title: 'Ranking',
-        href: '/ranking',
-        icon: Award,
+        category: 'Admin',
+        items: [
+            {
+                title: 'Dashboard',
+                href: route('admin.dashboard'),
+                icon: LayoutDashboard,
+            },
+            {
+                title: 'Solicitações',
+                href: route('admin.solicitations.index'),
+                icon: Inbox,
+            },
+            {
+                title: 'Municípios',
+                href: route('admin.municipalities.index'),
+                icon: Landmark,
+            },
+            {
+                title: 'Users',
+                href: route('admin.users.index'),
+                icon: Users,
+            },
+        ]
     },
 ];
 
 const footerNavItems: NavItem[] = [
     {
         title: 'Ajuda',
-        href: '/help',
+        href: '',
         icon: LucideHelpCircle,
     },
 ];
 
 export function AppSidebar() {
+    const { auth } = usePage().props as any;
+
+    if (auth?.user?.role !== 'admin') {
+        mainNavItems.pop();
+    }
+
     return (
         <Sidebar collapsible="icon" variant="inset">
             <SidebarHeader>
@@ -59,7 +95,9 @@ export function AppSidebar() {
             </SidebarHeader>
 
             <SidebarContent>
-                <NavMain items={mainNavItems} />
+                {mainNavItems.map(({ category, items }) => (
+                    <NavMain key={category} title={category} items={items} />
+                ))}
             </SidebarContent>
 
             <SidebarFooter>
