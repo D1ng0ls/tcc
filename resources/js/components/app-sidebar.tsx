@@ -76,9 +76,15 @@ const footerNavItems: NavItem[] = [
 export function AppSidebar() {
     const { auth } = usePage().props as any;
 
-    if (auth?.user?.role !== 'admin') {
-        mainNavItems[1].items = mainNavItems[1].items.filter((item: { title: string; }) => item.title !== 'Users');
-    }
+    const navItems = mainNavItems.map(menu => {
+        if (menu.category === 'Admin' && auth?.user?.role !== 'admin') {
+            return {
+                ...menu,
+                items: menu.items.filter((item: { title: string; }) => item.title !== 'Users')
+            };
+        }
+        return menu;
+    });
 
     return (
         <Sidebar collapsible="icon" variant="inset">
@@ -95,7 +101,7 @@ export function AppSidebar() {
             </SidebarHeader>
 
             <SidebarContent>
-                {mainNavItems.map(({ category, items }) => (
+                {navItems.map(({ category, items }) => (
                     <NavMain key={category} title={category} items={items} />
                 ))}
             </SidebarContent>
