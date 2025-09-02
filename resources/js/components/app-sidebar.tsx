@@ -77,7 +77,7 @@ export function AppSidebar() {
     const { auth } = usePage().props as any;
 
     if (auth?.user?.role !== 'admin') {
-        mainNavItems[1].items.pop();
+        mainNavItems[1].pop();
     }
 
     return (
