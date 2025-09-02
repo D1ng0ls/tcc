@@ -76,14 +76,11 @@ const footerNavItems: NavItem[] = [
 export function AppSidebar() {
     const { auth } = usePage().props as any;
 
-    const navItems = mainNavItems.map(menu => {
+    const navItems = mainNavItems.filter(menu => {
         if (menu.category === 'Admin' && auth?.user?.role !== 'admin') {
-            return {
-                ...menu,
-                items: menu.items.filter((item: { title: string; }) => item.title !== 'Users')
-            };
+            return false;
         }
-        return menu;
+        return true;
     });
 
     return (
