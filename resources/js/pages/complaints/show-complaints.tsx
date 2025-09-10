@@ -34,8 +34,8 @@ const statusStyles = {
         border: 'bg-yellow-300',
     },
     'Fechado': {
-        badge: 'bg-blue-100 text-blue-800',
-        border: 'bg-blue-500',
+        badge: 'bg-red-200 text-red-700',
+        border: 'bg-red-500',
     }
 };
 

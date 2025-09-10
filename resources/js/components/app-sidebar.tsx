@@ -27,13 +27,8 @@ const mainNavItems: any[] = [
                 icon: Plus,
             },
             {
-                title: 'Estatísticas',
-                href: '',
-                icon: ChartNoAxesCombined,
-            },
-            {
                 title: 'Ranking',
-                href: '',
+                href: route('ranking.index'),
                 icon: Award,
             },
         ]

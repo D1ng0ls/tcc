@@ -21,9 +21,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
             return Inertia::render('complaints/show-complaints');
         })->name('index');
 
-        Route::get('/complaints/create', function () {
+        Route::get('/create', function () {
             return Inertia::render('complaints/create-complaints');
         })->name('create');
+
+        Route::get('/single', function () {
+            return Inertia::render('complaints/single-complaints');
+        })->name('single');
     });
 
     Route::group([
@@ -33,6 +37,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/', [CityController::class, 'index'])->name('index');
         Route::get('/{city}/neighborhoods', [CityController::class, 'neighborhoods'])->name('neighborhoods');
     });
+    Route::get('/ranking', function () {
+        return Inertia::render('ranking/ranking');
+    })->name('ranking.index');
 
     Route::group([
         'prefix' => 'admin',
