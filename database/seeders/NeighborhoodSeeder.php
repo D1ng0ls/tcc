@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use App\Models\Neighborhood;
 use App\Models\City;
@@ -14,29 +13,48 @@ class NeighborhoodSeeder extends Seeder
      */
     public function run(): void
     {
-        $bairros = json_decode(file_get_contents(database_path('data/bairros.json')), true)['data'];
+        $file = database_path('data/bairros.csv');
 
-        foreach ($bairros as $item) {
-            if (!str_contains($item['Nome'], ' - ')) continue;
+        if (!file_exists($file)) {
+            echo "Arquivo CSV não encontrado: $file\n";
+            return;
+        }
 
-            [$bairro, $cidade] = explode(' - ', $item['Nome']);
-            $uf = $item['Uf'];
+        if (($handle = fopen($file, 'r')) !== false) {
+            $header = fgetcsv($handle, 0, ','); // lê o cabeçalho
 
-            $city = City::where('name', $cidade)
-                ->whereHas('state', function ($q) use ($uf) {
-                    $q->where('uf', $uf);
-                })
-                ->first();
+            while (($row = fgetcsv($handle, 0, ',')) !== false) {
+                $item = array_combine($header, $row);
 
-            if (!$city) {
-                echo "Cidade não encontrada: $cidade - $uf\n";
-                continue;
+                // filtra apenas bairros
+                if (($item['type'] ?? '') !== 'neighborhood') continue;
+
+                $bairro = $item['location_name'];
+                $cidade = $item['city'];
+                $uf = $item['state'];
+
+                if (!$bairro || !$cidade || !$uf) continue;
+
+                $city = City::where('name', $cidade)
+                    ->whereHas('state', fn($q) => $q->where('uf', $uf))
+                    ->first();
+
+                if (!$city) {
+                    echo "Cidade não encontrada: $cidade - $uf\n";
+                    continue;
+                }
+
+                $neighborhood = Neighborhood::firstOrCreate([
+                    'name' => $bairro,
+                    'city_id' => $city->id,
+                ]);
+
+                echo "Bairro {$neighborhood->name} criado para a cidade de {$city->name} - {$city->state->uf}!\n";
             }
 
-            Neighborhood::firstOrCreate([
-                'name' => $bairro,
-                'city_id' => $city->id,
-            ]);
+            fclose($handle);
         }
+
+        echo "Seed de bairros concluído!\n";
     }
 }

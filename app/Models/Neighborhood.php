@@ -17,4 +17,9 @@ class Neighborhood extends Model
     {
         return $this->belongsTo(City::class);
     }
+
+    public function complaints()
+    {
+        return $this->hasMany(Complaint::class);
+    }
 }

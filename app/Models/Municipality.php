@@ -11,11 +11,15 @@ class Municipality extends Model
     protected $fillable = [
         'name',
         'email',
-        'senha',
+        'password',
         'cnpj',
         'photo_url',
         'active',
         'city_id',
+    ];
+
+    protected $hidden = [
+        'password',
     ];
 
     public function city()

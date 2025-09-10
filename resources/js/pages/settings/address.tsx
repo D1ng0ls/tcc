@@ -20,7 +20,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 export default function Address() {
-    const { auth, cidades, estados } = usePage().props;
+    const { auth, cities, states } = usePage().props as any;
     const [state, setState] = useState<number | null>(auth.user.city?.state.id || null);
 
     console.log(auth.user);
@@ -52,7 +52,7 @@ export default function Address() {
                             <Dropdown
                                 id="state"
                                 value={state}
-                                options={estados as any}
+                                options={states as any}
                                 optionLabel="name"
                                 optionValue="id"
                                 onChange={(e) => setState(e.value)}
@@ -68,7 +68,7 @@ export default function Address() {
                             <Dropdown
                                 id="city"
                                 value={data.city}
-                                options={(cidades as any).filter((city: any) => city.state_id === state)}
+                                options={(cities as any).filter((city: any) => city.state_id === state)}
                                 optionLabel="name"
                                 optionValue="id"
                                 onChange={(e) => setData({ ...data, city: e.value })}

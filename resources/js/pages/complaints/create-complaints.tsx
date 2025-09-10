@@ -1,20 +1,24 @@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Head, usePage, Link, useForm } from '@inertiajs/react';
+import { Head, usePage, Link, useForm, router } from '@inertiajs/react';
 import { Plus, FileWarning, Hourglass, Check, Radar } from 'lucide-react';
 import { InputText } from 'primereact/inputtext';
 import { InputTextarea } from 'primereact/inputtextarea';
 import { Label } from '@/components/ui/label';
+import { Dropdown } from 'primereact/dropdown';
+import { useState, useEffect } from 'react';
+import axios from 'axios';
 
 export default function CreateComplaints() {
-    const { cities, states, categories, neighborhoods } = usePage().props;
+    const { cities, states, categories, auth } = usePage().props as any;
+    const [ neighborhoods, setNeighborhoods ] = useState(null);
 
     const { data, setData, post, processing, errors, reset } = useForm({
         title: '',
         description: '',
         category_id: '',
-        state_id: '',
-        city_id: '',
+        state_id: auth.user.city.state_id || undefined,
+        city_id: auth.user.city.id || undefined,
         neighborhood_id: '',
     });
 
@@ -28,9 +32,21 @@ export default function CreateComplaints() {
     const submit = (e: any) => {
         e.preventDefault();
         post(route('complaints.store'), {
-            onFinish: () => reset('title', 'description', 'category_id', 'state_id', 'city_id', 'neighborhood_id'),
+            onFinish: () => reset(),
         });
     };
+
+    useEffect(() => {
+        if (data.city_id) {
+            axios.get(route('cities.neighborhoods', { city: data.city_id }))
+            .then(
+                (response: any) => {
+                    setNeighborhoods(response.data)
+                    console.log("Bairros recebidos:", response.data);
+                }
+            );
+        }
+    }, [data.city_id]);
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -74,6 +90,61 @@ export default function CreateComplaints() {
                                         style={{ resize: 'none' }}
                                     />
                                     <span>{errors.description}</span>
+                                </div>
+                                <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
+                                    <div className='flex flex-col gap-2'>
+                                        <Label htmlFor="state_id">Estado</Label>
+                                        <Dropdown
+                                            id="state_id"
+                                            value={data.state_id || undefined}
+                                            options={states as any}
+                                            optionLabel="name"
+                                            optionValue="id"
+                                            onChange={(e) => setData('state_id', e.value)}
+                                            placeholder="Selecione o estado"
+                                            filter
+                                            showClear
+                                            className="w-full! rounded-xl! bg-background!"
+                                            panelClassName="bg-background!"
+                                            required
+                                        />
+                                    </div>
+                                    <div className='flex flex-col gap-2'>
+                                        <Label htmlFor="city_id">Cidade</Label>
+                                        <Dropdown
+                                            id="city_id"
+                                            value={data.city_id}
+                                            options={(cities as any).filter((city: any) => city.state_id === data.state_id)}
+                                            optionLabel="name"
+                                            optionValue="id"
+                                            onChange={(e) => setData('city_id', e.value)}
+                                            placeholder="Selecione a cidade"
+                                            filter
+                                            showClear
+                                            className="w-full! rounded-xl! bg-background!"
+                                            panelClassName="bg-background!"
+                                            required
+                                            disabled={!data.state_id}
+                                        />
+                                    </div>
+                                    <div className='flex flex-col gap-2'>
+                                        <Label htmlFor="neighborhood_id">Bairro</Label>
+                                        <Dropdown
+                                            id="neighborhood_id"
+                                            value={data.neighborhood_id}
+                                            options={(neighborhoods as any) || []}
+                                            optionLabel="name"
+                                            optionValue="id"
+                                            onChange={(e) => setData('neighborhood_id', e.value)}
+                                            placeholder="Selecione o bairro"
+                                            filter
+                                            showClear
+                                            className="w-full! rounded-xl! bg-background!"
+                                            panelClassName="bg-background!"
+                                            required
+                                            disabled={!data.city_id}
+                                        />
+                                    </div>
                                 </div>
                             </form>
                         </div>

@@ -9,8 +9,8 @@ class City extends Model
     protected $table = 'cities';
 
     protected $fillable = [
-        'nome',
-        'estado_id',
+        'name',
+        'state_id',
     ];
 
     public function state()
@@ -35,13 +35,6 @@ class City extends Model
 
     public function complaints()
     {
-        return $this->hasManyThrough(
-            Complaint::class,
-            Department::class,
-            'prefeitura_id',
-            'departamento_id',
-            'prefeitura_id',
-            'id'
-        );
+        return $this->hasManyThrough(Complaint::class, Neighborhood::class, 'city_id', 'neighborhood_id', 'id', 'id');
     }
 }

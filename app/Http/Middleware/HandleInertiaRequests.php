@@ -2,8 +2,9 @@
 
 namespace App\Http\Middleware;
 
-use App\Models\City;
 use App\Models\State;
+use App\Models\City;
+use App\Models\Neighborhood;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -48,8 +49,8 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
             ],
-            'estados' => State::all(),
-            'cidades' => City::all(),
+            'states' => State::all(),
+            'cities' => City::all(),
             'ziggy' => fn (): array => [
                 ...(new Ziggy)->toArray(),
                 'location' => $request->url(),

@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use App\Http\Controllers\CityController;
 
 Route::get('/', function () {
     return Inertia::render('welcome');
@@ -25,6 +26,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         })->name('create');
     });
 
+    Route::group([
+        'prefix' => 'cities',
+        'as' => 'cities.',
+    ], function () {
+        Route::get('/', [CityController::class, 'index'])->name('index');
+        Route::get('/{city}/neighborhoods', [CityController::class, 'neighborhoods'])->name('neighborhoods');
+    });
 
     Route::group([
         'prefix' => 'admin',

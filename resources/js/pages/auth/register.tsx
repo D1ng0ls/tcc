@@ -14,7 +14,7 @@ import { Dropdown } from 'primereact/dropdown';
 import { Calendar } from 'primereact/calendar';
 
 export default function Register() {
-    const { cidades, estados } = usePage().props;
+    const { cities, states } = usePage().props;
     const [step, setStep] = useState(1);
 
     const [state, setClientState] = useState<number | null>(null);
@@ -138,7 +138,7 @@ export default function Register() {
                             <Dropdown
                                 id="state"
                                 value={state}
-                                options={estados as any}
+                                options={states as any}
                                 optionLabel="name"
                                 optionValue="id"
                                 onChange={(e) => setClientState(e.value)}
@@ -154,7 +154,7 @@ export default function Register() {
                             <Dropdown
                                 id="city"
                                 value={data.city_id}
-                                options={(cidades as any).filter((city: any) => city.state_id === state)}
+                                options={(cities as any).filter((city: any) => city.state_id === state)}
                                 optionLabel="name"
                                 optionValue="id"
                                 onChange={(e) => setData({ ...data, city_id: e.value })}
