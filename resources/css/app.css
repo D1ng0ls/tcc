@@ -59,6 +59,57 @@
     --color-sidebar-ring: var(--sidebar-ring);
 }
 
+@layer components {
+    .swiper-button-next,
+    .swiper-button-prev {
+        @apply bg-card border border-muted rounded-full text-foreground shadow-lg;
+        width: 38px !important;      /* Força o tamanho que você quer */
+        height: 38px !important;
+        transition: all 0.2s ease-in-out;
+    }
+
+    .swiper-button-next:hover,
+    .swiper-button-prev:hover {
+        @apply bg-primary border-primary text-primary-foreground;
+    }
+
+    /* Posiciona os botões "vazados" para fora */
+    .swiper-button-prev {
+        left: -19px !important;
+    }
+    .swiper-button-next {
+        right: -19px !important;
+    }
+
+    .swiper-button-next::after,
+    .swiper-button-prev::after {
+        @apply text-lg; /* text-lg é um bom tamanho, ajuste se precisar */
+    }
+
+    /* --- Paginação (Bolinhas) --- */
+
+    /* Tira a paginação da posição absoluta e joga para baixo com uma margem */
+    .swiper-pagination {
+        position: relative !important;
+        bottom: auto !important;
+        margin-top: 24px; /* Ajuste o espaçamento vertical conforme gostar */
+    }
+
+    .swiper-pagination .swiper-pagination-bullet {
+        @apply bg-muted/50;
+        width: 8px;
+        height: 8px;
+        transition: all 0.2s ease-in-out;
+    }
+
+    /* Estilo da bolinha ATIVA */
+    .swiper-pagination .swiper-pagination-bullet-active {
+        @apply bg-primary;
+        width: 24px; /* Deixa a bolinha ativa mais larga */
+        border-radius: 99px;
+    }
+}
+
 /*
   The default border color has changed to `currentColor` in Tailwind CSS v4,
   so we've added these compatibility styles to make sure everything still
@@ -157,3 +208,4 @@
         @apply bg-background text-foreground;
     }
 }
+
