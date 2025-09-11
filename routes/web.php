@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\CityController;
+use App\Http\Controllers\ComplaintController;
 
 Route::get('/', function () {
     return Inertia::render('welcome');
@@ -17,17 +18,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         'prefix' => 'complaints',
         'as' => 'complaints.',
     ], function () {
-        Route::get('/', function () {
-            return Inertia::render('complaints/show-complaints');
-        })->name('index');
+        Route::get('/', [ComplaintController::class, 'index'])->name('index');
 
-        Route::get('/create', function () {
-            return Inertia::render('complaints/create-complaints');
-        })->name('create');
+        Route::get('/create', [ComplaintController::class, 'create'])->name('create');
 
-        Route::get('/single', function () {
-            return Inertia::render('complaints/single-complaints');
-        })->name('single');
+        Route::post('/create', [ComplaintController::class, 'store'])->name('store');
+
+        Route::get('/single', [ComplaintController::class, 'single'])->name('single');
     });
 
     Route::group([
@@ -36,7 +33,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     ], function () {
         Route::get('/', [CityController::class, 'index'])->name('index');
         Route::get('/{city}/neighborhoods', [CityController::class, 'neighborhoods'])->name('neighborhoods');
+        Route::get('/{city}/departments', [CityController::class, 'departments'])->name('departments');
     });
+
     Route::get('/ranking', function () {
         return Inertia::render('ranking/ranking');
     })->name('ranking.index');

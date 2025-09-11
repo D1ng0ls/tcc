@@ -17,8 +17,6 @@ class MunicipalitySeeder extends Seeder
      */
     public function run(): void
     {
-        $cities = City::all();
-
         $departments = [
             'Meio Ambiente',
             'Saúde',
@@ -32,23 +30,51 @@ class MunicipalitySeeder extends Seeder
             'Outros',
         ];
 
-        foreach ($cities as $city) {
-            $m = Municipality::create([
-                'name' => $city->name,
-                'email' => $city->name . '@mail.com',
-                'password' => Hash::make(Str::random(32)),
-                'cnpj' => null,
-                'photo_url' => null,
-                'city_id' => $city->id,
-            ]);
+        $now = now();
 
-            foreach ($departments as $department) {
-                Department::create([
-                    'name' => $department,
-                    'municipality_id' => $m->id,
-                    'is_default' => true,
-                ]);
+        City::chunk(100, function ($cities) use ($departments, $now) {
+            $municipalities = [];
+            $allDepartments = [];
+
+            foreach ($cities as $city) {
+                $municipalities[] = [
+                    'name' => $city->name,
+                    'email' => $city->name . '@mail.com',
+                    'password' => Str::random(60),
+                    'cnpj' => null,
+                    'photo_url' => '',
+                    'city_id' => $city->id,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
             }
-        }
+
+            Municipality::upsert(
+                $municipalities,
+                ['city_id'],
+                ['name', 'email', 'password', 'updated_at']
+            );
+
+            $municipalities = Municipality::whereIn('city_id', $cities->pluck('id'))
+                ->get(['id', 'city_id']);
+
+            foreach ($municipalities as $m) {
+                foreach ($departments as $dep) {
+                    $allDepartments[] = [
+                        'name' => $dep,
+                        'municipality_id' => $m->id,
+                        'is_default' => true,
+                        'created_at' => $now,
+                        'updated_at' => $now,
+                    ];
+                }
+            }
+
+            Department::upsert(
+                $allDepartments,
+                ['municipality_id', 'name'],
+                ['is_default', 'updated_at']
+            );
+        });
     }
 }

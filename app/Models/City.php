@@ -23,9 +23,9 @@ class City extends Model
         return $this->hasMany(Neighborhood::class);
     }
 
-    public function municipalities()
+    public function municipality()
     {
-        return $this->hasMany(Municipality::class);
+        return $this->hasOne(Municipality::class);
     }
 
     public function users()

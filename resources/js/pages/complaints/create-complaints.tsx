@@ -6,20 +6,23 @@ import { InputText } from 'primereact/inputtext';
 import { InputTextarea } from 'primereact/inputtextarea';
 import { Label } from '@/components/ui/label';
 import { Dropdown } from 'primereact/dropdown';
+import { Button } from 'primereact/button';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 
 export default function CreateComplaints() {
     const { cities, states, categories, auth } = usePage().props as any;
-    const [ neighborhoods, setNeighborhoods ] = useState(null);
+    const [neighborhoods, setNeighborhoods] = useState<any[]>([]);
+    const [departments, setDepartments] = useState<any[]>([]);
 
     const { data, setData, post, processing, errors, reset } = useForm({
         title: '',
         description: '',
-        category_id: '',
-        state_id: auth.user.city.state_id || undefined,
-        city_id: auth.user.city.id || undefined,
-        neighborhood_id: '',
+        department_id: 0,
+        state_id: auth.user?.city?.state_id || undefined,
+        city_id: auth.user?.city?.id || undefined,
+        neighborhood_id: auth.user?.neighborhood?.id || null,
+        district: '',
     });
 
     const breadcrumbs: BreadcrumbItem[] = [
@@ -39,15 +42,26 @@ export default function CreateComplaints() {
     useEffect(() => {
         if (data.city_id) {
             axios.get(route('cities.neighborhoods', { city: data.city_id }))
-            .then(
-                (response: any) => {
-                    setNeighborhoods(response.data)
-                    console.log("Bairros recebidos:", response.data);
-                }
-            );
+                .then(
+                    (response: any) => {
+                        setNeighborhoods([
+                            ...response.data,
+                            {
+                                name: "Outro",
+                                id: null,
+                            },
+                        ]);
+                    }
+                );
+
+            axios.get(route('cities.departments', { city: data.city_id }))
+                .then(
+                    (response: any) => {
+                        setDepartments(response.data);
+                    }
+                );
         }
     }, [data.city_id]);
-
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Nova Reclamação" />
@@ -127,7 +141,7 @@ export default function CreateComplaints() {
                                             disabled={!data.state_id}
                                         />
                                     </div>
-                                    <div className='flex flex-col gap-2'>
+                                    <div className={`flex flex-col gap-2`}>
                                         <Label htmlFor="neighborhood_id">Bairro</Label>
                                         <Dropdown
                                             id="neighborhood_id"
@@ -144,7 +158,40 @@ export default function CreateComplaints() {
                                             required
                                             disabled={!data.city_id}
                                         />
+                                        {
+                                            data.neighborhood_id === null && (
+                                                <InputText
+                                                    id="district"
+                                                    value={data.district}
+                                                    onChange={(e) => setData('district', e.target.value)}
+                                                    placeholder="Digite o bairro"
+                                                    className="w-full rounded-xl bg-background"
+                                                    required
+                                                />
+                                            )
+                                        }
                                     </div>
+                                </div>
+                                <div className={`flex flex-col gap-2 col-span-2 ${data.neighborhood_id === null ? 'col-span-2' : 'col-span-3'}`}>
+                                    <Label htmlFor="department_id">Departamento</Label>
+                                    <Dropdown
+                                        id="department_id"
+                                        value={data.department_id}
+                                        options={(departments as any) || []}
+                                        optionLabel="name"
+                                        optionValue="id"
+                                        onChange={(e) => setData('department_id', e.value)}
+                                        placeholder="Selecione o departamento"
+                                        filter
+                                        showClear
+                                        className="w-full! rounded-xl! bg-background!"
+                                        panelClassName="bg-background!"
+                                        required
+                                        disabled={!data.city_id}
+                                    />
+                                </div>
+                                <div className='mt-4 flex justify-end'>
+                                    <Button type="submit" label="Enviar" className="w-full" disabled={processing} />
                                 </div>
                             </form>
                         </div>
