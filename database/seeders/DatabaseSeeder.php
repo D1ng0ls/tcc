@@ -27,6 +27,7 @@ class DatabaseSeeder extends Seeder
             StateCitySeeder::class,
             NeighborhoodSeeder::class,
             StatusSeeder::class,
+            MunicipalitySeeder::class,
         ]);
     }
 }
