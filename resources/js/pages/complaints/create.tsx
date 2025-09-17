@@ -1,7 +1,7 @@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, usePage, Link, useForm, router } from '@inertiajs/react';
-import { Plus, FileWarning, Hourglass, Check, Radar } from 'lucide-react';
+import { Plus, FileWarning, Hourglass, Check, Radar, UploadCloud, X } from 'lucide-react';
 import { InputText } from 'primereact/inputtext';
 import { InputTextarea } from 'primereact/inputtextarea';
 import { Label } from '@/components/ui/label';
@@ -14,16 +14,35 @@ export default function CreateComplaints() {
     const { cities, states, categories, auth } = usePage().props as any;
     const [neighborhoods, setNeighborhoods] = useState<any[]>([]);
     const [departments, setDepartments] = useState<any[]>([]);
+    const [previews, setPreviews] = useState<{ url: string; name: string; type: string; }[]>([]);
+    const [fileErrors, setFileErrors] = useState<string[]>([]);
 
     const { data, setData, post, processing, errors, reset } = useForm({
         title: '',
         description: '',
-        department_id: 0,
+        department_id: 0 || undefined,
         state_id: auth.user?.city?.state_id || undefined,
         city_id: auth.user?.city?.id || undefined,
-        neighborhood_id: auth.user?.neighborhood?.id || null,
+        neighborhood_id: auth.user?.neighborhood?.id || undefined,
         district: '',
+        address: '',
+        images: [] as File[],
     });
+
+    const MAX_TOTAL_FILES = 5;
+    const MAX_FILE_SIZE_MB = 10;
+    const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
+    const ALLOWED_FILE_TYPES = [
+        'image/jpeg',
+        'image/png',
+        'image/jpg',
+        'image/webp',
+        'image/gif',
+        'video/mp4',
+        'video/quicktime',
+        'video/x-ms-wmv',
+        'video/x-flv',
+    ];
 
     const breadcrumbs: BreadcrumbItem[] = [
         {
@@ -38,6 +57,67 @@ export default function CreateComplaints() {
             onFinish: () => reset(),
         });
     };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setFileErrors([]); // Limpa os erros anteriores a cada nova seleção
+        const files = e.target.files;
+
+        if (!files) return;
+
+        const newFiles = Array.from(files);
+        const currentFileCount = data.images.length;
+        const errors: string[] = [];
+
+        if (currentFileCount + newFiles.length > MAX_TOTAL_FILES) {
+            errors.push(`Você só pode enviar no máximo ${MAX_TOTAL_FILES} arquivos.`);
+            setFileErrors(errors);
+            return;
+        }
+
+        const validFiles: File[] = [];
+
+        newFiles.forEach(file => {
+            if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+                errors.push(`"${file.name}": Tipo de arquivo não permitido.`);
+            } else if (file.size > MAX_FILE_SIZE_BYTES) {
+                errors.push(`"${file.name}" excede o limite de ${MAX_FILE_SIZE_MB}MB.`);
+            } else {
+                validFiles.push(file);
+            }
+        });
+
+        if (errors.length > 0) {
+            setFileErrors(errors);
+        }
+
+        if (validFiles.length > 0) {
+            const allFiles = [...data.images, ...validFiles];
+            setData('images', allFiles);
+
+            const newPreviews = validFiles.map(file => ({
+                url: URL.createObjectURL(file),
+                name: file.name,
+                type: file.type
+            }));
+            setPreviews(prev => [...prev, ...newPreviews]);
+        }
+    };
+
+    const handleRemoveImage = (index: number) => {
+        URL.revokeObjectURL(previews[index].url);
+
+        const remainingFiles = data.images.filter((_, i) => i !== index);
+        const remainingPreviews = previews.filter((_, i) => i !== index);
+
+        setData('images', remainingFiles);
+        setPreviews(remainingPreviews);
+    };
+
+    useEffect(() => {
+        return () => {
+            previews.forEach(preview => URL.revokeObjectURL(preview.url));
+        };
+    }, [previews]);
 
     useEffect(() => {
         if (data.city_id) {
@@ -60,6 +140,11 @@ export default function CreateComplaints() {
                         setDepartments(response.data);
                     }
                 );
+        } else {
+            setNeighborhoods([]);
+            setDepartments([]);
+            setData('neighborhood_id', undefined);
+            setData('department_id', undefined);
         }
     }, [data.city_id]);
     return (
@@ -105,7 +190,80 @@ export default function CreateComplaints() {
                                     />
                                     <span>{errors.description}</span>
                                 </div>
-                                <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
+                                {/* Bloco de Upload de Arquivos com Preview */}
+                                <div className="flex flex-col gap-2">
+                                    <Label htmlFor="images">Fotos e Vídeos</Label>
+                                    <label
+                                        htmlFor="file-upload"
+                                        className="flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-border bg-background p-6 text-center transition-colors hover:border-primary"
+                                    >
+                                        <UploadCloud className="h-10 w-10 text-muted-foreground" />
+                                        <p className="mt-2 font-semibold text-foreground">
+                                            Clique para enviar ou arraste e solte
+                                        </p>
+                                        <p className="text-sm text-muted-foreground">
+                                            Imagens ou vídeos (PNG, JPG, MP4, etc.)
+                                        </p>
+                                    </label>
+                                    <input
+                                        id="file-upload"
+                                        type="file"
+                                        multiple
+                                        // A propriedade 'accept' é só uma sugestão para o navegador, a validação real está no JS
+                                        accept={ALLOWED_FILE_TYPES.join(',')}
+                                        className="hidden"
+                                        onChange={handleFileChange}
+                                    />
+                                    {/* Erros que vêm do Backend (Inertia) */}
+                                    {errors.images && <span className="text-red-500 text-sm mt-1">{errors.images}</span>}
+
+                                    {/* Erros em tempo real do Frontend */}
+                                    {fileErrors.length > 0 && (
+                                        <div className="mt-2 flex flex-col gap-1">
+                                            {fileErrors.map((error, index) => (
+                                                <span key={index} className="text-red-500 text-sm">
+                                                    - {error}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    )}
+
+                                    {/* Bloco de Grid de Previews ATUALIZADO */}
+                                    {previews.length > 0 && (
+                                        <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+                                            {previews.map((preview, index) => (
+                                                <div key={index} className="relative aspect-square rounded-lg border border-border bg-black">
+                                                    {preview.type.startsWith('image/') ? (
+                                                        <img
+                                                            src={preview.url}
+                                                            alt={`Preview ${preview.name}`}
+                                                            className="h-full w-full rounded-md object-cover"
+                                                        />
+                                                    ) : (
+                                                        <video
+                                                            src={preview.url}
+                                                            muted
+                                                            loop
+                                                            autoPlay
+                                                            playsInline
+                                                            className="h-full w-full rounded-md object-cover"
+                                                        />
+                                                    )}
+
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleRemoveImage(index)}
+                                                        className="absolute -right-2 -top-2 z-10 flex h-6 w-6 items-center justify-center rounded-full border border-border bg-destructive text-destructive-foreground transition-transform hover:scale-110"
+                                                        aria-label={`Remover ${preview.name}`}
+                                                    >
+                                                        <X className="h-4 w-4" />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                                <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
                                     <div className='flex flex-col gap-2'>
                                         <Label htmlFor="state_id">Estado</Label>
                                         <Dropdown
@@ -171,8 +329,12 @@ export default function CreateComplaints() {
                                             )
                                         }
                                     </div>
+                                    <div className="flex flex-col gap-2">
+                                        <Label htmlFor="address">Endereço</Label>
+                                        <InputText id="address" value={data.address} onChange={(e) => setData('address', e.target.value)} placeholder="Digite o endereço" className="w-full rounded-xl bg-background" required />
+                                    </div>
                                 </div>
-                                <div className={`flex flex-col gap-2 col-span-2 ${data.neighborhood_id === null ? 'col-span-2' : 'col-span-3'}`}>
+                                <div className={`flex flex-col gap-2`}>
                                     <Label htmlFor="department_id">Departamento</Label>
                                     <Dropdown
                                         id="department_id"

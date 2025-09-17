@@ -43,4 +43,9 @@ class Complaint extends Model
     {
         return $this->belongsTo(Municipality::class);
     }
+
+    public function archives()
+    {
+        return $this->hasMany(Archive::class);
+    }
 }

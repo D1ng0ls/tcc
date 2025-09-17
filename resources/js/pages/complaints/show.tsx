@@ -4,7 +4,7 @@ import { Head, usePage, useForm } from '@inertiajs/react';
 
 export default function CreateComplaints() {
 
-    const { cities, states, categories, neighborhoods } = usePage().props;
+    const { cities, states, categories, neighborhoods, complaint } = usePage().props as any;
 
     const { data, setData, post, processing, errors, reset } = useForm({
         title: '',
@@ -17,14 +17,14 @@ export default function CreateComplaints() {
 
     const breadcrumbs: BreadcrumbItem[] = [
         {
-            title: 'Single',
-            href: '/complaints/single',
+            title: `Reclamação #${complaint.id}`,
+            href: `complaints/${complaint.id}`,
         },
     ];
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Single" />
+            <Head title={`Reclamação #${complaint.id}`} />
             <div>
                 testando
             </div>

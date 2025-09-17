@@ -25,23 +25,35 @@ type ComplaintProps = {
 };
 
 const statusStyles = {
-    'Aberto': {
-        badge: 'bg-green-100 text-green-800',
-        border: 'bg-green-500',
+    1: {
+        badge: 'bg-sky-100 text-sky-800',
+        border: 'bg-sky-500',
     },
-    'Em andamento': {
+    2: {
         badge: 'bg-yellow-100 text-yellow-800',
         border: 'bg-yellow-300',
     },
-    'Fechado': {
+    3: {
+        badge: 'bg-purple-200 text-purple-700',
+        border: 'bg-purple-500',
+    },
+    4: {
+        badge: 'bg-green-100 text-green-800',
+        border: 'bg-green-500',
+    },
+    5: {
         badge: 'bg-red-200 text-red-700',
         border: 'bg-red-500',
-    }
+    },
+    6: {
+        badge: 'bg-stone-200 text-stone-700',
+        border: 'bg-stone-500',
+    },
 };
 
-export default function CreateComplaints() {
+export default function Complaints() {
 
-    const { complaints = [] } = usePage().props;
+    const { complaints } = usePage().props as any;
 
     const mockComplaints: ComplaintProps[] = [
         { 
@@ -95,6 +107,10 @@ export default function CreateComplaints() {
             label: 'Fechado', 
             value: 'closed' 
         },
+        { 
+            label: 'Resolvido', 
+            value: 'resolved' 
+        }
     ];
 
     const category = [
@@ -146,17 +162,6 @@ export default function CreateComplaints() {
         }
     ];
 
-    const { cities, states, categories, neighborhoods } = usePage().props;
-
-    const { data, setData, post, processing, errors, reset } = useForm({
-        title: '',
-        description: '',
-        category_id: '',
-        state_id: '',
-        city_id: '',
-        neighborhood_id: '',
-    });
-
     const breadcrumbs: BreadcrumbItem[] = [
         {
             title: 'Minhas Reclamações',
@@ -167,36 +172,30 @@ export default function CreateComplaints() {
     const cards = [
         {
             title: 'Total de reclamações',
-            value: 7,
+            value: complaints.length,
             icon: FileWarning,
             color: 'bg-blue-500',
         },
         {
             title: 'Em andamento',
-            value: 2,
+            value: complaints.filter((c: any) => c.status_id === 2).length,
             icon: Hourglass,
             color: 'bg-yellow-500',
         },
         {
-            title: 'Abertos',
-            value: 10,
+            title: 'Resolvidos',
+            value: complaints.filter((c: any) => c.status_id === 4).length,
             icon: Check,
             color: 'bg-green-500',
         },
         {
-            title: 'Acompanhando',
-            value: 10,
+            title: 'Abertos',
+            value: complaints.filter((c: any) => c.status_id === 1).length,
             icon: Radar,
             color: 'bg-violet-500',
         },
     ];
 
-    const submit = (e: any) => {
-        e.preventDefault();
-        post(route('complaints.store'), {
-            onFinish: () => reset('title', 'description', 'category_id', 'state_id', 'city_id', 'neighborhood_id'),
-        });
-    };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -214,8 +213,8 @@ export default function CreateComplaints() {
                                     <div className={`w-12 h-12 p-3 rounded-full flex items-center justify-center ${card.color}`}>
                                         <Icon className="w-full h-full text-white" />
                                     </div>
-                                    <p className="text-2xl font-bold">10</p>
-                                    <h2 className="text-lg font-light">Total de reclamações</h2>
+                                    <p className="text-2xl font-bold">{card.value}</p>
+                                    <h2 className="text-lg font-light">{card.title}</h2>
                                 </div>
                             )
                         })}
@@ -271,30 +270,30 @@ export default function CreateComplaints() {
                 </div>
 
                 <div className="border border-border rounded-xl bg-zinc-900 p-4 flex flex-col gap-4">
-                    {complaintsToRender.length > 0 ? (
-                        complaintsToRender.map((complaint) => (
+                    {complaints.length > 0 ? (
+                        complaints.map((complaint: any) => (
                             <div key={complaint.id} className="relative w-full bg-card border border-border rounded-lg shadow-sm bg-primary-foreground">
                                 {/* Borda superior baseada no status */}
-                                <div className={`absolute top-0 left-0 w-full h-2 rounded-t-lg ${statusStyles[complaint.status].border}`}></div>
+                                <div className={`absolute top-0 left-0 w-full h-2 rounded-t-lg ${statusStyles[complaint?.status_id]?.border}`}></div>
                                 
                                 <div className="p-6 pt-8">
                                     <div className="flex justify-between items-center mb-2">
                                         <span className="text-sm font-medium text-muted-foreground">#{complaint.id}</span>
-                                        <span className={`px-3 py-1 text-xs font-semibold rounded-full ${statusStyles[complaint.status].badge}`}>
-                                            {complaint.status.toUpperCase()}
+                                        <span className={`px-3 py-1 text-xs font-semibold rounded-full ${statusStyles[complaint?.status_id]?.badge}`}>
+                                            {complaint?.status?.name?.toUpperCase()}
                                         </span>
                                     </div>
 
-                                    <h2 className="text-2xl font-bold text-foreground">{complaint.title}</h2>
+                                    <h2 className="text-2xl font-bold text-foreground">{complaint?.title}</h2>
 
                                     <p className="mt-3 text-muted-foreground truncate">
                                         {complaint.description}
                                     </p>
 
                                     <div className="flex items-center gap-6 mt-4 text-sm text-muted-foreground">
-                                        <div className="flex items-center gap-1.5"><MapPin size={16} /><span>{complaint.location}</span></div>
-                                        <div className="flex items-center gap-1.5"><Clock size={16} /><span>{complaint.time}</span></div>
-                                        <div className="flex items-center gap-1.5"> <span className="px-3 py-1 text-xs font-medium text-primary bg-primary/10 rounded-full">{complaint.category}</span></div>
+                                        <div className="flex items-center gap-1.5"><MapPin size={16} /><span>{complaint?.department?.municipality?.city?.name}</span></div>
+                                        <div className="flex items-center gap-1.5"><Clock size={16} /><span>{new Date(complaint?.created_at).toLocaleDateString()}</span></div>
+                                        <div className="flex items-center gap-1.5"> <span className="px-3 py-1 text-xs font-medium text-primary bg-primary/10 rounded-full">{complaint?.department?.name}</span></div>
                                     </div>
                                     
                                     <div className="flex items-center gap-4 mt-6 pt-4 border-t border-border/50">

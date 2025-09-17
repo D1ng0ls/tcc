@@ -19,12 +19,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         'as' => 'complaints.',
     ], function () {
         Route::get('/', [ComplaintController::class, 'index'])->name('index');
-
         Route::get('/create', [ComplaintController::class, 'create'])->name('create');
-
         Route::post('/create', [ComplaintController::class, 'store'])->name('store');
-
-        Route::get('/single', [ComplaintController::class, 'single'])->name('single');
+        Route::get('/show/{complaint}', [ComplaintController::class, 'show'])->name('show');
     });
 
     Route::group([

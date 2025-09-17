@@ -13,4 +13,9 @@ class Archive extends Model
         'type',
         'complaint_id'
     ];
+
+    public function complaint()
+    {
+        return $this->belongsTo(Complaint::class);
+    }
 }

@@ -16,10 +16,10 @@ class StatusSeeder extends Seeder
         $status = [
             ['name' => 'Aberto', 'type' => 'municipality'],
             ['name' => 'Em andamento', 'type' => 'municipality'],
-            ['name' => 'Fechado', 'type' => 'municipality'],
+            ['name' => 'Encerrado', 'type' => 'municipality'],
             ['name' => 'Resolvido', 'type' => 'user'],
             ['name' => 'Não resolvido', 'type' => 'user'],
-            ['name' => 'Encerrado', 'type' => 'system']
+            ['name' => 'Fechado', 'type' => 'system']
         ];
 
         Status::insert($status);
