@@ -286,8 +286,8 @@ export default function Complaints() {
 
                                     <h2 className="text-2xl font-bold text-foreground">{complaint?.title}</h2>
 
-                                    <p className="mt-3 text-muted-foreground truncate">
-                                        {complaint.description}
+                                    <p className="mt-3 text-muted-foreground">
+                                        {complaint.description.length > 150 ? complaint.description.substring(0, 150) + '...' : complaint.description}
                                     </p>
 
                                     <div className="flex items-center gap-6 mt-4 text-sm text-muted-foreground">

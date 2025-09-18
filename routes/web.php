@@ -33,6 +33,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/{city}/departments', [CityController::class, 'departments'])->name('departments');
     });
 
+     Route::group([
+        'prefix' => 'neighborhoods',
+        'as' => 'neighborhoods.',
+    ], function () {
+        Route::get('/create', function () { 
+            // CORREÇÃO: Removido 'admin/' do caminho
+            return Inertia::render('neighborhoods/create'); 
+        })->name('create');
+    });
+
     Route::get('/ranking', function () {
         return Inertia::render('ranking/ranking');
     })->name('ranking.index');

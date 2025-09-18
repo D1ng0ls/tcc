@@ -60,53 +60,66 @@
 }
 
 @layer components {
-    .swiper-button-next,
-    .swiper-button-prev {
+    .swiper-button-next, .swiper-button-prev {
         @apply bg-card border border-muted rounded-full text-foreground shadow-lg;
-        width: 38px !important;      /* Força o tamanho que você quer */
+        width: 38px !important; 
         height: 38px !important;
+        top: calc(50% + 3px) !important;
+        transform: translateY(-50%) !important;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-size: 12px 10px;
         transition: all 0.2s ease-in-out;
     }
-
-    .swiper-button-next:hover,
-    .swiper-button-prev:hover {
+    
+    .swiper-button-next::after, .swiper-button-prev::after {
+        content: '' !important;
+    }
+    
+    .swiper-button-next:not(.swiper-button-disabled):hover, .swiper-button-prev:not(.swiper-button-disabled):hover {
         @apply bg-primary border-primary text-primary-foreground;
     }
 
-    /* Posiciona os botões "vazados" para fora */
+    .swiper-button-next:not(.swiper-button-disabled):hover {
+        background-image: url("data:image/svg+xml,%3Csvg width='12' height='10' viewBox='0 0 12 10' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7.04935 1L11 5M11 5L7.04935 9M11 5H1' stroke='black' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    }
+
+    .swiper-button-prev:not(.swiper-button-disabled):hover {
+        background-image: url("data:image/svg+xml,%3Csvg width='12' height='10' viewBox='0 0 12 10' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4.95065 1L1 5M1 5L4.95065 9M1 5H11' stroke='black' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    }
+    
     .swiper-button-prev {
-        left: -19px !important;
+        left: 10px !important;
+        background-image: url("data:image/svg+xml,%3Csvg width='12' height='10' viewBox='0 0 12 10' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4.95065 1L1 5M1 5L4.95065 9M1 5H11' stroke='white' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
     }
+
     .swiper-button-next {
-        right: -19px !important;
+        right: 10px !important;
+        background-image: url("data:image/svg+xml,%3Csvg width='12' height='10' viewBox='0 0 12 10' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7.04935 1L11 5M11 5L7.04935 9M11 5H1' stroke='white' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
     }
 
-    .swiper-button-next::after,
-    .swiper-button-prev::after {
-        @apply text-lg; /* text-lg é um bom tamanho, ajuste se precisar */
+    .swiper-button-disabled {
+        opacity: .6 !important;
+        cursor: not-allowed !important;
+        pointer-events: all !important;
     }
 
-    /* --- Paginação (Bolinhas) --- */
-
-    /* Tira a paginação da posição absoluta e joga para baixo com uma margem */
     .swiper-pagination {
         position: relative !important;
         bottom: auto !important;
-        margin-top: 24px; /* Ajuste o espaçamento vertical conforme gostar */
+        margin-top: 10px;
     }
 
     .swiper-pagination .swiper-pagination-bullet {
-        @apply bg-muted/50;
-        width: 8px;
-        height: 8px;
+        width: 12px;
+        height: 12px;
+        background-color: #CECECE !important;
         transition: all 0.2s ease-in-out;
     }
 
-    /* Estilo da bolinha ATIVA */
     .swiper-pagination .swiper-pagination-bullet-active {
-        @apply bg-primary;
-        width: 24px; /* Deixa a bolinha ativa mais larga */
-        border-radius: 99px;
+        background-color: #FFF !important;
+        border-radius: 50%;
     }
 }
 

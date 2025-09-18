@@ -23,6 +23,7 @@ class ComplaintController extends Controller
 
     public function show(Complaint $complaint)
     {
+        $complaint->load('status');
         return Inertia::render('complaints/show', [
             'complaint' => $complaint,
         ]);

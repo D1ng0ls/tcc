@@ -29,7 +29,7 @@ export default function AdminMunicipalities() {
                     <div className="bg-background dark:bg-muted rounded-lg border border-border w-full overflow-hidden">
                         <div className="overflow-x-auto">
                             <table className="w-full">
-                                <thead className="bg-muted dark:bg-background ">
+                                <thead className="bg-muted dark:bg-background">
                                     <tr>
                                         <th className="px-6 py-3 text-left text-xs font-medium uppercase">Cidade</th>
                                         <th className="px-6 py-3 text-left text-xs font-medium uppercase">Status</th>
