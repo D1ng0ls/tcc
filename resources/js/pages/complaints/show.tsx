@@ -31,7 +31,7 @@ const historyIconMap = {
     'Em Análise': { icon: Search, color: 'text-gray-500' },
 };
 
-export default function CreateComplaints() {
+export default function ShowComplaint() {
 
     const { cities, states, categories, neighborhoods, complaint } = usePage().props as any;
 
@@ -43,12 +43,6 @@ export default function CreateComplaints() {
         city_id: '',
         neighborhood_id: '',
     });
-
-    const complaint = {
-        id: 1234,
-        title: "Buraco na Rua das Flores",
-        status: "Resolvida"
-    };
 
     const breadcrumbs: BreadcrumbItem[] = [
         {
@@ -80,7 +74,7 @@ export default function CreateComplaints() {
                         </button>
 
                         <span className="px-4 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-                            {complaint.status.toUpperCase()}
+                            {complaint.status.name.toUpperCase()}
                         </span>
                     </div>
 
@@ -106,7 +100,7 @@ export default function CreateComplaints() {
                         <p className="text-foreground/80 leading-relaxed">Um grande buraco no asfalto está presente há mais de duas semanas, causando danos aos veículos que passam pelo local e representando um grande risco para pedestres e ciclistas, especialmente durante a noite devido à baixa iluminação da área.</p>
                     </div>  
 
-                    <div className="mt-8 mx-12 overflow-hidden">
+                    <div className="mt-8 overflow-hidden">
                         <h2 className="text-xl font-semibold text-foreground mb-4">Imagens Anexadas</h2>
                         <Swiper
                             modules={[Navigation, Pagination]}
