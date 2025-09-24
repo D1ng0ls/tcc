@@ -1,7 +1,9 @@
 import AppLayout from '@/layouts/app-layout';
-import { Head } from '@inertiajs/react';
+import { Head, usePage } from '@inertiajs/react';
 
 export default function AdminSolicitations() {
+    const { cityRequests } = usePage().props as any;
+
     const breadcrumbs = [
         {
             title: 'Dashboard',
@@ -34,27 +36,29 @@ export default function AdminSolicitations() {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-muted dark:divide-muted-foreground">
-                                    <tr>
-                                        <td className="px-6 py-4 whitespace-nowrap font-medium">Araçatuba</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-muted-foreground">João Silva</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-muted-foreground">prefeito@aracatuba.sp.gov.br</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-muted-foreground">27/08/2025</td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className='font-medium text-amber-700 bg-yellow-100 px-2 py-1 rounded-full text-xs'>Pendente</span>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap flex gap-2">
-                                            <button
-                                                className={`px-3 py-1 rounded text-sm bg-green-500 cursor-pointer text-white hover:bg-green-600`}
-                                            >
-                                                Aprovar
-                                            </button>
-                                            <button
-                                                className={`px-3 py-1 rounded text-sm bg-red-500 cursor-pointer text-white hover:bg-red-600`}
-                                            >
-                                                Rejeitar
-                                            </button>
-                                        </td>
-                                    </tr>
+                                    {(cityRequests || []).map((request: any) => (
+                                        <tr>
+                                            <td className="px-6 py-4 whitespace-nowrap font-medium">{request.city.name}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-muted-foreground">{request.requester}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-muted-foreground">{request.email}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-muted-foreground">{new Date(request.created_at).toLocaleDateString()}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <span className='font-medium text-amber-700 bg-yellow-100 px-2 py-1 rounded-full text-xs'>{request.status}</span>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap flex gap-2">
+                                                <button
+                                                    className={`px-3 py-1 rounded text-sm bg-green-500 cursor-pointer text-white hover:bg-green-600`}
+                                                >
+                                                    Aprovar
+                                                </button>
+                                                <button
+                                                    className={`px-3 py-1 rounded text-sm bg-red-500 cursor-pointer text-white hover:bg-red-600`}
+                                                >
+                                                    Rejeitar
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
                                     <tr>
                                         <td className="px-6 py-4 whitespace-nowrap font-medium">Marília</td>
                                         <td className="px-6 py-4 whitespace-nowrap text-muted-foreground">Maria Santos</td>

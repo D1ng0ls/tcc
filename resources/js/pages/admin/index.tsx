@@ -1,8 +1,9 @@
 import AppLayout from '@/layouts/app-layout';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import { Check, Clock, FileWarning, Flag, Map, MessageCircle, Plus, User } from 'lucide-react';
 
 export default function AdminIndex() {
+    const { users, complaints, municipalities, cityRequests } = usePage().props as any;
     const breadcrumbs = [
         {
             title: 'Dashboard',
@@ -23,7 +24,7 @@ export default function AdminIndex() {
                     <div className="border border-border rounded-xl p-6 flex flex-row justify-between items-center gap-4 bg-primary-foreground">
                         <div>
                             <h2 className="text-md text-muted-foreground">Cidades Ativas</h2>
-                            <p className="text-3xl font-bold">10</p>
+                            <p className="text-3xl font-bold">{Number(municipalities).toLocaleString()}</p>
                         </div>
                         <div className="p-3 rounded-full flex items-center justify-center bg-sky-100 text-blue-500">
                             <Map className="w-full h-full" />
@@ -32,7 +33,7 @@ export default function AdminIndex() {
                     <div className="border border-border rounded-xl p-6 flex flex-row justify-between items-center gap-4 bg-primary-foreground">
                         <div>
                             <h2 className="text-md text-muted-foreground">Usuários Cadastrados</h2>
-                            <p className="text-3xl font-bold">8.542</p>
+                            <p className="text-3xl font-bold">{Number(users).toLocaleString()}</p>
                         </div>
                         <div className="p-3 rounded-full flex items-center justify-center bg-green-100 text-emerald-500">
                             <User className="w-full h-full" />
@@ -41,7 +42,7 @@ export default function AdminIndex() {
                     <div className="border border-border rounded-xl p-6 flex flex-row justify-between items-center gap-4 bg-primary-foreground">
                         <div>
                             <h2 className="text-md text-muted-foreground">Total de Reclamações</h2>
-                            <p className="text-3xl font-bold">2.318</p>
+                            <p className="text-3xl font-bold">{Number(complaints).toLocaleString()}</p>
                         </div>
                         <div className="p-3 rounded-full flex items-center justify-center bg-yellow-100 text-amber-500">
                             <MessageCircle className="w-full h-full" />
@@ -50,7 +51,7 @@ export default function AdminIndex() {
                     <div className="border border-border rounded-xl p-6 flex flex-row justify-between items-center gap-4 bg-primary-foreground">
                         <div>
                             <h2 className="text-md text-muted-foreground">Solicitações Pendentes</h2>
-                            <p className="text-3xl font-bold">3</p>
+                            <p className="text-3xl font-bold">{Number(cityRequests).toLocaleString()}</p>
                         </div>
                         <div className="p-3 rounded-full flex items-center justify-center bg-red-100 text-red-500">
                             <Clock className="w-full h-full" />
@@ -124,7 +125,7 @@ export default function AdminIndex() {
                         <div className="flex flex-col flex-wrap justify-start items-start gap-4 w-full">
                             <div className="flex flex-row justify-between items-center gap-3">
                                 <div className="p-2 rounded-full flex items-start justify-start bg-blue-100 text-blue-500">
-                                    <Plus className="w-4 h-4"/>
+                                    <Plus className="w-4 h-4" />
                                 </div>
                                 <div>
                                     <p className="font-semibold text-sm">Prefeitura de Araçatuba solicitou acesso</p>
@@ -133,7 +134,7 @@ export default function AdminIndex() {
                             </div>
                             <div className="flex flex-row justify-between items-center gap-3">
                                 <div className="p-2 rounded-full flex items-start justify-start bg-green-100 text-green-500">
-                                    <User className="w-4 h-4"/>
+                                    <User className="w-4 h-4" />
                                 </div>
                                 <div>
                                     <p className="font-semibold text-sm">Novo usuário cadastrado em Birigui</p>
@@ -142,7 +143,7 @@ export default function AdminIndex() {
                             </div>
                             <div className="flex flex-row justify-between items-center gap-3">
                                 <div className="p-2 rounded-full flex items-start justify-start bg-red-100 text-red-500">
-                                    <Flag className="w-4 h-4"/>
+                                    <Flag className="w-4 h-4" />
                                 </div>
                                 <div>
                                     <p className="font-semibold text-sm">Reclamação #456 denunciada por conteúdo ofensivo</p>
@@ -151,7 +152,7 @@ export default function AdminIndex() {
                             </div>
                             <div className="flex flex-row justify-between items-center gap-3">
                                 <div className="p-2 rounded-full flex items-start justify-start bg-yellow-100 text-amber-500">
-                                    <Check className="w-4 h-4"/>
+                                    <Check className="w-4 h-4" />
                                 </div>
                                 <div>
                                     <p className="font-semibold text-sm">Reclamação #445 foi resolvida em São Paulo</p>

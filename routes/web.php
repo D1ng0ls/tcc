@@ -2,12 +2,27 @@
 
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use App\Http\Controllers\AdminController;
 use App\Http\Controllers\CityController;
 use App\Http\Controllers\ComplaintController;
+use App\Http\Controllers\RankingController;
 
 Route::get('/', function () {
     return Inertia::render('welcome');
 })->name('home');
+
+Route::group([
+    'prefix' => 'ranking',
+    'as' => 'ranking.',
+], function () {
+    Route::get('/', [RankingController::class, 'index'])->name('index');
+    Route::get('/{state}', [RankingController::class, 'state'])->name('state');
+    Route::get('/{state}/{city}', [RankingController::class, 'city'])->name('city');
+});
+
+Route::get('/', [RankingController::class, 'index'])->name('index');
+Route::get('/{state}', [RankingController::class, 'state'])->name('state');
+Route::get('/{state}/{city}', [RankingController::class, 'city'])->name('city');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', function () {
@@ -33,27 +48,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/{city}/departments', [CityController::class, 'departments'])->name('departments');
     });
 
-    Route::get('/ranking', function () {
-        return Inertia::render('ranking/ranking');
-    })->name('ranking.index');
 
     Route::group([
         'prefix' => 'admin',
         'as' => 'admin.',
     ], function () {
-        Route::get('/', function () {
-            return Inertia::render('admin/index');
-        })->name('dashboard');
+        Route::get('/', [AdminController::class, 'index'])->name('dashboard');
 
         Route::group([
             'prefix' => 'solicitations',
             'as' => 'solicitations.',
         ], function () {
-            Route::get('/', function () {
-                return Inertia::render('admin/solicitations');
-            })->name('index');
+            Route::get('/', [AdminController::class, 'solicitation'])->name('index');
+            Route::get('/create', [AdminController::class, 'create'])->name('create');
         });
-        
+
         Route::group([
             'prefix' => 'municipalities',
             'as' => 'municipalities.',

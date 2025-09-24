@@ -88,7 +88,7 @@ export default function CreateComplaints() {
     };
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <>
             <Head title="Ranking" />
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-4">
@@ -141,7 +141,7 @@ export default function CreateComplaints() {
                 </div>
 
                 <div className="lg:col-span-1">
-                    <div className="border border-border rounded-lg bg-zinc-900 p-4 sticky top-10">
+                    <div className="border border-border rounded-lg bg-zinc-900 p-4 sticky">
                         <h3 className="flex items-center gap-2 text-xl font-bold text-foreground p-4 border border-border rounded-lg shadow-sm bg-primary-foreground">
                             <Trophy size={20} className="text-yellow-400" />
                             Top 5 Cidades
@@ -164,6 +164,6 @@ export default function CreateComplaints() {
                     </div>
                 </div>
             </div>
-        </AppLayout>
+        </>
     );
 }
