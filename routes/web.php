@@ -16,13 +16,9 @@ Route::group([
     'as' => 'ranking.',
 ], function () {
     Route::get('/', [RankingController::class, 'index'])->name('index');
-    Route::get('/{state}', [RankingController::class, 'state'])->name('state');
-    Route::get('/{state}/{city}', [RankingController::class, 'city'])->name('city');
+    Route::get('/{stateUf}', [RankingController::class, 'state'])->name('state');
+    Route::get('/{stateUf}/{citySlug}', [RankingController::class, 'city'])->name('city');
 });
-
-Route::get('/', [RankingController::class, 'index'])->name('index');
-Route::get('/{state}', [RankingController::class, 'state'])->name('state');
-Route::get('/{state}/{city}', [RankingController::class, 'city'])->name('city');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', function () {
@@ -36,6 +32,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/', [ComplaintController::class, 'index'])->name('index');
         Route::get('/create', [ComplaintController::class, 'create'])->name('create');
         Route::post('/create', [ComplaintController::class, 'store'])->name('store');
+        Route::post('/approve/{complaint}', [ComplaintController::class, 'approve'])->name('approve');
+        Route::post('/reject/{complaint}', [ComplaintController::class, 'reject'])->name('reject');
         Route::get('/show/{complaint}', [ComplaintController::class, 'show'])->name('show');
     });
 
