@@ -4,7 +4,7 @@ import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { LucideHome, LucideHelpCircle, Plus, ChartNoAxesCombined, Files, Award, Landmark, LayoutDashboard, Users, Inbox } from 'lucide-react';
+import { LucideHome, LucideHelpCircle, Plus, ChartNoAxesCombined, Files, Award, Landmark, LayoutDashboard, Users, Inbox, MapPin, Network, FileText } from 'lucide-react';
 import AppLogo from './app-logo';
 
 const mainNavItems: any[] = [
@@ -30,6 +30,21 @@ const mainNavItems: any[] = [
                 title: 'Ranking',
                 href: route('ranking.index'),
                 icon: Award,
+            },
+            {
+                title: 'Bairros',
+                href: route('neighborhoods.index'),
+                icon: MapPin,
+            },
+            {
+                title: 'Departamentos',
+                href: route('departments.index'),
+                icon: Network,
+            },
+            {
+                title: 'Formulário de Solicitação',
+                href: route('solicitation-form.index'),
+                icon: FileText,
             },
         ]
     },

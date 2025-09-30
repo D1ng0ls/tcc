@@ -1,8 +1,10 @@
 import AppLayout from '@/layouts/app-layout';
 import { BreadcrumbItem } from '@/types';
-import { Head, Link } from '@inertiajs/react'; // Importando o Link do Inertia
+import { Head, Link, useForm } from '@inertiajs/react';
 import { InputText } from 'primereact/inputtext';
-import { Plus, Search } from 'lucide-react';
+import { LoaderCircle, Plus, Search } from 'lucide-react';
+import { useState } from 'react';
+import { Button } from 'primereact/button';
 
 // Tipagem para os dados de cada bairro
 type Neighborhood = {
@@ -21,19 +23,22 @@ const mockNeighborhoods: Neighborhood[] = [
     { name: 'Parque dos Eucaliptos', complaintCount: 7, region: 'Leste', status: 'ATIVO' },
 ];
 
-// Objeto para estilizar o badge de status dinamicamente
-const statusStyles = {
-    'ATIVO': 'bg-green-500/20 text-green-400',
-    'INATIVO': 'bg-red-500/20 text-red-400',
-};
-
-export default function CreateNeighborhood() {
-    // const { neighborhoods } = usePage().props; // Futuramente, os dados virão daqui
+export default function Neighborhood() {
 
     const breadcrumbs: (BreadcrumbItem & { current?: boolean })[] = [
-        { title: 'Admin', href: '/' },
         { title: 'Bairros', href: '/neighborhoods', current: true },
     ];
+
+    const [isFormVisible, setIsFormVisible] = useState(false);
+
+    const { data, setData, post, processing, errors, reset } = useForm({
+        name: '',
+    });
+
+    const submit = (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        setIsFormVisible(false);
+    };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -48,12 +53,30 @@ export default function CreateNeighborhood() {
                 </div>
 
                 <div className="flex flex-col flex-wrap justify-between items-center gap-4 p-8 border border-border rounded-xl bg-primary-foreground">
-                     <div className='w-full flex flex-row gap-2'>
-                        <InputText placeholder="Buscar cidade" className="w-full p-2 rounded-lg border border-border" />
-                        <Link href={route('neighborhoods.create')} className="flex items-center gap-2 bg-primary text-primary-foreground font-semibold px-4 py-2 rounded-lg whitespace-nowrap hover:bg-primary/90">
-                            <Plus size={18} />
-                            Adicionar
-                        </Link>
+                    
+                    <div className='w-full flex flex-col gap-2'>
+                        <div className='w-full flex flex-row gap-2'>
+                            <InputText placeholder="Buscar bairros" className="w-full p-2 rounded-lg border border-border" />
+                            <Button type="submit" label={isFormVisible ? "Cancelar" : "Adicionar"} className="w-xs" onClick={() => setIsFormVisible(!isFormVisible)} />
+                        </div>
+
+                        {isFormVisible && (
+                            <div className="w-full mt-2 border-t border-border pt-4">
+                                <form onSubmit={submit} className="space-y-4">
+                                    <div className='w-full flex flex-row gap-2'>
+                                        <InputText
+                                            id="name"
+                                            value={data.name}
+                                            onChange={(e) => setData('name', e.target.value)}
+                                            placeholder="Ex: Centro"
+                                            className={`w-full ${errors.name ? 'p-invalid' : ''}`}
+                                            autoFocus
+                                        />
+                                        <Button type="submit" label={processing ? "Salvando..." : "Salvar"}  className="w-xs" disabled={processing} />
+                                    </div>
+                                </form>
+                            </div>
+                        )}
                     </div>
 
                     <div className="bg-background dark:bg-muted rounded-lg border border-border w-full overflow-hidden">

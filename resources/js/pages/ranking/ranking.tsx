@@ -1,7 +1,7 @@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, usePage, Link, useForm } from '@inertiajs/react';
-import { Trophy, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Trophy, Search, ChevronLeft, ChevronRight, TrendingUp } from 'lucide-react';
 import { InputText } from 'primereact/inputtext';
 
 type RankingProps = {
@@ -14,7 +14,7 @@ type RankingProps = {
     score: number;
 };
 
-export default function CreateComplaints() {
+export default function Ranking() {
 
     const rankingData: RankingProps[] = [
         { 
@@ -140,7 +140,24 @@ export default function CreateComplaints() {
                     </div>
                 </div>
 
-                <div className="lg:col-span-1">
+                <div className="lg:col-span-1 flex flex-col gap-6">
+                    <div className="border border-border bg-card rounded-lg p-6 text-center">
+                        <TrendingUp size={32} className="mx-auto text-primary" />
+                        
+                        <p className="mt-2 text-sm text-muted-foreground">
+                            Posição no Ranking Nacional
+                        </p>
+
+                        <div className="my-2">
+                            <span className="text-6xl font-bold text-foreground">12</span>
+                            <span className="text-2xl font-semibold text-muted-foreground">ª</span>
+                        </div>
+
+                        <p className="text-foreground">
+                            <span className="font-semibold">Birigui</span> está na 12ª colocação!
+                        </p>
+                    </div>
+
                     <div className="border border-border rounded-lg bg-zinc-900 p-4 sticky top-10">
                         <h3 className="flex items-center gap-2 text-xl font-bold text-foreground p-4 border border-border rounded-lg shadow-sm bg-primary-foreground">
                             <Trophy size={20} className="text-yellow-400" />
