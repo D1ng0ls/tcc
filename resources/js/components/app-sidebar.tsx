@@ -66,11 +66,6 @@ const mainNavItems: any[] = [
                 href: route('admin.municipalities.index'),
                 icon: Landmark,
             },
-            {
-                title: 'Users',
-                href: route('admin.users.index'),
-                icon: Users,
-            },
         ]
     },
 ];

@@ -1,6 +1,6 @@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Head, usePage, useForm } from '@inertiajs/react';
+import { Head, usePage, useForm, Link } from '@inertiajs/react';
 import { FileWarning, Hourglass, Check, Radar, MapPin, Clock, Eye } from 'lucide-react';
 import { useState } from 'react';
 import { Dropdown, type DropdownChangeEvent } from 'primereact/dropdown';
@@ -52,115 +52,7 @@ const statusStyles = {
 };
 
 export default function Complaints() {
-
-    const { complaints } = usePage().props as any;
-
-    const mockComplaints: ComplaintProps[] = [
-        { 
-            id: 1234, 
-            title: 'Buraco na Rua das Flores', 
-            status: 'Aberto', 
-            category: 'Infraestrutura', 
-            description: 'Grande buraco no asfalto está causando danos...', 
-            location: 'Centro', 
-            time: 'Há 2 horas'
-        },
-        { 
-            id: 1235, 
-            title: 'Poste de luz queimado', 
-            status: 'Em andamento', 
-            category: 'Iluminação Pública', 
-            description: 'Poste na esquina da Av. Brasil está apagado há 3 dias.', 
-            location: 'Vila Nova', 
-            time: 'Há 1 dia'
-        },
-        { 
-            id: 1236, 
-            title: 'Lixo acumulado na praça', 
-            status: 'Fechado', 
-            category: 'Limpeza', 
-            description: 'Lixo não foi coletado na praça central, causando mau cheiro.', 
-            location: 'Centro', 
-            time: 'Há 5 horas'
-        }
-    ];
-
-    const complaintsToRender = mockComplaints;
-    
-    const [filters, setFilters] = useState<Filters>({
-        status: null,
-        category: null,
-        period: null,
-        search: '',
-    });
-
-    const status = [
-        { 
-            label: 'Aberto', 
-            value: 'open' 
-        },
-        { 
-            label: 'Em andamento', 
-            value: 'in-progress' 
-        },
-        { 
-            label: 'Fechado', 
-            value: 'closed' 
-        },
-        { 
-            label: 'Resolvido', 
-            value: 'resolved' 
-        }
-    ];
-
-    const category = [
-        { 
-            label: 'Infraestrutura', 
-            value: 'infra' 
-        },
-        { 
-            label: 'Segurança', 
-            value: 'security' 
-        },
-        { 
-            label: 'Limpeza', 
-            value: 'cleaning' 
-        }
-    ];
-
-    const handleFilterChange = (field: keyof Filters, value: any) => {
-        setFilters(prevFilters => ({
-            ...prevFilters,
-            [field]: value,
-        }));
-    };
-
-    const summary = [
-        { 
-            title: 'Em andamentos', 
-            value: complaintsToRender.filter(c => c.status === 'Em andamento').length, 
-            icon: Hourglass, 
-            color: 'bg-yellow-500' 
-        },
-        { 
-            title: 'Fechado', 
-            value: complaintsToRender.filter(c => c.status === 'Fechado').length, 
-            icon: Radar, 
-            color: 'bg-blue-500' 
-        },
-        { 
-            title: 'Abertos', 
-            value: complaintsToRender.filter(c => c.status === 'Aberto').length, 
-            icon: Check, 
-            color: 'bg-green-500' 
-        },
-        { 
-            title: 'Total', 
-            value: complaintsToRender.length, 
-            icon: FileWarning, 
-            color: 'bg-violet-500' 
-        }
-    ];
+    const { complaints, status } = usePage().props as any;
 
     const breadcrumbs: BreadcrumbItem[] = [
         {
@@ -168,6 +60,36 @@ export default function Complaints() {
             href: '/complaints',
         },
     ];
+
+    const [filters, setFilters] = useState<Filters>({
+        status: null,
+        category: null,
+        period: null,
+        search: '',
+    });
+
+    const handleFilterChange = (field: keyof Filters, value: any) => {
+        setFilters((prev) => ({ ...prev, [field]: value }));
+    };
+
+    const filteredComplaints = complaints.filter((c: ComplaintProps & { status_id: number }) => {
+        let ok = true;
+
+        if (filters.status && c.status_id !== filters.status) {
+            ok = false;
+        }
+
+        if (filters.search && !c.title.toLowerCase().includes(filters.search.toLowerCase())) {
+            ok = false;
+        }
+
+        if (filters.period) {
+            const created = new Date(c.time);
+            ok = created.toDateString() === filters.period.toDateString();
+        }
+
+        return ok;
+    });
 
     const cards = [
         {
@@ -200,9 +122,7 @@ export default function Complaints() {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Nova Reclamação" />
-            
             <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
-                
                 <div className="border border-border rounded-xl p-4 bg-zinc-900">
                     <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-4">
                         {cards.map((card) => {
@@ -222,39 +142,17 @@ export default function Complaints() {
                 </div>
 
                 <div className="border border-border rounded-xl bg-zinc-900 p-4 flex gap-4">
-                    <div className="w-full sm:w-auto flex flex-col">
+                    <div className="w-full sm:w-1/3 flex flex-col">
                         <label className="text-sm font-medium text-muted-foreground mb-1">Status</label>
                         <Dropdown
                             value={filters.status}
                             options={status}
+                            optionLabel="name"
+                            optionValue="id"
                             onChange={(e: DropdownChangeEvent) => handleFilterChange('status', e.value)}
                             placeholder="Todos"
                             showClear
-                            className="w-full md:w-48" 
-                        />
-                    </div>
-
-                    <div className="w-full sm:w-auto flex flex-col">
-                        <label className="text-sm font-medium text-muted-foreground mb-1">Categoria</label>
-                        <Dropdown
-                            value={filters.category}
-                            options={category}
-                            onChange={(e: DropdownChangeEvent) => handleFilterChange('category', e.value)}
-                            placeholder="Todas"
-                            showClear
-                            className="w-full md:w-48"
-                        />
-                    </div>
-
-                    <div className="w-full sm:w-auto flex flex-col">
-                        <label className="text-sm font-medium text-muted-foreground mb-1">Período</label>
-                        <Calendar
-                            value={filters.period}
-                            onChange={(e) => handleFilterChange('period', e.value ?? null)}
-                            placeholder="dd/mm/aaaa"
-                            dateFormat="dd/mm/yy"
-                            showIcon
-                            className="w-full md:w-48"
+                            className="w-full"
                         />
                     </div>
 
@@ -270,12 +168,12 @@ export default function Complaints() {
                 </div>
 
                 <div className="border border-border rounded-xl bg-zinc-900 p-4 flex flex-col gap-4">
-                    {complaints.length > 0 ? (
-                        complaints.map((complaint: any) => (
+                    {filteredComplaints.length > 0 ? (
+                        filteredComplaints.map((complaint: any) => (
                             <div key={complaint.id} className="relative w-full bg-card border border-border rounded-lg shadow-sm bg-primary-foreground">
                                 {/* Borda superior baseada no status */}
                                 <div className={`absolute top-0 left-0 w-full h-2 rounded-t-lg ${statusStyles[complaint?.status_id]?.border}`}></div>
-                                
+
                                 <div className="p-6 pt-8">
                                     <div className="flex justify-between items-center mb-2">
                                         <span className="text-sm font-medium text-muted-foreground">#{complaint.id}</span>
@@ -295,14 +193,16 @@ export default function Complaints() {
                                         <div className="flex items-center gap-1.5"><Clock size={16} /><span>{new Date(complaint?.created_at).toLocaleDateString()}</span></div>
                                         <div className="flex items-center gap-1.5"> <span className="px-3 py-1 text-xs font-medium text-primary bg-primary/10 rounded-full">{complaint?.department?.name}</span></div>
                                     </div>
-                                    
+
                                     <div className="flex items-center gap-4 mt-6 pt-4 border-t border-border/50">
-                                        <button className="px-6 py-2 font-semibold text-primary-foreground bg-primary rounded-lg hover:bg-primary/90 transition-colors">
-                                            Ver detalhes
-                                        </button>
-                                        <button className="px-6 py-2 font-semibold text-foreground bg-muted rounded-lg hover:bg-muted/80 transition-colors">
+                                        <Link href={route('complaints.show', complaint.id)}>
+                                            <button className="px-6 py-2 font-semibold text-primary-foreground bg-primary rounded-lg hover:bg-primary/90 transition-colors cursor-pointer">
+                                                Ver detalhes
+                                            </button>
+                                        </Link>
+                                        {/* <button className="px-6 py-2 font-semibold text-foreground bg-muted rounded-lg hover:bg-muted/80 transition-colors">
                                             Avaliar
-                                        </button>
+                                        </button> */}
                                     </div>
                                 </div>
                             </div>

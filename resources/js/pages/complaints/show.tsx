@@ -5,11 +5,11 @@ import { Navigation, Pagination } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
-
+import useTimeAgo from '@/hooks/use-time-ago';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Head, usePage, useForm } from '@inertiajs/react';
-import { ArrowLeft, Check, ClipboardList, Clock, MapPin, Search, Wrench } from 'lucide-react';
+import { Head, usePage, useForm, Link } from '@inertiajs/react';
+import { ArrowLeft, Check, ClipboardList, Clock, MapPin, Search, ThumbsDown, ThumbsUp, Wrench } from 'lucide-react';
 
 type HistoryItem = {
     date: string;
@@ -31,9 +31,36 @@ const historyIconMap = {
     'Em Análise': { icon: Search, color: 'text-gray-500' },
 };
 
-export default function ShowComplaint() {
+const statusStyles = {
+    1: {
+        badge: 'bg-sky-100 text-sky-800',
+        border: 'bg-sky-500',
+    },
+    2: {
+        badge: 'bg-yellow-100 text-yellow-800',
+        border: 'bg-yellow-300',
+    },
+    3: {
+        badge: 'bg-purple-200 text-purple-700',
+        border: 'bg-purple-500',
+    },
+    4: {
+        badge: 'bg-green-100 text-green-800',
+        border: 'bg-green-500',
+    },
+    5: {
+        badge: 'bg-red-200 text-red-700',
+        border: 'bg-red-500',
+    },
+    6: {
+        badge: 'bg-stone-200 text-stone-700',
+        border: 'bg-stone-500',
+    },
+};
 
+export default function ShowComplaint() {
     const { cities, states, categories, neighborhoods, complaint } = usePage().props as any;
+    const timeAgo = useTimeAgo(complaint?.created_at);
 
     const { data, setData, post, processing, errors, reset } = useForm({
         title: '',
@@ -51,74 +78,95 @@ export default function ShowComplaint() {
         },
     ];
 
-    const complaintImages = [
-        'https://ogimg.infoglobo.com.br/in/23611951-d94-877/FT1086A/79287512_RI-Rio-de-Janeiro-RJ-09-10-2018-Buraco-na-pista-da-Avenida-Vieira-Souto-esquina-com-Avenida.jpg',
-        'https://ogimg.infoglobo.com.br/in/23611951-d94-877/FT1086A/79287512_RI-Rio-de-Janeiro-RJ-09-10-2018-Buraco-na-pista-da-Avenida-Vieira-Souto-esquina-com-Avenida.jpg',
-        'https://ogimg.infoglobo.com.br/in/23611951-d94-877/FT1086A/79287512_RI-Rio-de-Janeiro-RJ-09-10-2018-Buraco-na-pista-da-Avenida-Vieira-Souto-esquina-com-Avenida.jpg',
-        'https://ogimg.infoglobo.com.br/in/23611951-d94-877/FT1086A/79287512_RI-Rio-de-Janeiro-RJ-09-10-2018-Buraco-na-pista-da-Avenida-Vieira-Souto-esquina-com-Avenida.jpg',
-        'https://ogimg.infoglobo.com.br/in/23611951-d94-877/FT1086A/79287512_RI-Rio-de-Janeiro-RJ-09-10-2018-Buraco-na-pista-da-Avenida-Vieira-Souto-esquina-com-Avenida.jpg',
-        'https://ogimg.infoglobo.com.br/in/23611951-d94-877/FT1086A/79287512_RI-Rio-de-Janeiro-RJ-09-10-2018-Buraco-na-pista-da-Avenida-Vieira-Souto-esquina-com-Avenida.jpg',
-        'https://ogimg.infoglobo.com.br/in/23611951-d94-877/FT1086A/79287512_RI-Rio-de-Janeiro-RJ-09-10-2018-Buraco-na-pista-da-Avenida-Vieira-Souto-esquina-com-Avenida.jpg',
-        'https://ogimg.infoglobo.com.br/in/23611951-d94-877/FT1086A/79287512_RI-Rio-de-Janeiro-RJ-09-10-2018-Buraco-na-pista-da-Avenida-Vieira-Souto-esquina-com-Avenida.jpg',
-    ];
+    const approveComplaint = () => {
+        post(route('complaints.approve', complaint.id));
+    };
+
+    const rejectComplaint = () => {
+        post(route('complaints.reject', complaint.id));
+    };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Single" />
+            <Head title={`Reclamação #${complaint.id}`} />
             <div className="border border-border rounded-xl bg-zinc-900 m-4 p-4">
                 <div className="border border-border bg-primary-foreground rounded-xl p-4 w-full">
                     <div className="flex justify-between items-start mb-4">
-                        <button className={"w-fit border border-border bg-primary-foreground rounded-xl p-4 flex items-center justify-center gap-2 font-semibold text-foreground hover:bg-muted hover:border-primary transition-all duration-200"}>
-                            <ArrowLeft size={18} />
-                            Voltar
-                        </button>
+                        <Link href={route('complaints.index')}>
+                            <button className={"w-fit cursor-pointer border border-border bg-primary-foreground rounded-xl p-4 flex items-center justify-center gap-2 font-semibold text-foreground hover:bg-muted hover:border-primary transition-all duration-200"}>
+                                <ArrowLeft size={18} />
+                                Voltar
+                            </button>
+                        </Link>
 
-                        <span className="px-4 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-                            {complaint.status.name.toUpperCase()}
+                        <span className={`px-4 py-1 text-xs font-semibold rounded-full ${statusStyles[complaint?.status_id]?.badge}`}>
+                            {complaint?.status?.name.toUpperCase()}
                         </span>
                     </div>
 
                     <span className="text-sm font-medium text-muted-foreground">
-                        #{complaint.id}
+                        #{complaint?.id}
                     </span>
 
                     <h2 className="text-2xl font-bold text-foreground mt-4">
-                        {complaint.title}
+                        {complaint?.title}
                     </h2>
 
                     <div className="flex items-center gap-6 mt-4 text-sm text-muted-foreground">
-                        <div className="flex items-center gap-1.5"><MapPin size={16} /><span>Rua Teste, Centro - Cidade, SP</span></div>
-                        <div className="flex items-center gap-1.5"><Clock size={16} /><span>Há 2 horas</span></div>
+                        <div className="flex items-center gap-1.5"><MapPin size={16} /><span>{complaint?.address} - {complaint?.neighborhood?.name || complaint?.district}, {complaint?.department?.municipality?.city?.name} - {complaint?.department?.municipality?.city?.state?.uf}</span></div>
+                        <div className="flex items-center gap-1.5"><Clock size={16} /><span>{timeAgo}</span></div>
                     </div>
 
-                    <div className="flex items-center gap-1.5"> <span className="px-3 py-1 text-sm font-medium text-primary bg-primary/10 rounded-full mt-4">Infraestrutura</span></div>
+                    <div className="flex justify-between items-start mb-4">
+                        <div className="flex items-center gap-1.5"> <span className="px-3 py-1 text-sm font-medium text-primary bg-primary/10 rounded-full mt-4">{complaint?.department?.name}</span></div>
+                        {complaint?.status_id === 3 && (
+                            <div className="flex flex-row gap-2">
+                                <button onClick={() => approveComplaint()} className={"w-fit cursor-pointer border border-green-500 bg-primary-foreground rounded-xl py-2 px-4 group flex items-center justify-center gap-2 font-semibold text-foreground hover:bg-green-500/60 transition-all duration-200"}>
+                                    Aprovar
+                                    <ThumbsUp size={18} className="text-green-500 group-hover:text-foreground" />
+                                </button>
+                                <button onClick={() =>  rejectComplaint()}  className={"w-fit cursor-pointer border border-red-500 bg-primary-foreground rounded-xl py-2 px-4 group flex items-center justify-center gap-2 font-semibold text-foreground hover:bg-red-500/60 transition-all duration-200"}>
+                                    Rejeitar
+                                    <ThumbsDown size={18} className="text-red-500 group-hover:text-foreground" />
+                                </button>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 <div className="border border-border bg-primary-foreground rounded-xl p-4 mt-4 w-full grid">
                     <div>
                         <h2 className="text-xl font-semibold text-foreground mb-4">Descrição Completa</h2>
-                        <p className="text-foreground/80 leading-relaxed">Um grande buraco no asfalto está presente há mais de duas semanas, causando danos aos veículos que passam pelo local e representando um grande risco para pedestres e ciclistas, especialmente durante a noite devido à baixa iluminação da área.</p>
-                    </div>  
+                        <p className="text-foreground/80 leading-relaxed">{complaint?.description}</p>
+                    </div>
 
                     <div className="mt-8 overflow-hidden">
                         <h2 className="text-xl font-semibold text-foreground mb-4">Imagens Anexadas</h2>
-                        <Swiper
-                            modules={[Navigation, Pagination]}
-                            spaceBetween={20}
-                            slidesPerView={4}
-                            navigation
-                            pagination={{ clickable: true }}
-                            className="w-full rounded-lg"
-                        >
-                            {complaintImages.map((imgUrl, index) => (
-                                <SwiperSlide key={index}>
-                                    <img src={imgUrl} alt={`Imagem da reclamação ${index + 1}`} className="w-full aspect-square object-cover rounded-md" />
-                                </SwiperSlide>
-                            ))}
-                        </Swiper>
+                        {complaint?.archives.length > 0 ? (
+                            <Swiper
+                                modules={[Navigation, Pagination]}
+                                spaceBetween={20}
+                                slidesPerView={4}
+                                navigation
+                                pagination={{ clickable: true }}
+                                className="w-full rounded-lg"
+                            >
+                                {(complaint?.archives || []).map((img: any, index: any) => (
+                                    <SwiperSlide key={img?.id}>
+                                        {img?.type === 'image' ? (
+                                            <img src={'/storage/' + img?.photo_url} alt={`Imagem da reclamação #${complaint?.id} - ${complaint?.title}`} className="w-full aspect-square object-cover rounded-md" />
+                                        ) : (
+                                            <video src={'/storage/' + img?.photo_url} controls className="w-full aspect-square object-cover rounded-md" />
+                                        )}
+                                    </SwiperSlide>
+                                ))}
+                            </Swiper>
+                        ) : (
+                            <p className="text-foreground/80">Nenhuma imagem ou video anexada.</p>
+                        )}
                     </div>
 
-                    <div>
+                    {/* <div>
                         <h2 className="text-xl font-semibold text-foreground mb-4 mt-12">Histórico da Reclamação</h2>
 
                         <div className="flex">
@@ -174,8 +222,8 @@ export default function ShowComplaint() {
                                 <p className="mt-1 text-foreground/80 text-sm">Técnico da prefeitura realizou vistoria no local e confirmou a necessidade de reparo urgente.</p>
                             </div>
                         </div>
-                    </div>
-                </div>
+                    </div>*/}
+                </div> 
             </div>
         </AppLayout>
     );

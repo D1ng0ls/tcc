@@ -1,7 +1,8 @@
 import AppLayout from '@/layouts/app-layout';
+import GuestLayout from '@/layouts/guest-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, usePage, Link, useForm } from '@inertiajs/react';
-import { Trophy, Search, ChevronLeft, ChevronRight, TrendingUp } from 'lucide-react';
+import { Trophy, Search, ChevronLeft, ChevronRight, Pin, MapPin } from 'lucide-react';
 import { InputText } from 'primereact/inputtext';
 
 type RankingProps = {
@@ -14,58 +15,59 @@ type RankingProps = {
     score: number;
 };
 
-export default function Ranking() {
+export default function CreateComplaints() {
+    const { ranking } = usePage().props as any;
 
     const rankingData: RankingProps[] = [
-        { 
-            rank: 1, 
-            city: 'São Caetano do Sul', 
-            state: 'São Paulo', 
-            complaints: 45, 
-            resolved: 44, 
-            rate: 
-            '97.8%', 
-            score: 98.5 
+        {
+            rank: 1,
+            city: 'São Caetano do Sul',
+            state: 'São Paulo',
+            complaints: 45,
+            resolved: 44,
+            rate:
+                '97.8%',
+            score: 98.5
         },
-        { 
-            rank: 2, 
-            city: 'Águas de São Pedro', 
-            state: 'São Paulo', 
-            complaints: 12, 
-            resolved: 12, 
-            rate: 
-            '100.0%', 
-            score: 97.2 
+        {
+            rank: 2,
+            city: 'Águas de São Pedro',
+            state: 'São Paulo',
+            complaints: 12,
+            resolved: 12,
+            rate:
+                '100.0%',
+            score: 97.2
         },
-        { 
-            rank: 3, 
-            city: 'Florianópolis', 
-            state: 'Santa Catarina', 
-            complaints: 234, 
-            resolved: 224, 
-            rate: 
-            '95.7%', 
-            score: 95.8 
+        {
+            rank: 3,
+            city: 'Florianópolis',
+            state: 'Santa Catarina',
+            complaints: 234,
+            resolved: 224,
+            rate:
+                '95.7%',
+            score: 95.8
         },
-        { 
-            rank: 4, 
-            city: 'Santos', 
-            state: 'São Paulo', 
-            complaints: 189, 
-            resolved: 178, 
-            rate: 
-            '94.2%', 
-            score: 94.5 
+        {
+            rank: 4,
+            city: 'Santos',
+            state: 'São Paulo',
+            complaints: 189,
+            resolved: 178,
+            rate:
+                '94.2%',
+            score: 94.5
         },
-        { 
-            rank: 5, 
-            city: 'Vitória', 
-            state: 'Espírito Santo', 
-            complaints: 98, 
-            resolved: 91, 
-            rate: 
-            '92.9%', 
-            score: 93.7 
+        {
+            rank: 5,
+            city: 'Vitória',
+            state: 'Espírito Santo',
+            complaints: 98,
+            resolved: 91,
+            rate:
+                '92.9%',
+            score: 93.7
         }
     ];
 
@@ -88,7 +90,7 @@ export default function Ranking() {
     };
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <GuestLayout className='max-w-7xl mx-auto py-8'>
             <Head title="Ranking" />
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-4">
@@ -141,24 +143,33 @@ export default function Ranking() {
                 </div>
 
                 <div className="lg:col-span-1 flex flex-col gap-6">
-                    <div className="border border-border bg-card rounded-lg p-6 text-center">
-                        <TrendingUp size={32} className="mx-auto text-primary" />
-                        
-                        <p className="mt-2 text-sm text-muted-foreground">
-                            Posição no Ranking Nacional
-                        </p>
-
-                        <div className="my-2">
-                            <span className="text-6xl font-bold text-foreground">12</span>
-                            <span className="text-2xl font-semibold text-muted-foreground">ª</span>
-                        </div>
-
-                        <p className="text-foreground">
-                            <span className="font-semibold">Birigui</span> está na 12ª colocação!
-                        </p>
+                    <div className="border border-border rounded-lg bg-zinc-900 p-4 sticky">
+                        <h3 className="flex items-center gap-1 text-lg font-bold text-foreground p-2.5 border border-border rounded-lg shadow-sm bg-primary-foreground truncate">
+                            <MapPin size={20} className="text-red-400 mr-1" />
+                            Brasil
+                            {ranking?.state && (
+                                <>
+                                    <ChevronRight size={20} className="text-red-400" />
+                                    <Link href={route('ranking.state', ranking?.state?.uf)} className="hover:underline">{ranking?.state?.name}</Link>
+                                </>
+                            )}
+                            {ranking?.city && (
+                                <>
+                                    <ChevronRight size={20} className="text-red-400" />
+                                    <Link
+                                        href={route('ranking.city', {
+                                            stateUf: ranking?.state?.uf,
+                                            citySlug: ranking?.city?.slug,
+                                        })}
+                                        className="truncate hover:underline"
+                                    >
+                                        {ranking?.city?.name}
+                                    </Link>
+                                </>
+                            )}
+                        </h3>
                     </div>
-
-                    <div className="border border-border rounded-lg bg-zinc-900 p-4 sticky top-10">
+                    <div className="border border-border rounded-lg bg-zinc-900 p-4 sticky">
                         <h3 className="flex items-center gap-2 text-xl font-bold text-foreground p-4 border border-border rounded-lg shadow-sm bg-primary-foreground">
                             <Trophy size={20} className="text-yellow-400" />
                             Top 5 Cidades
@@ -181,6 +192,6 @@ export default function Ranking() {
                     </div>
                 </div>
             </div>
-        </AppLayout>
+        </GuestLayout>
     );
 }
