@@ -2,7 +2,9 @@
 import AppLayout from '@/layouts/app-layout';
 import { Head } from '@inertiajs/react';
 import { InputText } from 'primereact/inputtext';
-
+import { useState, useEffect } from 'react';
+import axios from 'axios';
+import Pagination from '@/components/ui/pagination';
 
 export default function AdminMunicipalities() {
     const breadcrumbs = [
@@ -11,6 +13,45 @@ export default function AdminMunicipalities() {
             href: '/admin/municipalities',
         },
     ];
+
+    const [municipalities, setMunicipalities] = useState([]) as any;
+    const [search, setSearch] = useState('') as any;
+    const [page, setPage] = useState(1) as any;
+
+    useEffect(() => {
+        axios.get(route('admin.municipalities.all'), {
+            params: {
+                search,
+                page,
+            },
+        })
+            .then(response => {
+                setMunicipalities(response.data);
+            })
+            .catch(error => {
+                console.error('Erro ao buscar cidades:', error);
+            });
+    }, [search, page]);
+
+    useEffect(() => {
+        setPage(1);
+    }, [search]);
+
+    const handlePreviousPage = () => {
+        if (page > 1) setPage(page - 1);
+    };
+
+    const handleNextPage = () => {
+        if (page < municipalities.last_page) setPage(page + 1);
+    };
+
+    const pagination = (
+        <Pagination
+            paginatedPosts={municipalities}
+            handlePreviousPage={handlePreviousPage}
+            handleNextPage={handleNextPage}
+        />
+    );
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -24,10 +65,11 @@ export default function AdminMunicipalities() {
                 </div>
                 <div className="flex flex-col flex-wrap justify-between items-center gap-4 p-8 border border-border rounded-xl bg-primary-foreground">
                     <div className='w-full'>
-                        <InputText placeholder="Buscar cidade" className="w-full p-2 rounded-lg border border-border" />
+                        <InputText onChange={(e) => setSearch(e.target.value)} value={search} placeholder="Buscar cidade" className="w-full p-2 rounded-lg border border-border" />
                     </div>
                     <div className="bg-background dark:bg-muted rounded-lg border border-border w-full overflow-hidden">
                         <div className="overflow-x-auto">
+                            {pagination}
                             <table className="w-full">
                                 <thead className="bg-muted dark:bg-background">
                                     <tr>
@@ -40,88 +82,50 @@ export default function AdminMunicipalities() {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-muted dark:divide-muted-foreground">
-                                    <tr>
-                                        <td className="px-6 py-4 whitespace-nowrap font-medium">São Paulo</td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className='font-medium text-green-700 bg-green-100 px-2 py-1 rounded-full text-xs'>Ativo</span>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-muted-foreground">3.245</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-muted-foreground">892</td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className='font-medium text-green-600'>
-                                                98%
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <button
-                                                className={`px-3 py-1 rounded text-sm bg-red-500 cursor-pointer text-white hover:bg-red-600`}
-                                            >
-                                                Bloquear
-                                            </button>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td className="px-6 py-4 whitespace-nowrap font-medium">Birigui</td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className='font-medium text-green-700 bg-green-100 px-2 py-1 rounded-full text-xs'>Ativo</span>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-muted-foreground">124</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-muted-foreground">27</td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className='font-medium text-blue-600'>
-                                                95%
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <button
-                                                className={`px-3 py-1 rounded text-sm bg-red-500 cursor-pointer text-white hover:bg-red-600`}
-                                            >
-                                                Bloquear
-                                            </button>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td className="px-6 py-4 whitespace-nowrap font-medium">Rio de Janeiro</td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className='font-medium text-red-700 bg-red-100 px-2 py-1 rounded-full text-xs'>Desativado</span>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-muted-foreground">2.156</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-muted-foreground">1.234</td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className='font-medium text-red-600'>
-                                                45%
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <button
-                                                className={`px-3 py-1 rounded text-sm bg-green-500 cursor-pointer text-white hover:bg-green-600`}
-                                            >
-                                                Ativar
-                                            </button>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td className="px-6 py-4 whitespace-nowrap font-medium">Campinas</td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className='font-medium text-green-700 bg-green-100 px-2 py-1 rounded-full text-xs'>Ativo</span>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-muted-foreground">567</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-muted-foreground">123</td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className='font-medium text-muted-foreground'>
-                                                89%
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <button
-                                                className={`px-3 py-1 rounded text-sm bg-red-500 cursor-pointer text-white hover:bg-red-600`}
-                                            >
-                                                Bloquear
-                                            </button>
-                                        </td>
-                                    </tr>
+                                    {console.log(municipalities)}
+                                    {(municipalities?.data as any || []).map((municipality: any) => (
+                                        <tr key={municipality.id}>
+                                            <td className="px-6 py-4 whitespace-nowrap font-medium">{municipality.city.name} - {municipality.city.state.uf}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <span className={`font-medium ${municipality.active ? 'text-green-700 bg-green-200' : 'text-red-700 bg-red-200'} px-2 py-1 rounded-full text-xs`}>{municipality.active ? 'Ativo' : 'Inativo'}</span>
+                                            </td>
+                                            
+                                            <td className="px-6 py-4 whitespace-nowrap text-muted-foreground">{municipality.users_count}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-muted-foreground">{municipality.complaints_count}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <span className='font-medium text-green-600'>
+                                                    98%
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                {municipality.active ? (
+                                                    <button
+                                                        onClick={() => handleApprove(municipality.id)}
+                                                        className={`px-3 py-1 rounded text-sm bg-red-500 cursor-pointer text-white hover:bg-red-600`}
+                                                    >
+                                                        Bloquear
+                                                    </button>
+                                                ) : (
+                                                    <button
+                                                        onClick={() => handleApprove(municipality.id)}
+                                                        className={`px-3 py-1 rounded text-sm bg-green-500 cursor-pointer text-white hover:bg-green-600`}
+                                                    >
+                                                        Ativar
+                                                    </button>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {(municipalities?.data as any || []).length === 0 && (
+                                        <tr>
+                                            <td colSpan={6} className="px-6 py-4 whitespace-nowrap text-center">
+                                                Nenhuma cidade encontrada
+                                            </td>
+                                        </tr>
+                                    )}
                                 </tbody>
                             </table>
+                            {pagination}
                         </div>
                     </div>
                 </div>

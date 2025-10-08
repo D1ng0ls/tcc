@@ -59,10 +59,6 @@ export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: 
             formData.append('name', data.name);
             formData.append('email', data.email);
             formData.append('photo', data.photo);
-
-            for (let [key, value] of formData.entries()) {
-                console.log(key, value);
-            }
         }
     }, [data.photo]);
 

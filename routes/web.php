@@ -77,9 +77,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
             'prefix' => 'municipalities',
             'as' => 'municipalities.',
         ], function () {
-            Route::get('/', function () {
-                return Inertia::render('admin/municipalities');
-            })->name('index');
+            Route::get('/', [AdminController::class, 'municipalities'])->name('index');
+            Route::get('/all', [AdminController::class, 'municipalitiesAll'])->name('all');
+            Route::get('/approve/{municipality}', [AdminController::class, 'approve'])->name('approve');
+            Route::get('/reject/{municipality}', [AdminController::class, 'reject'])->name('reject');
         });
 
         Route::group([

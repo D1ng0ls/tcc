@@ -45,8 +45,38 @@ class AdminController extends Controller
         return Inertia::render('admin/solicitations/create');
     }
 
-    public function store(CreateRequest $request)
+    public function store(CreateRequest $request) {}
+
+    public function municipalities()
     {
-        
+        return Inertia::render('admin/municipalities');
+    }
+
+    public function municipalitiesAll(Request $request)
+    {
+        $request->validate([
+            'search' => 'nullable|string|max:255',
+        ]);
+
+        $search = $request->input('search');
+
+        $municipalities = Municipality::with([
+            'city.state',
+        ])
+            ->withCount(['city as users_count' => function ($query) {
+                $query->withCount('users');
+            }])
+            ->withCount(['departments as complaints_count' => function ($q) {
+                $q->join('complaints', 'departments.id', '=', 'complaints.department_id');
+            }])
+            ->when($search, function ($query, $search) {
+                $query->where('name', 'like', "%{$search}%")
+                    ->orWhereHas('city', function ($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%");
+                    });
+            })
+            ->paginate(20);
+
+        return response()->json($municipalities);
     }
 }

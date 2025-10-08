@@ -28,7 +28,6 @@ export default function SolicitationFormPage() {
 
     const submit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        console.log('Dados do formulário:', data); 
     };
 
     return (

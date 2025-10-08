@@ -23,8 +23,6 @@ export default function Address() {
     const { auth, cities, states } = usePage().props as any;
     const [state, setState] = useState<number | null>(auth.user.city?.state.id || null);
 
-    console.log(auth.user);
-
     const { data, setData, put, errors, processing, recentlySuccessful } = useForm({
         address: auth.user.address ? String(auth.user.address) : '',
         city: auth.user.city ? Number(auth.user.city.id) : null,

@@ -21,6 +21,6 @@ class CityController extends Controller
 
     public function departments(City $city)
     {
-        return response()->json($city->municipality->departaments()->get());
+        return response()->json($city->municipality->departments()->get());
     }
 }

@@ -4,7 +4,6 @@ import { usePage } from '@inertiajs/react';
 
 export default function GlobalToast() {
     const { props } = usePage();
-    console.log(props);
     const toast = useRef(null);
 
     useEffect(() => {
