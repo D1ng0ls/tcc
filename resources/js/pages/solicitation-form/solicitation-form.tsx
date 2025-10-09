@@ -12,7 +12,7 @@ export default function SolicitationFormPage() {
     const { cities, states, auth } = usePage().props as any;
 
     const { data, setData, post, processing, errors, reset } = useForm({
-        responsible_name: '',
+        requester: '',
         email: '',
         state_id: auth.user?.city?.state_id || undefined,
         city_id: auth.user?.city?.id || undefined,
@@ -26,8 +26,13 @@ export default function SolicitationFormPage() {
         },
     ];
 
-    const submit = (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
+    const submit = () => {
+        post(route('solicitation-form.store'), {
+            onSuccess: () => {
+                reset();
+                console.log('Solicitação enviada com sucesso!');
+            },
+        });
     };
 
     return (
@@ -44,11 +49,11 @@ export default function SolicitationFormPage() {
 
                     <form onSubmit={submit} className="space-y-6">
                         <div>
-                            <Label htmlFor="responsible_name">Nome do responsável</Label>
+                            <Label htmlFor="requester">Nome do responsável</Label>
                             <InputText
-                                id="responsible_name"
-                                value={data.responsible_name}
-                                onChange={(e) => setData('responsible_name', e.target.value)}
+                                id="requester"
+                                value={data.requester}
+                                onChange={(e) => setData('requester', e.target.value)}
                                 placeholder="Nome"
                                 className="w-full"
                             />

@@ -45,8 +45,6 @@ class AdminController extends Controller
         return Inertia::render('admin/solicitations/create');
     }
 
-    public function store(CreateRequest $request) {}
-
     public function municipalities()
     {
         return Inertia::render('admin/municipalities');
@@ -78,5 +76,32 @@ class AdminController extends Controller
             ->paginate(20);
 
         return response()->json($municipalities);
+    }
+    
+    public function toggle(Municipality $municipality)
+    {
+        $municipality->update([
+            'active' => !$municipality->active
+        ]);
+
+        return redirect()->back()->with('success', 'Município ' . ($municipality->active ? 'ativado' : 'desativado') . ' com sucesso');
+    }
+
+    public function approve(CityRequest $cityRequest)
+    {
+        $cityRequest->update([
+            'status' => RequestEnum::APPROVED,
+        ]);
+
+        return redirect()->back()->with('success', 'Solicitação aprovada com sucesso');
+    }
+
+    public function reject(CityRequest $cityRequest)
+    {
+        $cityRequest->update([
+            'status' => RequestEnum::REJECTED,
+        ]);
+
+        return redirect()->back()->with('success', 'Solicitação rejeitada com sucesso');
     }
 }

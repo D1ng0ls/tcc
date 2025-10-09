@@ -1,6 +1,6 @@
 
 import AppLayout from '@/layouts/app-layout';
-import { Head } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import { InputText } from 'primereact/inputtext';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
@@ -19,6 +19,10 @@ export default function AdminMunicipalities() {
     const [page, setPage] = useState(1) as any;
 
     useEffect(() => {
+        municipalitiesAll();
+    }, [search, page]);
+
+    const municipalitiesAll = () => {
         axios.get(route('admin.municipalities.all'), {
             params: {
                 search,
@@ -31,7 +35,7 @@ export default function AdminMunicipalities() {
             .catch(error => {
                 console.error('Erro ao buscar cidades:', error);
             });
-    }, [search, page]);
+    };
 
     useEffect(() => {
         setPage(1);
@@ -43,6 +47,10 @@ export default function AdminMunicipalities() {
 
     const handleNextPage = () => {
         if (page < municipalities.last_page) setPage(page + 1);
+    };
+
+    const handleToggle = (id: number) => {
+        router.get(route('admin.municipalities.toggle', id));
     };
 
     const pagination = (
@@ -82,7 +90,6 @@ export default function AdminMunicipalities() {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-muted dark:divide-muted-foreground">
-                                    {console.log(municipalities)}
                                     {(municipalities?.data as any || []).map((municipality: any) => (
                                         <tr key={municipality.id}>
                                             <td className="px-6 py-4 whitespace-nowrap font-medium">{municipality.city.name} - {municipality.city.state.uf}</td>
@@ -100,14 +107,14 @@ export default function AdminMunicipalities() {
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 {municipality.active ? (
                                                     <button
-                                                        onClick={() => handleApprove(municipality.id)}
+                                                        onClick={() => handleToggle(municipality.id)}
                                                         className={`px-3 py-1 rounded text-sm bg-red-500 cursor-pointer text-white hover:bg-red-600`}
                                                     >
                                                         Bloquear
                                                     </button>
                                                 ) : (
                                                     <button
-                                                        onClick={() => handleApprove(municipality.id)}
+                                                        onClick={() => handleToggle(municipality.id)}
                                                         className={`px-3 py-1 rounded text-sm bg-green-500 cursor-pointer text-white hover:bg-green-600`}
                                                     >
                                                         Ativar

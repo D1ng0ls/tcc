@@ -6,6 +6,7 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\CityController;
 use App\Http\Controllers\ComplaintController;
 use App\Http\Controllers\RankingController;
+use App\Http\Controllers\CityRequestController;
 
 Route::get('/', function () {
     return Inertia::render('welcome');
@@ -18,6 +19,14 @@ Route::group([
     Route::get('/', [RankingController::class, 'index'])->name('index');
     Route::get('/{stateUf}', [RankingController::class, 'state'])->name('state');
     Route::get('/{stateUf}/{citySlug}', [RankingController::class, 'city'])->name('city');
+});
+
+Route::group([
+    'prefix' => 'solicitation-form',
+    'as' => 'solicitation-form.',
+], function () {
+    Route::get('/', [CityRequestController::class, 'index'])->name('index');
+    Route::post('/', [CityRequestController::class, 'store'])->name('store')->middleware('throttle:2,60000');
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
@@ -55,10 +64,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     })->name('departments.index');
 
 
-    Route::get('/solicitation-form', function () {
-        return Inertia::render('solicitation-form/solicitation-form');
-    })->name('solicitation-form.index');
-
     Route::group([
         'prefix' => 'admin',
         'as' => 'admin.',
@@ -81,6 +86,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/all', [AdminController::class, 'municipalitiesAll'])->name('all');
             Route::get('/approve/{municipality}', [AdminController::class, 'approve'])->name('approve');
             Route::get('/reject/{municipality}', [AdminController::class, 'reject'])->name('reject');
+            Route::get('/toggle/{municipality}', [AdminController::class, 'toggle'])->name('toggle');
         });
 
         Route::group([

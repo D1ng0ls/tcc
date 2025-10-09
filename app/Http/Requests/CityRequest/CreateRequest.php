@@ -26,8 +26,19 @@ class CreateRequest extends FormRequest
             'city_id' => 'required|exists:cities,id',
             'requester' => 'required|string|max:255',
             'email' => 'required|email|max:255',
-            'message' => 'required|string',
-            'status' => 'required|in:' . implode(',', RequestEnum::cases()),
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'city_id.required' => 'A cidade é obrigatória.',
+            'city_id.exists' => 'A cidade selecionada não existe.',
+            'requester.required' => 'O nome do solicitante é obrigatório.',
+            'requester.max' => 'O nome do solicitante deve ter no máximo 255 caracteres.',
+            'email.required' => 'O email do solicitante é obrigatório.',
+            'email.email' => 'O email do solicitante deve ser um email válido.',
+            'email.max' => 'O email do solicitante deve ter no máximo 255 caracteres.',
         ];
     }
 }
