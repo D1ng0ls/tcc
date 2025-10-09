@@ -52,6 +52,7 @@ const statusStyles = {
 };
 
 export default function Complaints() {
+    
     const { complaints, status } = usePage().props as any;
 
     const breadcrumbs: BreadcrumbItem[] = [
@@ -118,12 +119,12 @@ export default function Complaints() {
         },
     ];
 
-
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Nova Reclamação" />
+
             <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
-                <div className="border border-border rounded-xl p-4 bg-zinc-900">
+                <div className="border border-border rounded-xl p-4 bg-gray-100 dark:bg-zinc-900">
                     <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-4">
                         {cards.map((card) => {
                             const Icon = card.icon;
@@ -141,7 +142,7 @@ export default function Complaints() {
                     </div>
                 </div>
 
-                <div className="border border-border rounded-xl bg-zinc-900 p-4 flex gap-4">
+                <div className="border border-border rounded-xl bg-gray-100 dark:bg-zinc-900 p-4 flex gap-4">
                     <div className="w-full sm:w-1/3 flex flex-col">
                         <label className="text-sm font-medium text-muted-foreground mb-1">Status</label>
                         <Dropdown
@@ -167,7 +168,7 @@ export default function Complaints() {
                     </div>
                 </div>
 
-                <div className="border border-border rounded-xl bg-zinc-900 p-4 flex flex-col gap-4">
+                <div className="border border-border rounded-xl bg-gray-100 dark:bg-zinc-900 p-4 flex flex-col gap-4">
                     {filteredComplaints.length > 0 ? (
                         filteredComplaints.map((complaint: any) => (
                             <div key={complaint.id} className="relative w-full bg-card border border-border rounded-lg shadow-sm bg-primary-foreground">
