@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { Button } from 'primereact/button';
 import { Dialog } from 'primereact/dialog';
 import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog';
+import Headline from '@/components/ui/headline';
 
 export default function Neighborhood() {
     const { neighborhoods } = usePage().props;
@@ -70,12 +71,10 @@ export default function Neighborhood() {
             <Head title="Gerenciar Bairros" />
             <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
 
-                <div className="flex flex-row flex-wrap justify-between items-center gap-4 p-8 border border-border rounded-xl bg-primary-foreground">
-                    <div>
-                        <h1 className="text-2xl font-bold">Gerenciar Bairros 🏙️</h1>
-                        <p className="text-md text-muted-foreground">Adicione, edite ou remova os bairros da cidade</p>
-                    </div>
-                </div>
+                <Headline 
+                    title="Gerenciar Bairros 🏙️" 
+                    description="Adicione, edite ou remova os bairros da cidade" 
+                />
 
                 <div className="flex flex-col flex-wrap justify-between items-center gap-4 p-8 border border-border rounded-xl bg-primary-foreground">
 
