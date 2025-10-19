@@ -2,10 +2,14 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
 
-class Municipality extends Model
+class Municipality extends Authenticatable
 {
+    use HasFactory, Notifiable;
+
     protected $table = 'municipalities';
 
     protected $fillable = [

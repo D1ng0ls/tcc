@@ -15,10 +15,10 @@ class AdminController extends Controller
 {
     public function index()
     {
-        $users = User::all()->count();
-        $complaints = Complaint::all()->count();
-        $municipalities = Municipality::all()->count();
-        $cityRequests = CityRequest::all()->count();
+        $users = User::count();
+        $complaints = Complaint::count();
+        $municipalities = Municipality::where('active', true)->count();
+        $cityRequests = CityRequest::where('status', RequestEnum::PENDING)->count();
         return Inertia::render('admin/index', compact('users', 'complaints', 'municipalities', 'cityRequests'));
     }
 

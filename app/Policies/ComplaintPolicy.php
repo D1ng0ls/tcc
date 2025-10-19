@@ -2,8 +2,9 @@
 
 namespace App\Policies;
 
-use App\Models\User;
 use App\Models\Complaint;
+use App\Models\Municipality;
+use App\Models\User;
 use App\ComplaintStatus;
 
 class ComplaintPolicy
@@ -16,9 +17,17 @@ class ComplaintPolicy
         //
     }
 
-    public function view(User $user, Complaint $complaint)
+    public function view($auth, Complaint $complaint)
     {
-        return $user->id === $complaint->user_id;
+        if ($auth instanceof \App\Models\User) {
+            return $auth->id === $complaint->user_id;
+        }
+
+        if ($auth instanceof \App\Models\Municipality) {
+            return $auth->id === $complaint->department->municipality_id;
+        }
+
+        return false;
     }
 
     public function approve(User $user, Complaint $complaint)
@@ -34,5 +43,15 @@ class ComplaintPolicy
     public function delete(User $user, Complaint $complaint)
     {
         return $user->id === $complaint->user_id;
+    }
+
+    public function start(Municipality $municipality, Complaint $complaint)
+    {
+        return $municipality->id === $complaint->department->municipality_id && $complaint->status_id === ComplaintStatus::OPEN;
+    }
+
+    public function end(Municipality $municipality, Complaint $complaint)
+    {
+        return $municipality->id === $complaint->department->municipality_id && $complaint->status_id === ComplaintStatus::IN_PROGRESS;
     }
 }

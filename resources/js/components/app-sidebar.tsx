@@ -4,7 +4,7 @@ import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { LucideHome, LucideHelpCircle, Plus, ChartNoAxesCombined, Files, Award, Landmark, LayoutDashboard, Users, Inbox, MapPin, Network, FileText } from 'lucide-react';
+import { LucideHome, LucideHelpCircle, Plus, Files, Award, Landmark, LayoutDashboard, Inbox, MapPin, Layers, FileText } from 'lucide-react';
 import AppLogo from './app-logo';
 
 const mainNavItems: any[] = [
@@ -30,16 +30,6 @@ const mainNavItems: any[] = [
                 title: 'Ranking',
                 href: route('ranking.index'),
                 icon: Award,
-            },
-            {
-                title: 'Bairros',
-                href: route('neighborhoods.index'),
-                icon: MapPin,
-            },
-            {
-                title: 'Departamentos',
-                href: route('departments.index'),
-                icon: Network,
             },
             {
                 title: 'Formulário de Solicitação',
@@ -68,6 +58,31 @@ const mainNavItems: any[] = [
             },
         ]
     },
+    {
+        category: 'Painel Municipal',
+        items: [
+            {
+                title: 'Dashboard',
+                href: route('municipality.dashboard'),
+                icon: LayoutDashboard,
+            },
+            {
+                title: 'Reclamações',
+                href: route('municipality.complaints.index'),
+                icon: Inbox,
+            },
+            {
+                title: 'Bairros',
+                href: route('municipality.neighborhoods.index'),
+                icon: MapPin,
+            },
+            {
+                title: 'Departamentos',
+                href: route('municipality.departments.index'),
+                icon: Layers,
+            },
+        ]
+    }
 ];
 
 const footerNavItems: NavItem[] = [
@@ -85,6 +100,15 @@ export function AppSidebar() {
         if (menu.category === 'Admin' && auth?.user?.role !== 'admin') {
             return false;
         }
+
+        if (menu.category === 'Painel Municipal' && !!auth?.user?.role) {
+            return false;
+        }
+
+        if (menu.category === 'Painel' && !auth?.user?.role) {
+            return false;
+        }
+        
         return true;
     });
 

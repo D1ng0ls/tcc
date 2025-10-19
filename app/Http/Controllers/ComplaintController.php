@@ -2,15 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use Inertia\Inertia;
+use App\Actions\Complaint\ApproveAction;
+use App\Actions\Complaint\CreateAction;
+use App\Actions\Complaint\RejectAction;
 use App\Http\Requests\Complaint\CreateRequest;
 use App\Models\Complaint;
 use App\Models\Status;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Arr;
-use Illuminate\Support\Str;
-use App\ComplaintStatus;
+
 
 class ComplaintController extends Controller
 {
@@ -30,7 +29,7 @@ class ComplaintController extends Controller
 
     public function show(Complaint $complaint)
     {
-        auth()->user()->can('view', $complaint);
+        $this->authorize('view', $complaint);
         $complaint->load('status', 'neighborhood', 'department.municipality.city.state', 'archives', 'department');
         return Inertia::render('complaints/show', compact('complaint'));
     }
@@ -40,34 +39,12 @@ class ComplaintController extends Controller
         return Inertia::render('complaints/create');
     }
 
-    public function store(CreateRequest $request)
+    public function store(CreateRequest $request, CreateAction $createAction)
     {
-        $validated = $request->validated();
+        $images = $request->file('images', []);
 
         try {
-            $complaint = DB::transaction(function () use ($validated, $request) {
-
-                $complaintData = Arr::except($validated, ['images']);
-                $complaintData['status_id'] = ComplaintStatus::OPEN;
-                $complaint = auth()->user()->complaints()->create($complaintData);
-
-                if ($request->hasFile('images')) {
-                    foreach ($request->file('images') as $file) {
-                        $path = $file->store('complaints', 'public');
-
-                        $fileType = Str::startsWith($file->getClientMimeType(), 'image')
-                            ? 'image'
-                            : 'video';
-
-                        $complaint->archives()->create([
-                            'photo_url' => $path,
-                            'type'      => $fileType,
-                        ]);
-                    }
-                }
-
-                return $complaint;
-            });
+            $complaint = $createAction->execute($request, $images, auth()->user());
 
             return redirect()->route('complaints.show', $complaint->id)->with('success', 'Reclamação enviada com sucesso');
         } catch (\Exception $e) {
@@ -75,23 +52,21 @@ class ComplaintController extends Controller
         }
     }
 
-    public function approve(Complaint $complaint)
+    public function approve(Complaint $complaint, ApproveAction $approveAction)
     {
-        if(!auth()->user()->can('approve', $complaint)) {
-            return redirect()->route('complaints.show', $complaint->id)->with('error', 'Essa reclamação não pode ser aprovada!');
-        }
-        $complaint->status_id = ComplaintStatus::SOLVED;
-        $complaint->save();
+        $this->authorize('approve', $complaint);
+
+        $approveAction->execute($complaint);
+
         return redirect()->route('complaints.show', $complaint->id)->with('success', 'Reclamação aprovada com sucesso');
     }
 
-    public function reject(Complaint $complaint)
+    public function reject(Complaint $complaint, RejectAction $rejectAction)
     {
-        if(!auth()->user()->can('reject', $complaint)) {
-            return redirect()->route('complaints.show', $complaint->id)->with('error', 'Essa reclamação não pode ser rejeitada!');
-        }
-        $complaint->status_id = ComplaintStatus::REJECTED;
-        $complaint->save();
+        $this->authorize('reject', $complaint);
+
+        $rejectAction->execute($complaint);
+
         return redirect()->route('complaints.show', $complaint->id)->with('success', 'Reclamação rejeitada com sucesso');
     }
 }

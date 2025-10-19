@@ -72,6 +72,14 @@ class HandleInertiaRequests extends Middleware
             ]);
         }
 
+        if (auth()->guard('municipality')->user()) {
+            $shared = array_merge($shared, [
+                'auth' => [
+                    'user' => $request->user('municipality')->loadMissing('city.state'),
+                ],
+            ]);
+        }
+
         return $shared;
     }
 }
