@@ -15,7 +15,8 @@ type RankingProps = {
     score: number;
 };
 
-export default function CreateComplaints() {
+export default function Ranking() {
+    
     const { ranking } = usePage().props as any;
 
     const rankingData: RankingProps[] = [
@@ -94,28 +95,38 @@ export default function CreateComplaints() {
             <Head title="Ranking" />
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-4">
-                <div className="lg:col-span-2 flex flex-col gap-6">
-
-                    <div className="border border-border rounded-xl bg-zinc-900 p-4 flex gap-4">
+                <div className="lg:col-span-2 flex flex-col gap-6 order-2 lg:order-1">
+                    <div className="border border-border rounded-xl bg-gray-100 dark:bg-zinc-900 p-4 flex gap-4">
                         <InputText placeholder="Digite para buscar..." className="w-full" />
                     </div>
 
-                    <div className="border border-border rounded-xl bg-zinc-900 p-4 flex flex-col gap-4">
+                    <div className="border border-border rounded-xl bg-gray-100 dark:bg-zinc-900 p-4 flex flex-col gap-4">
                         {rankingData.map((item) => (
-                            <div key={item.rank} className="p-4 flex items-center gap-4 relative w-full bg-card border border-border rounded-lg shadow-sm bg-primary-foreground">
-                                <div className={`w-12 h-12 flex-shrink-0 flex items-center justify-center rounded-full text-xl font-bold ${getMedalColor(item.rank)}`}>
-                                    {item.rank}
+                            <div key={item.rank} className="p-4 flex flex-col sm:flex-row sm:items-center gap-4 relative w-full bg-card border border-border rounded-lg bg-primary-foreground">
+                                <div className="flex items-center gap-4">
+                                    <div className={`w-12 h-12 flex-shrink-0 flex items-center justify-center rounded-full text-xl font-bold ${getMedalColor(item.rank)}`}>
+                                        {item.rank}
+                                    </div>
+
+                                    <div className="d-block sm:hidden">
+                                        <h3 className="text-lg font-bold text-foreground">{item.city}</h3>
+                                        <p className="text-sm text-muted-foreground">{item.state}</p>
+                                    </div>
                                 </div>
+
                                 <div className="flex-grow">
-                                    <h3 className="text-lg font-bold text-foreground">{item.city}</h3>
-                                    <p className="text-sm text-muted-foreground">{item.state}</p>
-                                    <div className="flex items-center gap-4 text-xs text-muted-foreground mt-2">
+                                    <div className="hidden sm:block">
+                                        <h3 className="text-lg font-bold text-foreground">{item.city}</h3>
+                                        <p className="text-sm text-muted-foreground">{item.state}</p>
+                                    </div>
+                                    
+                                    <div className="flex items-center gap-4 text-xs text-muted-foreground mt-0 sm:mt-1">
                                         <span>Reclamações: <span className="font-semibold text-foreground">{item.complaints}</span></span>
                                         <span>Resolvidas: <span className="font-semibold text-foreground">{item.resolved}</span></span>
                                         <span>Taxa: <span className="font-semibold text-foreground">{item.rate}</span></span>
                                     </div>
                                 </div>
-                                <div className="text-right flex-shrink-0">
+                                <div className="sm:text-right flex-shrink-0">
                                     <p className="text-3xl font-bold text-primary">{item.score.toFixed(1)}</p>
                                     <p className="text-sm text-muted-foreground -mt-1">pontos</p>
                                 </div>
@@ -123,10 +134,10 @@ export default function CreateComplaints() {
                         ))}
                     </div>
 
-                    <div className="p-4 flex items-center justify-between text-sm bg-zinc-900 border border-border rounded-lg shadow-sm">
+                    <div className="p-4 flex items-center justify-between text-sm bg-gray-100 dark:bg-zinc-900 border border-border rounded-lg">
                         <button className="flex items-center gap-2 px-3 py-1.5 rounded-md text-muted-foreground bg-card border border-border bg-primary-foreground hover:bg-muted transition-colors" disabled>
                             <ChevronLeft size={16} />
-                            Anterior
+                            <span className="hidden sm:block">Anterior</span>
                         </button>
                         <div className="flex items-center gap-2">
                             {[1, 2, 3, 4, 5].map(page => (
@@ -136,15 +147,15 @@ export default function CreateComplaints() {
                             ))}
                         </div>
                         <button className="flex items-center gap-2 px-3 py-1.5 rounded-md text-muted-foreground bg-card border border-border bg-primary-foreground hover:bg-muted transition-colors">
-                            Próxima
+                            <span className="hidden sm:block">Próxima</span>
                             <ChevronRight size={16} />
                         </button>
                     </div>
                 </div>
 
-                <div className="lg:col-span-1 flex flex-col gap-6">
-                    <div className="border border-border rounded-lg bg-zinc-900 p-4 sticky">
-                        <h3 className="flex items-center gap-1 text-lg font-bold text-foreground p-2.5 border border-border rounded-lg shadow-sm bg-primary-foreground truncate">
+                <div className="lg:col-span-1 flex flex-col gap-6 order-1 lg:order-2">
+                    <div className="border border-border rounded-lg bg-gray-100 dark:bg-zinc-900 p-4 sticky">
+                        <h3 className="flex items-center gap-1 text-lg font-bold text-foreground p-2.5 truncate p-inputtext">
                             <MapPin size={20} className="text-red-400 mr-1" />
                             Brasil
                             {ranking?.state && (
@@ -169,13 +180,14 @@ export default function CreateComplaints() {
                             )}
                         </h3>
                     </div>
-                    <div className="border border-border rounded-lg bg-zinc-900 p-4 sticky">
-                        <h3 className="flex items-center gap-2 text-xl font-bold text-foreground p-4 border border-border rounded-lg shadow-sm bg-primary-foreground">
+
+                    <div className="border border-border rounded-lg bg-gray-100 dark:bg-zinc-900 p-4 sticky">
+                        <h3 className="flex items-center gap-2 text-xl font-bold text-foreground p-4 border border-border rounded-lg bg-primary-foreground">
                             <Trophy size={20} className="text-yellow-400" />
                             Top 5 Cidades
                         </h3>
 
-                        <div className="mt-4 flex flex-col gap-5 p-4 border border-border rounded-lg shadow-sm bg-primary-foreground">
+                        <div className="mt-4 flex flex-col gap-5 p-4 border border-border rounded-lg bg-primary-foreground">
                             {topCities.map((city) => (
                                 <div key={city.rank} className="flex items-center gap-4">
                                     <div className={`w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-full text-sm font-bold ${getMedalColor(city.rank)}`}>
