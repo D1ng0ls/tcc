@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Municipality;
 
+use App\Actions\Complaint\EndAction;
+use App\Actions\Complaint\StartAction;
 use App\ComplaintStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Complaint;
@@ -19,10 +21,10 @@ class ComplaintController extends Controller
 
         $complaints = Complaint::whereIn('department_id', $departments->pluck('id'))
             ->orderBy('id', 'desc')
-            ->with(['status', 'neighborhood', 'department.municipality.city'])
+            ->with(['status', 'neighborhood', 'department.municipality.city', 'user'])
             ->get();
 
-        return Inertia::render('municipality/complaints/index', [
+        return Inertia::render('complaints/index', [
             'complaints' => $complaints,
             'departments' => $departments,
             'status' => Status::all(),
@@ -33,28 +35,26 @@ class ComplaintController extends Controller
     {
         $this->authorize('view', $complaint);
         $complaint->load('status', 'neighborhood', 'department.municipality.city.state', 'archives', 'department', 'user');
-        return Inertia::render('municipality/complaints/show', [
+        return Inertia::render('complaints/show', [
             'complaint' => $complaint,
         ]);
     }
 
-    public function start(Complaint $complaint)
+    public function start(Complaint $complaint, StartAction $startAction)
     {
         $this->authorize('start', $complaint);
 
-        $complaint->status_id = ComplaintStatus::IN_PROGRESS;
-        $complaint->save();
+        $startAction->execute($complaint);
 
-        return redirect()->route('municipality.complaints.show', $complaint->id)->with('success', 'Reclamação aprovada com sucesso');
+        return redirect()->back()->with('info', 'Reclamação aprovada com sucesso');
     }
 
-    public function end(Complaint $complaint)
+    public function end(Complaint $complaint, EndAction $endAction)
     {
         $this->authorize('end', $complaint);
 
-        $complaint->status_id = ComplaintStatus::ENDED;
-        $complaint->save();
+        $endAction->execute($complaint);
 
-        return redirect()->route('municipality.complaints.show', $complaint->id)->with('success', 'Reclamação rejeitada com sucesso');
+        return redirect()->back()->with('info', 'Reclamação rejeitada com sucesso');
     }
 }

@@ -15,11 +15,14 @@ class ComplaintController extends Controller
 {
     public function index()
     {
-        $complaints = auth()->user()
-            ->complaints()
-            ->orderBy('id', 'desc')
-            ->with(['status', 'neighborhood', 'department.municipality.city'])
-            ->get();
+        $complaints = [];
+
+        if (auth()->user()->can('viewAny', Complaint::class)) {
+            $complaints = Complaint::orderBy('id', 'desc')->with(['status', 'neighborhood', 'department.municipality.city', 'user'])->get();
+        } else {
+            $complaints = auth()->user()->complaints()->orderBy('id', 'desc')->with(['status', 'neighborhood', 'department.municipality.city'])->get();
+        }
+
         return Inertia::render('complaints/index', [
             'complaints' => $complaints,
             'departments' => $complaints->pluck('department')->unique(),
@@ -30,7 +33,7 @@ class ComplaintController extends Controller
     public function show(Complaint $complaint)
     {
         $this->authorize('view', $complaint);
-        $complaint->load('status', 'neighborhood', 'department.municipality.city.state', 'archives', 'department');
+        $complaint->load('status', 'neighborhood', 'department.municipality.city.state', 'archives', 'department', 'user');
         return Inertia::render('complaints/show', compact('complaint'));
     }
 
@@ -58,7 +61,7 @@ class ComplaintController extends Controller
 
         $approveAction->execute($complaint);
 
-        return redirect()->route('complaints.show', $complaint->id)->with('success', 'Reclamação aprovada com sucesso');
+        return redirect()->route('complaints.show', $complaint->id)->with('info', 'Reclamação aprovada com sucesso');
     }
 
     public function reject(Complaint $complaint, RejectAction $rejectAction)
@@ -67,6 +70,6 @@ class ComplaintController extends Controller
 
         $rejectAction->execute($complaint);
 
-        return redirect()->route('complaints.show', $complaint->id)->with('success', 'Reclamação rejeitada com sucesso');
+        return redirect()->route('complaints.show', $complaint->id)->with('info', 'Reclamação rejeitada com sucesso');
     }
 }

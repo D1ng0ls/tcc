@@ -1,5 +1,4 @@
 import React from 'react';
-
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination } from 'swiper/modules';
 import 'swiper/css';
@@ -8,8 +7,8 @@ import 'swiper/css/pagination';
 import useTimeAgo from '@/hooks/use-time-ago';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Head, usePage, useForm, Link } from '@inertiajs/react';
-import { ArrowLeft, Check, ClipboardList, Clock, MapPin, Search, ThumbsDown, ThumbsUp, Wrench } from 'lucide-react';
+import { Head, usePage, useForm, Link, router } from '@inertiajs/react';
+import { ArrowLeft, Check, ClipboardList, Clock, MapPin, Search, ThumbsDown, ThumbsUp, User, Wrench, TrafficCone, CircleCheckBig, Construction } from 'lucide-react';
 
 type HistoryItem = {
     date: string;
@@ -59,10 +58,10 @@ const statusStyles = {
 };
 
 export default function ShowComplaint() {
-    const { cities, states, categories, neighborhoods, complaint } = usePage().props as any;
+    const { cities, states, categories, neighborhoods, complaint, auth } = usePage().props as any;
     const timeAgo = useTimeAgo(complaint?.created_at);
 
-    const { data, setData, post, processing, errors, reset } = useForm({
+    const { data, setData, patch, processing, errors, reset } = useForm({
         title: '',
         description: '',
         category_id: '',
@@ -79,12 +78,25 @@ export default function ShowComplaint() {
     ];
 
     const approveComplaint = () => {
-        post(route('complaints.approve', complaint.id));
+        patch(route('complaints.approve', complaint.id));
     };
 
     const rejectComplaint = () => {
-        post(route('complaints.reject', complaint.id));
+        patch(route('complaints.reject', complaint.id));
     };
+
+    const startComplaint = () => {
+        let url = auth?.user?.active ? route('municipality.complaints.start', complaint.id) : route('complaints.start', complaint.id);
+        console.log(url);
+        patch(url);
+    };
+
+    const endComplaint = () => {
+        let url = auth?.user?.active ? route('municipality.complaints.end', complaint.id) : route('complaints.end', complaint.id)
+        console.log(url);
+        patch(url);
+    };
+
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -115,22 +127,43 @@ export default function ShowComplaint() {
                     <div className="flex items-center gap-6 mt-4 text-sm text-muted-foreground">
                         <div className="flex items-center gap-1.5"><MapPin size={16} /><span>{complaint?.address} - {complaint?.neighborhood?.name || complaint?.district}, {complaint?.department?.municipality?.city?.name} - {complaint?.department?.municipality?.city?.state?.uf}</span></div>
                         <div className="flex items-center gap-1.5"><Clock size={16} /><span>{timeAgo}</span></div>
+                        {(auth.user?.role === 'admin' || auth.user?.active) && (
+                            <div className="flex items-center gap-1.5"><User size={16} /><span>{complaint?.user?.name}</span></div>
+                        )}
                     </div>
 
                     <div className="flex justify-between items-start mb-4">
                         <div className="flex items-center gap-1.5"> <span className="px-3 py-1 text-sm font-medium text-primary bg-primary/10 rounded-full mt-4">{complaint?.department?.name}</span></div>
-                        {complaint?.status_id === 3 && (
-                            <div className="flex flex-row gap-2">
-                                <button onClick={() => approveComplaint()} className={"w-fit cursor-pointer border border-green-500 bg-primary-foreground rounded-xl py-2 px-4 group flex items-center justify-center gap-2 font-semibold text-foreground hover:bg-green-500/60 transition-all duration-200"}>
-                                    Aprovar
-                                    <ThumbsUp size={18} className="text-green-500 group-hover:text-foreground" />
-                                </button>
-                                <button onClick={() =>  rejectComplaint()}  className={"w-fit cursor-pointer border border-red-500 bg-primary-foreground rounded-xl py-2 px-4 group flex items-center justify-center gap-2 font-semibold text-foreground hover:bg-red-500/60 transition-all duration-200"}>
-                                    Rejeitar
-                                    <ThumbsDown size={18} className="text-red-500 group-hover:text-foreground" />
-                                </button>
-                            </div>
-                        )}
+                        <div className="flex flex-row gap-2">
+                            {(complaint?.status_id === 3 && auth.user?.role === 'user' || auth.user?.role === 'admin') && (
+                                <>
+                                    <button onClick={() => approveComplaint()} className={"w-fit cursor-pointer border border-green-500 bg-primary-foreground rounded-xl py-2 px-4 group flex items-center justify-center gap-2 font-semibold text-foreground hover:bg-green-500/60 transition-all duration-200"}>
+                                        Aprovar
+                                        <ThumbsUp size={18} className="text-green-500 group-hover:text-foreground" />
+                                    </button>
+                                    <button onClick={() => rejectComplaint()} className={"w-fit cursor-pointer border border-red-500 bg-primary-foreground rounded-xl py-2 px-4 group flex items-center justify-center gap-2 font-semibold text-foreground hover:bg-red-500/60 transition-all duration-200"}>
+                                        Rejeitar
+                                        <ThumbsDown size={18} className="text-red-500 group-hover:text-foreground" />
+                                    </button>
+                                </>
+                            )}
+                            {(auth.user?.active || auth.user?.role === 'admin') && (
+                                <>
+                                    {(complaint?.status_id === 1 || auth.user?.role === 'admin') && (
+                                        <button onClick={() => startComplaint()} className={"w-fit cursor-pointer border border-orange-500 bg-primary-foreground rounded-xl py-2 px-4 group flex items-center justify-center gap-2 font-semibold text-foreground hover:bg-orange-500/60 transition-all duration-200"}>
+                                            Iniciar Trabalhos
+                                            <TrafficCone size={18} className="text-orange-500 group-hover:text-foreground" />
+                                        </button>
+                                    )}
+                                    {(complaint?.status_id === 2 || auth.user?.role === 'admin') && (
+                                        <button onClick={() => endComplaint()} className={"w-fit cursor-pointer border border-indigo-500 bg-primary-foreground rounded-xl py-2 px-4 group flex items-center justify-center gap-2 font-semibold text-foreground hover:bg-indigo-500/60 transition-all duration-200"}>
+                                            Encerrar Trabalhos
+                                            <Construction size={18} className="text-indigo-500 group-hover:text-foreground" />
+                                        </button>
+                                    )}
+                                </>
+                            )}
+                        </div>
                     </div>
                 </div>
 
@@ -223,7 +256,7 @@ export default function ShowComplaint() {
                             </div>
                         </div>
                     </div>*/}
-                </div> 
+                </div>
             </div>
         </AppLayout>
     );

@@ -72,7 +72,7 @@ export default function AdminSolicitations() {
                                             )}
                                         </tr>
                                     ))}
-                                    {(cityRequests?.data as any || []).length === 0 && (
+                                    {(cityRequests as any || []).length === 0 && (
                                         <tr>
                                             <td colSpan={6} className="px-6 py-4 whitespace-nowrap text-center">
                                                 Nenhuma solicitação encontrada

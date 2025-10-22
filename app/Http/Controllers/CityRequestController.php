@@ -11,7 +11,7 @@ class CityRequestController extends Controller
 {
     public function index()
     {
-        return Inertia::render('solicitation-form/solicitation-form');
+        return Inertia::render('solicitation-form/index');
     }
     public function store(CreateRequest $request)
     {

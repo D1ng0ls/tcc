@@ -1,14 +1,12 @@
-import AppLayout from '@/layouts/app-layout';
 import { BreadcrumbItem } from '@/types';
 import { Head, usePage, useForm } from '@inertiajs/react';
 import { InputText } from 'primereact/inputtext';
-import { Label } from '@/components/ui/label';  
+import { Label } from '@/components/ui/label';
 import { Dropdown } from 'primereact/dropdown';
-import React from 'react';
 import { Button } from 'primereact/button';
+import GuestLayout from '@/layouts/guest-layout';
 
 export default function SolicitationFormPage() {
-    
     const { cities, states, auth } = usePage().props as any;
 
     const { data, setData, post, processing, errors, reset } = useForm({
@@ -17,14 +15,6 @@ export default function SolicitationFormPage() {
         state_id: auth.user?.city?.state_id || undefined,
         city_id: auth.user?.city?.id || undefined,
     });
-
-     const breadcrumbs: (BreadcrumbItem & { current?: boolean })[] = [
-        {
-            title: 'Formulário de Solicitação',
-            href: '/solicitation-form',
-            current: true
-        },
-    ];
 
     const submit = () => {
         post(route('solicitation-form.store'), {
@@ -36,12 +26,12 @@ export default function SolicitationFormPage() {
     };
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <GuestLayout className='max-w-7xl mx-auto py-8'>
             <Head title="Solicitar Acesso" />
-            
-            <div className="p-4 sm:p-6 lg:p-8 max-w-2xl m-auto">
+
+            <div className="p-4 sm:p-6 lg:p-8 max-w-2xl m-auto h-[calc(100vh-11rem)]">
                 <div className="bg-card border border-border rounded-xl p-10 bg-primary-foreground">
-                    
+
                     <div className="mb-6 text-center">
                         <h1 className="text-2xl font-bold text-foreground">Formulário de solicitação</h1>
                         <p className="text-sm text-muted-foreground mt-1">Preencha o formulário para solicitar o gerenciamento da sua cidade.</p>
@@ -108,13 +98,13 @@ export default function SolicitationFormPage() {
                                 disabled={!data.state_id}
                             />
                         </div>
-                        
+
                         <div className="w-full pt-6 border-t border-border">
-                            <Button type="submit" label={processing ? "Enviando..." : "Enviar solicitação"}  className="w-full" disabled={processing} />
+                            <Button type="submit" label={processing ? "Enviando..." : "Enviar solicitação"} className="w-full" disabled={processing} />
                         </div>
                     </form>
                 </div>
             </div>
-        </AppLayout>
+        </GuestLayout>
     );
 }

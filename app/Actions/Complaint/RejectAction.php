@@ -10,7 +10,7 @@ class RejectAction
 {
     public function execute(Complaint $complaint)
     {
-        if ($complaint->status_id !== ComplaintStatus::ENDED) {
+        if ($complaint->status_id !== ComplaintStatus::ENDED && auth()->user()->role !== 'admin') {
             abort(422, 'Reclamação não está finalizada.');
         }
 

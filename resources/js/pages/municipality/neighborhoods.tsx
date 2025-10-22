@@ -171,7 +171,7 @@ export default function Neighborhood() {
                         />
                     </div>
                     <Button
-                        onClick={() => handleUpdate(selectedNeighborhood)}
+                        onClick={() => handleUpdate()}
                         className="mt-4 self-end"
                         disabled={processing}
                     >

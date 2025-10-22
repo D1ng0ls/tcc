@@ -4,7 +4,7 @@ import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { LucideHome, LucideHelpCircle, Plus, Files, Award, Landmark, LayoutDashboard, Inbox, MapPin, Layers, FileText } from 'lucide-react';
+import { LucideHome, LucideHelpCircle, Plus, Files, Award, Landmark, LayoutDashboard, Inbox, MapPin, Layers, FileText, Mails } from 'lucide-react';
 import AppLogo from './app-logo';
 
 const mainNavItems: any[] = [
@@ -47,9 +47,14 @@ const mainNavItems: any[] = [
                 icon: LayoutDashboard,
             },
             {
+                title: 'Reclamações',
+                href: route('admin.complaints.index'),
+                icon: Inbox,
+            },
+            {
                 title: 'Solicitações',
                 href: route('admin.solicitations.index'),
-                icon: Inbox,
+                icon: Mails,
             },
             {
                 title: 'Municípios',

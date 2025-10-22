@@ -5,6 +5,7 @@ use Inertia\Inertia;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\CityController;
 use App\Http\Controllers\ComplaintController;
+use App\Http\Controllers\Municipality\ComplaintController as MunicipalityComplaintController;
 use App\Http\Controllers\RankingController;
 use App\Http\Controllers\CityRequestController;
 
@@ -42,11 +43,13 @@ Route::domain(env('APP_DOMAIN'))->group(function () {
             'as' => 'complaints.',
         ], function () {
             Route::get('/', [ComplaintController::class, 'index'])->name('index');
+            Route::get('/show/{complaint}', [ComplaintController::class, 'show'])->name('show');
             Route::get('/create', [ComplaintController::class, 'create'])->name('create');
             Route::post('/create', [ComplaintController::class, 'store'])->name('store');
-            Route::post('/approve/{complaint}', [ComplaintController::class, 'approve'])->name('approve');
-            Route::post('/reject/{complaint}', [ComplaintController::class, 'reject'])->name('reject');
-            Route::get('/show/{complaint}', [ComplaintController::class, 'show'])->name('show');
+            Route::patch('/approve/{complaint}', [ComplaintController::class, 'approve'])->name('approve');
+            Route::patch('/reject/{complaint}', [ComplaintController::class, 'reject'])->name('reject');
+            Route::patch('/start/{complaint}', [MunicipalityComplaintController::class, 'start'])->name('start');
+            Route::patch('/end/{complaint}', [MunicipalityComplaintController::class, 'end'])->name('end');
         });
 
         Route::group([
@@ -72,6 +75,14 @@ Route::domain(env('APP_DOMAIN'))->group(function () {
                 Route::get('/create', [AdminController::class, 'create'])->name('create');
                 Route::patch('/approve/{cityRequest}', [AdminController::class, 'approve'])->name('approve');
                 Route::patch('/reject/{cityRequest}', [AdminController::class, 'reject'])->name('reject');
+            });
+
+            Route::group([
+                'prefix' => 'complaints',
+                'as' => 'complaints.',
+            ], function () {
+                Route::get('/', [ComplaintController::class, 'index'])->name('index');
+                Route::get('/show/{complaint}', [ComplaintController::class, 'show'])->name('show');
             });
 
             Route::group([

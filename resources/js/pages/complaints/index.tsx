@@ -1,7 +1,7 @@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, usePage, useForm, Link } from '@inertiajs/react';
-import { FileWarning, Hourglass, Check, Radar, MapPin, Clock, Eye } from 'lucide-react';
+import { FileWarning, Hourglass, Check, Radar, MapPin, Clock, Eye, User } from 'lucide-react';
 import { useState } from 'react';
 import { Dropdown, type DropdownChangeEvent } from 'primereact/dropdown';
 import { Calendar } from 'primereact/calendar';
@@ -52,8 +52,8 @@ const statusStyles = {
 };
 
 export default function Complaints() {
-    
-    const { complaints, status } = usePage().props as any;
+
+    const { complaints, status, auth } = usePage().props as any;
 
     const breadcrumbs: BreadcrumbItem[] = [
         {
@@ -192,11 +192,16 @@ export default function Complaints() {
                                     <div className="flex items-center gap-6 mt-4 text-sm text-muted-foreground">
                                         <div className="flex items-center gap-1.5"><MapPin size={16} /><span>{complaint?.department?.municipality?.city?.name}</span></div>
                                         <div className="flex items-center gap-1.5"><Clock size={16} /><span>{new Date(complaint?.created_at).toLocaleDateString()}</span></div>
-                                        <div className="flex items-center gap-1.5"> <span className="px-3 py-1 text-xs font-medium text-primary bg-primary/10 rounded-full">{complaint?.department?.name}</span></div>
+                                        {(auth?.user?.role === 'admin' || auth?.user?.active) && (
+                                            <div className="flex items-center gap-1.5"><User size={16} /><span>{complaint?.user?.name}</span></div>
+                                        )}
+                                        <div className="flex items-center gap-1.5"><span className="px-3 py-1 text-xs font-medium text-primary bg-primary/10 rounded-full">{complaint?.department?.name}</span></div>
                                     </div>
 
                                     <div className="flex items-center gap-4 mt-6 pt-4 border-t border-border/50">
-                                        <Link href={route('complaints.show', complaint.id)}>
+                                        <Link href={
+                                            auth?.user?.active ? route('municipality.complaints.show', complaint.id) : route('complaints.show', complaint.id)
+                                        }>
                                             <button className="px-6 py-2 font-semibold text-primary-foreground bg-primary rounded-lg hover:bg-primary/90 transition-colors cursor-pointer">
                                                 Ver detalhes
                                             </button>
