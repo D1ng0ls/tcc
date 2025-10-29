@@ -15,18 +15,20 @@ class ComplaintController extends Controller
 {
     public function index()
     {
-        $complaints = [];
+        $user = auth()->user();
 
-        if (auth()->user()->can('viewAny', Complaint::class)) {
-            $complaints = Complaint::orderBy('id', 'desc')->with(['status', 'neighborhood', 'department.municipality.city', 'user'])->get();
-        } else {
-            $complaints = auth()->user()->complaints()->orderBy('id', 'desc')->with(['status', 'neighborhood', 'department.municipality.city'])->get();
-        }
+        $complaints = Complaint::with(['status', 'neighborhood', 'department.municipality.city', 'user'])
+            ->when(!$user->can('viewAny', Complaint::class), function ($query) use ($user) {
+                $query->where('user_id', $user->id)
+                    ->with(['status', 'neighborhood', 'department.municipality.city']);
+            })
+            ->orderByDesc('id')
+            ->get();
 
         return Inertia::render('complaints/index', [
-            'complaints' => $complaints,
+            'complaints'  => $complaints,
             'departments' => $complaints->pluck('department')->unique(),
-            'status' => Status::all(),
+            'status'      => Status::all(),
         ]);
     }
 

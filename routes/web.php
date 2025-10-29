@@ -8,6 +8,7 @@ use App\Http\Controllers\ComplaintController;
 use App\Http\Controllers\Municipality\ComplaintController as MunicipalityComplaintController;
 use App\Http\Controllers\RankingController;
 use App\Http\Controllers\CityRequestController;
+use App\Models\Complaint;
 
 require __DIR__ . '/municipality.php';
 
@@ -32,6 +33,11 @@ Route::domain(env('APP_DOMAIN'))->group(function () {
         Route::get('/', [CityRequestController::class, 'index'])->name('index');
         Route::post('/', [CityRequestController::class, 'store'])->name('store')->middleware('throttle:2,60000');
     });
+
+    Route::get('/complaints22', function () {
+        $complaints = Complaint::all();
+        return Inertia::render('complaints', compact('complaints'));
+    })->name('show');
 
     Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::get('dashboard', function () {

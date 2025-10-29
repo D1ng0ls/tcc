@@ -132,8 +132,8 @@ export default function ShowComplaint() {
                         )}
                     </div>
 
-                    <div className="flex justify-between items-start mb-4">
-                        <div className="flex items-center gap-1.5"> <span className="px-3 py-1 text-sm font-medium text-primary bg-primary/10 rounded-full mt-4">{complaint?.department?.name}</span></div>
+                    <div className="flex justify-between items-center my-4">
+                        <div className="flex items-center gap-1.5"> <span className="px-3 py-1 text-sm font-medium text-primary bg-primary/10 rounded-full">{complaint?.department?.name}</span></div>
                         <div className="flex flex-row gap-2">
                             {(complaint?.status_id === 3 && auth.user?.role === 'user' || auth.user?.role === 'admin') && (
                                 <>
