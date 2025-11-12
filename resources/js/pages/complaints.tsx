@@ -54,7 +54,7 @@ const statusStyles = {
 
 export default function Complaints() {
 
-    const { complaints, status, auth } = usePage().props as any;
+    const { complaints, status, auth, city, resolution } = usePage().props as any;
 
     const breadcrumbs: BreadcrumbItem[] = [
         {
@@ -119,67 +119,50 @@ export default function Complaints() {
             color: 'bg-violet-500',
         },
     ];
-    
+
     return (
         <GuestLayout className='max-w-7xl mx-auto py-8'>
             <Head title="Reclamações" />
 
             <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
-                <div className="w-full p-2 sm:p-6 lg:p-8 border border-border rounded-xl bg-gray-100 dark:bg-zinc-900 text-primary dark:text-white">
+                <div className={`w-full p-2 sm:p-6 lg:p-8 border border-border rounded-xl text-primary
+                    ${city.ranking.rank == 1 ? 'bg-linear-to-t from-amber-400 to-yellow-300 dark:from-amber-400 dark:to-amber-500'
+                        : city.ranking.rank == 2 ? 'bg-linear-to-t from-stone-200 to-slate-100 dark:from-stone-500 dark:to-slate-500'
+                            : city.ranking.rank == 3 ? 'bg-linear-to-t from-amber-500 to-orange-400 dark:from-amber-800 dark:to-yellow-800'
+                                : 'bg-muted/50'}
+                    `}>
 
                     <div className="mx-auto max-w-7xl">
-                        <div>
-                            <h1 className="text-4xl sm:text-4xl font-bold tracking-tight text-center">Birigui</h1>
-                            <span className="mx-auto block w-fit rounded-full bg-primary dark:bg-white/20 px-3 py-1 text-sm font-medium text-white mt-4">SP</span>
+                        <div className="flex flex-col items-center justify-center gap-4">
+                            <div className="flex items-center justify-center gap-4">
+                                <h1 className="text-4xl sm:text-4xl font-bold tracking-tight text-center">{city.name} - {city.ranking.rank == 1 ? '🥇' : city.ranking.rank == 2 ? '🥈' : city.ranking.rank == 3 ? '🥉' : city.ranking.rank + 'º'}</h1>
+                            </div>
+                            <div className="flex justify-center gap-2">
+                                <span className="block w-fit rounded-full bg-muted/50 px-3 py-1 text-sm font-medium">{city.state.uf}</span>
+                            </div>
                         </div>
 
-                        <div className="mt-12 grid grid-cols-2 sm:grid-cols-4 gap-x-8 gap-y-6 text-primary">
+                        <div className="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-x-8 gap-y-6 text-primary">
                             <div>
-                                <p className="text-3xl font-bold text-center">1.234</p>
-                                <p className="text-sm text-center">Reclamações Ativas</p>
+                                <p className="text-3xl font-bold text-center">{complaints?.filter((c: any) => c.status_id === 1).length}</p>
+                                <p className="text-sm text-center">Reclamações Abertas</p>
                             </div>
 
                             <div>
-                                <p className="text-3xl font-bold text-center">54.321</p>
+                                <p className="text-3xl font-bold text-center">{city.ranking.solved_complaints}</p>
+                                <p className="text-sm text-center">Reclamações Concluídas</p>
+                            </div>
+
+                            <div>
+                                <p className="text-3xl font-bold text-center">{city.ranking.total_complaints}</p>
                                 <p className="text-sm text-center">Total de Reclamações</p>
                             </div>
 
                             <div>
-                                <p className="text-3xl font-bold text-center">87.3%</p>
-                                <p className="text-sm text-center">Taxa de Resolução</p>
+                                <p className="text-3xl font-bold text-center">{city.ranking.resolution || 0}</p>
+                                <p className="text-sm text-center">Pontos</p>
                             </div>
 
-                            <h2 className="text-2xl font-bold text-foreground">{complaint?.title}</h2>
-
-                            <p className="mt-3 text-muted-foreground">
-                                {complaint.description.length > 150 ? complaint.description.substring(0, 150) + '...' : complaint.description}
-                            </p>
-
-                            <div className="flex items-center gap-6 mt-4 text-sm text-muted-foreground">
-                                <div className="flex items-center gap-1.5"><MapPin size={16} /><span>{complaint?.department?.municipality?.city?.name}</span></div>
-                                <div className="flex items-center gap-1.5"><Clock size={16} /><span>{new Date(complaint?.created_at).toLocaleDateString()}</span></div>
-                                {(auth?.user?.role === 'admin' || auth?.user?.active) && (
-                                    <div className="flex items-center gap-1.5"><User size={16} /><span>{complaint?.user?.name}</span></div>
-                                )}
-                                <div className="flex items-center gap-1.5"><span className="px-3 py-1 text-xs font-medium text-primary bg-primary/10 rounded-full">{complaint?.department?.name}</span></div>
-                            </div>
-
-                            <div className="flex items-center gap-4 mt-6 pt-4 border-t border-border/50">
-                                <Link href={
-                                    auth?.user?.active ? route('municipality.complaints.show', complaint.id) : route('complaints.show', complaint.id)
-                                }>
-                                    <button className="px-6 py-2 font-semibold text-primary-foreground bg-primary rounded-lg hover:bg-primary/90 transition-colors cursor-pointer">
-                                        Ver detalhes
-                                    </button>
-                                </Link>
-                                {/* <button className="px-6 py-2 font-semibold text-foreground bg-muted rounded-lg hover:bg-muted/80 transition-colors">
-                                            Avaliar
-                                        </button> */}
-                            </div>
-                            <div>
-                                <p className="text-3xl font-bold text-center">9.2</p>
-                                <p className="text-sm text-center">Pontuação Geral</p>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -267,15 +250,24 @@ export default function Complaints() {
                         </p>
 
                         <div className="mt-8 flex items-center justify-center gap-4 lg:flex-row flex-col">
-                            <Link
-                                href={'#'}
-                                className="w-[220px] inline-block rounded-lg px-5 py-3 shadow-md flex-shrink-0 bg-primary text-primary-foreground font-semibold hover:bg-primary/90 transition-colors"
-                            >
-                                Criar conta grátis
-                            </Link>
+                            {auth.user ? (
+                                <Link
+                                    href={route('complaints.create')}
+                                    className="w-[220px] inline-block rounded-lg px-5 py-3 shadow-md flex-shrink-0 bg-primary text-primary-foreground font-semibold hover:bg-primary/90 transition-colors"
+                                >
+                                    Abrir nova reclamação
+                                </Link>
+                            ) : (
+                                <Link
+                                    href={route('login')}
+                                    className="w-[220px] inline-block rounded-lg px-5 py-3 shadow-md flex-shrink-0 bg-primary text-primary-foreground font-semibold hover:bg-primary/90 transition-colors"
+                                >
+                                    Criar conta grátis
+                                </Link>
+                            )}
 
                             <Link
-                                href={'#'}
+                                href={route('ranking.index')}
                                 className="w-[220px] inline-block rounded-lg border border-foreground dark:border-white px-5 py-3 text-base font-semibold text-foreground dark:text-white hover:bg-foreground hover:text-white transition-colors dark:hover:text-primary-foreground"
                             >
                                 Ver ranking completo

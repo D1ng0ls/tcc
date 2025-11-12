@@ -38,4 +38,9 @@ class City extends Model
     {
         return $this->hasManyThrough(Complaint::class, Neighborhood::class, 'city_id', 'neighborhood_id', 'id', 'id');
     }
+
+    public function ranking()
+    {
+        return $this->hasOne(Ranking::class);
+    }
 }

@@ -1,9 +1,8 @@
-import AppLogoIcon from './app-logo-icon';
 import { Building2 } from 'lucide-react';
 
 export default function AppLogo({textClassName='', className=''}: {textClassName?: string, className?: string}) {
     return (
-        <div className={className}>
+        <div className='flex flex-row items-center gap-2'>
             <div className="text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-md">
                 <Building2 className="rounded-md text-blue-500" />
             </div>

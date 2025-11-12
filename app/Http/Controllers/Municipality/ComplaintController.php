@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Municipality;
 
 use App\Actions\Complaint\EndAction;
 use App\Actions\Complaint\StartAction;
-use App\ComplaintStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Complaint;
 use App\Models\Status;
@@ -46,7 +45,7 @@ class ComplaintController extends Controller
 
         $startAction->execute($complaint);
 
-        return redirect()->back()->with('info', 'Reclamação aprovada com sucesso');
+        return redirect()->back()->with('info', 'Reclamação iniciada com sucesso');
     }
 
     public function end(Complaint $complaint, EndAction $endAction)
@@ -55,6 +54,6 @@ class ComplaintController extends Controller
 
         $endAction->execute($complaint);
 
-        return redirect()->back()->with('info', 'Reclamação rejeitada com sucesso');
+        return redirect()->back()->with('info', 'Reclamação finalizada com sucesso');
     }
 }

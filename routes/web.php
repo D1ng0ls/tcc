@@ -34,10 +34,7 @@ Route::domain(env('APP_DOMAIN'))->group(function () {
         Route::post('/', [CityRequestController::class, 'store'])->name('store')->middleware('throttle:2,60000');
     });
 
-    Route::get('/complaints22', function () {
-        $complaints = Complaint::all();
-        return Inertia::render('complaints', compact('complaints'));
-    })->name('show');
+    Route::get('/cities/{stateUf}/{citySlug}', [CityController::class, 'show'])->name('city.show');
 
     Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::get('dashboard', function () {
@@ -62,7 +59,6 @@ Route::domain(env('APP_DOMAIN'))->group(function () {
             'prefix' => 'cities',
             'as' => 'cities.',
         ], function () {
-            Route::get('/', [CityController::class, 'index'])->name('index');
             Route::get('/{city}/neighborhoods', [CityController::class, 'neighborhoods'])->name('neighborhoods');
             Route::get('/{city}/departments', [CityController::class, 'departments'])->name('departments');
         });

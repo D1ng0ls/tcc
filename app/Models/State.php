@@ -17,4 +17,9 @@ class State extends Model
     {
         return $this->hasMany(City::class);
     }
+
+    public function ranking()
+    {
+        return $this->hasOne(Ranking::class);
+    }
 }
