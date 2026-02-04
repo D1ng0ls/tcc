@@ -17,6 +17,7 @@ class Complaint extends Model
         'municipality_id',
         'neighborhood_id',
         'status_id',
+        'district',
     ];
 
     public function user()

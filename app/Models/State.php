@@ -20,6 +20,6 @@ class State extends Model
 
     public function ranking()
     {
-        return $this->hasOne(Ranking::class);
+        return $this->hasMany(Ranking::class);
     }
 }
