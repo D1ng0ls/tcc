@@ -8,6 +8,7 @@ use App\Http\Controllers\ComplaintController;
 use App\Http\Controllers\Municipality\ComplaintController as MunicipalityComplaintController;
 use App\Http\Controllers\RankingController;
 use App\Http\Controllers\CityRequestController;
+use App\Http\Controllers\DashboardController;
 use App\Models\Complaint;
 
 require __DIR__ . '/municipality.php';
@@ -37,9 +38,7 @@ Route::domain(env('APP_DOMAIN'))->group(function () {
     Route::get('/cities/{stateUf}/{citySlug}', [CityController::class, 'show'])->name('city.show');
 
     Route::middleware(['auth:web', 'verified'])->group(function () {
-        Route::get('dashboard', function () {
-            return Inertia::render('dashboard');
-        })->name('dashboard');
+        Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
         Route::group([
             'prefix' => 'complaints',

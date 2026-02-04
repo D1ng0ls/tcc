@@ -4,6 +4,7 @@ use App\Http\Controllers\Municipality\AuthController;
 use App\Http\Controllers\Municipality\DepartmentController;
 use App\Http\Controllers\Municipality\ComplaintController;
 use App\Http\Controllers\Municipality\NeighborhoodController;
+use App\Http\Controllers\Municipality\DashboardController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -20,9 +21,7 @@ Route::domain('cid.' . env('APP_DOMAIN'))->as('municipality.')->group(function (
     });
 
     Route::middleware('auth:municipality')->group(function () {
-        Route::get('dashboard', function () {
-            return Inertia::render('municipality/dashboard');
-        })->name('dashboard');
+        Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
         Route::group([
             'prefix' => 'neighborhoods',

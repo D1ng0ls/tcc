@@ -19,6 +19,7 @@ class AdminController extends Controller
         $complaints = Complaint::count();
         $municipalities = Municipality::where('active', true)->count();
         $cityRequests = CityRequest::where('status', RequestEnum::PENDING)->count();
+        //se precisar de mais informacoes, basta adicionar aqui
         return Inertia::render('admin/index', compact('users', 'complaints', 'municipalities', 'cityRequests'));
     }
 
@@ -77,7 +78,7 @@ class AdminController extends Controller
 
         return response()->json($municipalities);
     }
-    
+
     public function toggle(Municipality $municipality)
     {
         $municipality->update([
