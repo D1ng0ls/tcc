@@ -10,7 +10,8 @@ use App\Models\Complaint;
 use App\Models\State;
 use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB; // Precisa do DB
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class CalculateRanking extends Command
 {
@@ -55,74 +56,99 @@ class CalculateRanking extends Command
         }
 
         // =================================================================
-        // FASE 1: CALCULAR E SALVAR AS NOTAS
+        // FASE 1: CALCULAR E SALVAR AS NOTAS (COM SUPER DEBUG)
         // =================================================================
         $bar = $this->output->createProgressBar($totalCities);
         $bar->start();
 
-        $citiesQuery->chunkById(100, function (Collection $cities) use ($bar, $currentMonth, $currentYear) {
+        dump("\n[DEBUG] Preparando para iniciar os chunks das cidades...");
 
-            $departmentIds = $cities
-                ->pluck('municipality.departments')
-                ->flatten()
-                ->pluck('id')
-                ->unique()
-                ->toArray();
+        try {
+            $citiesQuery->chunkById(100, function (Collection $cities) use ($bar, $currentMonth, $currentYear) {
 
-            if (empty($departmentIds)) {
-                $bar->advance($cities->count());
-                return;
-            }
+                dump("\n[DEBUG] >>> Entrou no chunk! Processando lote de " . $cities->count() . " cidades.");
 
-            $statsByDept = DB::table('complaints')
-                ->select('department_id')
-                ->selectRaw('COUNT(id) as total')
-                ->selectRaw('SUM(CASE WHEN status_id = ? THEN 1 ELSE 0 END) as solved', [ComplaintStatus::SOLVED])
-                ->whereIn('department_id', $departmentIds)
-                ->groupBy('department_id')
-                ->get()
-                ->keyBy('department_id');
+                $departmentIds = $cities
+                    ->pluck('municipality.departments')
+                    ->flatten()
+                    ->pluck('id')
+                    ->unique()
+                    ->toArray();
 
-            $rankingData = [];
+                dump("[DEBUG] Pegou os departamentos com sucesso. Total de IDs únicos: " . count($departmentIds));
 
-            foreach ($cities as $city) {
-                $total = 0;
-                $solved = 0;
-
-                if ($city->municipality) {
-                    foreach ($city->municipality->departments as $department) {
-                        if (isset($statsByDept[$department->id])) {
-                            $total += $statsByDept[$department->id]->total;
-                            $solved += $statsByDept[$department->id]->solved;
-                        }
-                    }
+                if (empty($departmentIds)) {
+                    dump("[DEBUG] Lote sem departamentos. Pulando...");
+                    $bar->advance($cities->count());
+                    return;
                 }
 
-                $resolution = CalcResolutionHelper::calcRaw($total, $solved);
+                dump("[DEBUG] Disparando query de agrupamento (statsByDept) no banco de dados...");
 
-                $rankingData[] = [
-                    'city_id' => $city->id,
-                    'state_id' => $city->state_id,
-                    'total_complaints' => $total,
-                    'solved_complaints' => $solved,
-                    'resolution' => $resolution,
-                    'rank' => null, // Vai ser preenchido na Fase 2
-                    'rank_state' => null, // Vai ser preenchido na Fase 3
-                    'month' => $currentMonth,
-                    'year' => $currentYear,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ];
-            }
+                // Se o script travar aqui, é a query do banco que estourou
+                $statsByDept = DB::table('complaints')
+                    ->select('department_id')
+                    ->selectRaw('COUNT(id) as total')
+                    ->selectRaw('SUM(CASE WHEN status_id = ? THEN 1 ELSE 0 END) as solved', [ComplaintStatus::SOLVED])
+                    ->whereIn('department_id', $departmentIds)
+                    ->groupBy('department_id')
+                    ->get()
+                    ->keyBy('department_id');
 
-            Ranking::upsert(
-                $rankingData,
-                ['city_id', 'month', 'year'],
-                ['state_id', 'total_complaints', 'solved_complaints', 'resolution', 'updated_at']
-            );
+                dump("[DEBUG] Query retornou " . $statsByDept->count() . " resultados. Montando rankingData...");
 
-            $bar->advance($cities->count());
-        });
+                $rankingData = [];
+
+                foreach ($cities as $city) {
+                    $total = 0;
+                    $solved = 0;
+
+                    if ($city->municipality) {
+                        foreach ($city->municipality->departments as $department) {
+                            if (isset($statsByDept[$department->id])) {
+                                $total += $statsByDept[$department->id]->total;
+                                $solved += $statsByDept[$department->id]->solved;
+                            }
+                        }
+                    }
+
+                    // ATENÇÃO: Se o método calcRaw não existir na classe CalcResolutionHelper, o script morre aqui!
+                    $resolution = CalcResolutionHelper::calcRaw($total, $solved);
+
+                    $rankingData[] = [
+                        'city_id' => $city->id,
+                        'state_id' => $city->state_id,
+                        'total_complaints' => $total,
+                        'solved_complaints' => $solved,
+                        'resolution' => $resolution,
+                        'rank' => null,
+                        'rank_state' => null,
+                        'month' => $currentMonth,
+                        'year' => $currentYear,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ];
+                }
+
+                dump("[DEBUG] Array montado para o lote! Disparando o Ranking::upsert...");
+
+                // Se travar aqui, é o Upsert colidindo ou faltando índice/coluna unique
+                Ranking::upsert(
+                    $rankingData,
+                    ['city_id', 'month', 'year'],
+                    ['state_id', 'total_complaints', 'solved_complaints', 'resolution', 'updated_at']
+                );
+
+                dump("[DEBUG] <<< Upsert feito com sucesso! Avançando barra de progresso.");
+
+                $bar->advance($cities->count());
+            });
+        } catch (\Throwable $e) {
+            // SE CAIR AQUI, A GENTE PEGOU O CULPADO
+            $this->error("\n\n[ERRO FATAL CAPTURADO]: " . $e->getMessage() . " | Arquivo: " . $e->getFile() . " | Linha: " . $e->getLine());
+            Log::error($e);
+            return 1;
+        }
 
         $bar->finish();
         $this->info("\nFase 1 (Cálculo de Notas) concluída.");
@@ -132,7 +158,6 @@ class CalculateRanking extends Command
         // =================================================================
         $this->info("Iniciando Fase 2 (Cálculo de Posição Nacional)...");
 
-        // Pega apenas os IDs já na ordem correta. Isso consome quase zero memória RAM!
         $orderedIds = Ranking::where('month', $currentMonth)
             ->where('year', $currentYear)
             ->when($cityId, fn($q) => $q->where('city_id', $cityId))
@@ -143,7 +168,7 @@ class CalculateRanking extends Command
             ->orderBy('rankings.solved_complaints', 'desc')
             ->orderBy('cities.name', 'asc')
             ->orderBy('states.uf', 'asc')
-            ->pluck('rankings.id'); // <-- O pulo do gato: traz só um array de números
+            ->pluck('rankings.id');
 
         if ($orderedIds->isEmpty()) {
             $this->info("\nNenhum ranking encontrado para calcular posições.");
@@ -154,7 +179,6 @@ class CalculateRanking extends Command
         $barRank = $this->output->createProgressBar($orderedIds->count());
         $barRank->start();
 
-        // Envolve tudo numa transação. Se der erro no meio, ele desfaz e não suja o banco.
         DB::beginTransaction();
         try {
             foreach ($orderedIds as $id) {
@@ -191,7 +215,6 @@ class CalculateRanking extends Command
 
         foreach ($stateIdsToRank as $sId) {
 
-            // O pulo do gato: pluck('rankings.id') traz só os números na ordem certa
             $orderedStateIds = Ranking::where('month', $currentMonth)
                 ->where('year', $currentYear)
                 ->where('rankings.state_id', $sId)
@@ -210,7 +233,6 @@ class CalculateRanking extends Command
 
             $position = 1;
 
-            // Transação para salvar o estado inteiro de uma vez de forma segura
             DB::beginTransaction();
             try {
                 foreach ($orderedStateIds as $id) {
