@@ -116,66 +116,52 @@ class CalculateRanking extends Command
         $this->info("\nFase 1 (Cálculo de Notas) concluída.");
 
         // =================================================================
-        // FASE 2: CALCULAR E SALVAR AS POSIÇÕES
+        // FASE 2: CALCULAR E SALVAR AS POSIÇÕES (CORRIGIDO)
         // =================================================================
         $this->info("Iniciando Fase 2 (Cálculo de Posição Nacional)...");
 
-        $queryRank = Ranking::where('month', $currentMonth)
-            ->where('year', $currentYear);
-
-        if ($cityId) {
-            $queryRank->where('city_id', $cityId);
-        } elseif ($stateId) {
-            $queryRank->where('state_id', $stateId);
-        }
-
-        $orderedRankings = Ranking::where('month', $currentMonth)
+        // Pega apenas os IDs já na ordem correta. Isso consome quase zero memória RAM!
+        $orderedIds = Ranking::where('month', $currentMonth)
             ->where('year', $currentYear)
             ->when($cityId, fn($q) => $q->where('city_id', $cityId))
             ->when($stateId, fn($q) => $q->where('state_id', $stateId))
             ->join('cities', 'rankings.city_id', '=', 'cities.id')
             ->join('states', 'cities.state_id', '=', 'states.id')
-            ->select('rankings.*')
             ->orderBy('rankings.resolution', 'desc')
             ->orderBy('rankings.solved_complaints', 'desc')
             ->orderBy('cities.name', 'asc')
             ->orderBy('states.uf', 'asc')
-            ->get();
+            ->pluck('rankings.id'); // <-- O pulo do gato: traz só um array de números
 
-        if ($orderedRankings->isEmpty()) {
+        if ($orderedIds->isEmpty()) {
             $this->info("\nNenhum ranking encontrado para calcular posições.");
-            $this->info("Cálculo de ranking finalizado.");
             return 0;
         }
 
-        $cases = [];
-        $bindings = [];
-        $ids = [];
         $position = 1;
+        $barRank = $this->output->createProgressBar($orderedIds->count());
+        $barRank->start();
 
-        foreach ($orderedRankings as $ranking) {
-            $cases[] = "WHEN ? THEN ?";
-
-            $bindings[] = $ranking->id;
-            $bindings[] = $position++;
-
-            $ids[] = $ranking->id;
+        // Envolve tudo numa transação. Se der erro no meio, ele desfaz e não suja o banco.
+        DB::beginTransaction();
+        try {
+            foreach ($orderedIds as $id) {
+                DB::table('rankings')->where('id', $id)->update(['rank' => $position++]);
+                $barRank->advance();
+            }
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            $this->error("\nErro ao salvar posições: " . $e->getMessage());
+            return 1;
         }
 
-        $idsSql = implode(',', array_fill(0, count($ids), '?'));
-        $casesSql = implode(' ', $cases);
-        $bindings = array_merge($bindings, $ids);
-
-        DB::update(
-            "UPDATE rankings SET `rank` = (CASE `id` {$casesSql} END) WHERE `id` IN ({$idsSql})",
-            $bindings
-        );
-
-        $this->info("\nFase 2 (Cálculo de Posições Nacionais) concluída! " . $orderedRankings->count() . " cidades rankeadas.");
+        $barRank->finish();
+        $this->info("\nFase 2 concluída! " . $orderedIds->count() . " cidades rankeadas.");
         // =================================================================
-        // FASE 3: CÁLCULO DO RANK ESTADUAL
+        // FASE 3: CÁLCULO DO RANK ESTADUAL (CORRIGIDA)
         // =================================================================
-        $this->info("Iniciando Fase 3 (Cálculo de Posição Estadual)...");
+        $this->info("\nIniciando Fase 3 (Cálculo de Posição Estadual)...");
 
         $stateIdsToRank = [];
         if ($cityId) {
@@ -184,7 +170,7 @@ class CalculateRanking extends Command
         } elseif ($stateId) {
             $stateIdsToRank = [$stateId];
         } else {
-            $this->info("Calculando ranking para todos os 27 estados...");
+            $this->info("Calculando ranking para todos os estados...");
             $stateIdsToRank = State::pluck('id')->toArray();
         }
 
@@ -193,43 +179,37 @@ class CalculateRanking extends Command
 
         foreach ($stateIdsToRank as $sId) {
 
-            $orderedStateRankings = Ranking::where('month', $currentMonth)
+            // O pulo do gato: pluck('rankings.id') traz só os números na ordem certa
+            $orderedStateIds = Ranking::where('month', $currentMonth)
                 ->where('year', $currentYear)
                 ->where('rankings.state_id', $sId)
                 ->join('cities', 'rankings.city_id', '=', 'cities.id')
                 ->join('states', 'cities.state_id', '=', 'states.id')
-                ->select('rankings.*')
                 ->orderBy('rankings.resolution', 'desc')
                 ->orderBy('rankings.solved_complaints', 'desc')
                 ->orderBy('cities.name', 'asc')
                 ->orderBy('states.uf', 'asc')
-                ->get();
+                ->pluck('rankings.id');
 
-            if ($orderedStateRankings->isEmpty()) {
+            if ($orderedStateIds->isEmpty()) {
                 $stateBar->advance();
                 continue;
             }
 
-            $cases = [];
-            $bindings = [];
-            $ids = [];
             $position = 1;
 
-            foreach ($orderedStateRankings as $ranking) {
-                $cases[] = "WHEN ? THEN ?";
-                $bindings[] = $ranking->id;
-                $bindings[] = $position++;
-                $ids[] = $ranking->id;
+            // Transação para salvar o estado inteiro de uma vez de forma segura
+            DB::beginTransaction();
+            try {
+                foreach ($orderedStateIds as $id) {
+                    DB::table('rankings')->where('id', $id)->update(['rank_state' => $position++]);
+                }
+                DB::commit();
+            } catch (\Exception $e) {
+                DB::rollBack();
+                $this->error("\nErro ao salvar posições para o estado ID {$sId}: " . $e->getMessage());
+                return 1;
             }
-
-            $idsSql = implode(',', array_fill(0, count($ids), '?'));
-            $casesSql = implode(' ', $cases);
-            $bindings = array_merge($bindings, $ids);
-
-            DB::update(
-                "UPDATE rankings SET `rank_state` = (CASE `id` {$casesSql} END) WHERE `id` IN ({$idsSql})",
-                $bindings
-            );
 
             $stateBar->advance();
         }
