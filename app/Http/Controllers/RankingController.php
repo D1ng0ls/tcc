@@ -39,6 +39,30 @@ class RankingController extends Controller
         ]);
     }
 
+    public function find(Request $request)
+    {
+        $search = $request->query('search');
+
+        if (!$search) return response()->json(['states' => [], 'cities' => []]);
+
+        $states = State::where('name', 'like', "%{$search}%")
+            ->orWhere('uf', 'like', "%{$search}%")
+            ->select('id', 'uf', 'name')
+            ->limit(2)
+            ->get();
+
+        $cities = City::join('states', 'cities.state_id', '=', 'states.id')
+            ->where('cities.name', 'like', "%{$search}%")
+            ->select('cities.id', 'cities.name', 'cities.slug', 'states.uf')
+            ->limit(5)
+            ->get();
+
+        return response()->json([
+            'states' => $states,
+            'cities' => $cities
+        ]);
+    }
+
     public function state($stateUf)
     {
         $state = State::where('uf', strtoupper($stateUf))->first();

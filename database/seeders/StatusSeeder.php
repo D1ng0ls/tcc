@@ -22,6 +22,6 @@ class StatusSeeder extends Seeder
             ['name' => 'Fechado', 'type' => 'system']
         ];
 
-        Status::insert($status);
+        Status::upsert($status, ['name'], ['type']);
     }
 }

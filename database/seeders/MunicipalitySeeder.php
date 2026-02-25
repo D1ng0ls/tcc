@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -12,12 +11,9 @@ use App\Models\Department;
 
 class MunicipalitySeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        $departments = [
+        $departmentsList = [
             'Meio Ambiente',
             'Saúde',
             'Infraestrutura',
@@ -32,44 +28,48 @@ class MunicipalitySeeder extends Seeder
 
         $now = now();
 
-        City::chunk(100, function ($cities) use ($departments, $now) {
-            $municipalities = [];
-            $allDepartments = [];
+        $lockedPasswordHash = Hash::make(Str::random(40));
+
+        City::chunk(500, function ($cities) use ($departmentsList, $now, $lockedPasswordHash) {
+
+            $municipalitiesData = [];
 
             foreach ($cities as $city) {
-                $municipalities[] = [
-                    'name' => $city->name,
-                    'email' => $city->name . '@mail.com',
-                    'password' => Str::random(60),
-                    'cnpj' => null,
-                    'photo_url' => '',
-                    'city_id' => $city->id,
+                $email = Str::slug($city->name . '-' . $city->state->uf) . '@mail.com';
+
+                $municipalitiesData[] = [
+                    'name'       => $city->name,
+                    'email'      => $email,
+                    'password'   => $lockedPasswordHash,
+                    'cnpj'       => null,
+                    'photo_url'  => '',
+                    'city_id'    => $city->id,
                     'created_at' => $now,
                     'updated_at' => $now,
                 ];
             }
 
             Municipality::upsert(
-                $municipalities,
+                $municipalitiesData,
                 ['city_id'],
                 ['name', 'email', 'password', 'updated_at']
             );
 
-            $municipalities = Municipality::whereIn('city_id', $cities->pluck('id'))
-                ->get(['id', 'city_id']);
+            $municipalityIds = Municipality::whereIn('city_id', $cities->pluck('id'))
+                ->pluck('id');
 
-            foreach ($municipalities as $m) {
-                foreach ($departments as $dep) {
+            $allDepartments = [];
+            foreach ($municipalityIds as $mId) {
+                foreach ($departmentsList as $depName) {
                     $allDepartments[] = [
-                        'name' => $dep,
-                        'municipality_id' => $m->id,
-                        'is_default' => true,
-                        'created_at' => $now,
-                        'updated_at' => $now,
+                        'name'            => $depName,
+                        'municipality_id' => $mId,
+                        'is_default'      => true,
+                        'created_at'      => $now,
+                        'updated_at'      => $now,
                     ];
                 }
             }
-
             Department::upsert(
                 $allDepartments,
                 ['municipality_id', 'name'],

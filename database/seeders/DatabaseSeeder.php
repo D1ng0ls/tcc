@@ -14,21 +14,22 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        User::factory()->create([
-            'name' => 'admin',
-            'email' => 'admin@admin.com',
-            'password' => Hash::make('123456'),
-            'cpf' => '12345678901',
-            'birth_date' => '2000-01-01',
-            'role' => 'admin',
-        ]);
+        User::updateOrCreate(
+            ['email' => config('app.admin.email')],
+            [
+                'name' => 'admin',
+                'password' => Hash::make(config('app.admin.password')),
+                'cpf' => '00000000000',
+                'birth_date' => '2000-01-01',
+                'role' => 'admin',
+            ]
+        );
 
         $this->call([
             StateCitySeeder::class,
             NeighborhoodSeeder::class,
             StatusSeeder::class,
             MunicipalitySeeder::class,
-            SlugCitiesSeeder::class,
         ]);
     }
 }

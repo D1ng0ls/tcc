@@ -14,9 +14,9 @@ use Inertia\Inertia;
 
 class CityController extends Controller
 {
-    public function index()
+    public function index(State $state)
     {
-        return City::all();
+        return $state->cities()->select('id', 'name')->get();
     }
 
     public function show($stateUf, $citySlug)
@@ -25,7 +25,7 @@ class CityController extends Controller
         if (!$state) {
             return redirect()->route('home');
         }
-        
+
         $city = City::where('slug', $citySlug)->where('state_id', $state->id)->first();
         if (!$city) {
             return redirect()->route('home');
@@ -40,7 +40,8 @@ class CityController extends Controller
 
         return Inertia::render('complaints', [
             'complaints' => $complaints,
-            'city' => $city->load('state', 'ranking'),
+            'city' => $city->load('state'),
+            'ranking' => $city->latestRanking,
             'status' => Status::all(),
             'resolution' => CalcResolutionHelper::calc($complaints),
         ]);

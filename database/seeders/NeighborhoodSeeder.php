@@ -4,57 +4,87 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use App\Models\Neighborhood;
-use App\Models\City;
+use Illuminate\Support\Facades\DB;
 
 class NeighborhoodSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
         $file = database_path('data/bairros.csv');
 
         if (!file_exists($file)) {
-            echo "Arquivo CSV não encontrado: $file\n";
+            $this->command->error("Arquivo CSV não encontrado: $file");
             return;
         }
 
-        if (($handle = fopen($file, 'r')) !== false) {
-            $header = fgetcsv($handle, 0, ','); // lê o cabeçalho
+        $this->command->info('Carregando mapa de cidades...');
 
-            while (($row = fgetcsv($handle, 0, ',')) !== false) {
-                $item = array_combine($header, $row);
+        $cityMap = DB::table('cities')
+            ->join('states', 'states.id', '=', 'cities.state_id')
+            ->select('cities.id', 'cities.name', 'states.uf')
+            ->get()
+            ->mapWithKeys(function ($item) {
+                $key = strtoupper(trim($item->uf)) . '-' . strtoupper(trim($item->name));
+                return [$key => $item->id];
+            })
+            ->toArray();
 
-                // filtra apenas bairros
-                if (($item['type'] ?? '') !== 'neighborhood') continue;
+        $handle = fopen($file, 'r');
+        $header = fgetcsv($handle, 0, ',');
 
-                $bairro = $item['location_name'];
-                $cidade = $item['city'];
-                $uf = $item['state'];
+        $batch = [];
+        $batchSize = 1000;
+        $count = 0;
 
-                if (!$bairro || !$cidade || !$uf) continue;
+        $this->command->info('Importando bairros...');
+        $progressBar = $this->command->getOutput()->createProgressBar();
 
-                $city = City::where('name', $cidade)
-                    ->whereHas('state', fn($q) => $q->where('uf', $uf))
-                    ->first();
+        while (($row = fgetcsv($handle, 0, ',')) !== false) {
+            if (count($header) !== count($row)) continue;
 
-                if (!$city) {
-                    echo "Cidade não encontrada: $cidade - $uf\n";
-                    continue;
-                }
+            $item = array_combine($header, $row);
+            if (($item['type'] ?? '') !== 'neighborhood') continue;
 
-                $neighborhood = Neighborhood::firstOrCreate([
-                    'name' => $bairro,
-                    'city_id' => $city->id,
-                ]);
+            $bairroNome = $item['location_name'] ?? null;
+            $cidadeNome = $item['city'] ?? null;
+            $uf         = $item['state'] ?? null;
 
-                echo "Bairro {$neighborhood->name} criado para a cidade de {$city->name} - {$city->state->uf}!\n";
+            if (!$bairroNome || !$cidadeNome || !$uf) continue;
+
+            $searchKey = strtoupper(trim($uf)) . '-' . strtoupper(trim($cidadeNome));
+
+            if (isset($cityMap[$searchKey])) {
+                $batch[] = [
+                    'city_id' => $cityMap[$searchKey],
+                    'name'    => $bairroNome,
+                ];
+
+                $count++;
+                $progressBar->advance();
             }
 
-            fclose($handle);
+            if (count($batch) >= $batchSize) {
+                $this->upsertBatch($batch);
+                $batch = [];
+            }
         }
 
-        echo "Seed de bairros concluído!\n";
+        if (!empty($batch)) {
+            $this->upsertBatch($batch);
+        }
+
+        fclose($handle);
+        $progressBar->finish();
+        $this->command->newLine();
+        $this->command->info("Seed concluído! Total processado: $count bairros.");
+    }
+
+    private function upsertBatch(array $data)
+    {
+        Neighborhood::upsert(
+            $data,
+            ['city_id', 'name'],
+            ['name']
+        );
     }
 }

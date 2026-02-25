@@ -23,6 +23,7 @@ Route::domain(env('APP_DOMAIN'))->group(function () {
         'as' => 'ranking.',
     ], function () {
         Route::get('/', [RankingController::class, 'index'])->name('index');
+        Route::get('/find', [RankingController::class, 'find'])->name('find');
         Route::get('/{stateUf}', [RankingController::class, 'state'])->name('state');
         Route::get('/{stateUf}/{citySlug}', [RankingController::class, 'city'])->name('city');
     });
@@ -34,8 +35,6 @@ Route::domain(env('APP_DOMAIN'))->group(function () {
         Route::get('/', [CityRequestController::class, 'index'])->name('index');
         Route::post('/', [CityRequestController::class, 'store'])->name('store')->middleware('throttle:2,60000');
     });
-
-    Route::get('/cities/{stateUf}/{citySlug}', [CityController::class, 'show'])->name('city.show');
 
     Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -58,6 +57,8 @@ Route::domain(env('APP_DOMAIN'))->group(function () {
             'prefix' => 'cities',
             'as' => 'cities.',
         ], function () {
+            Route::get('/{state}', [CityController::class, 'index'])->name('index');
+            Route::get('/{stateUf}/{citySlug}', [CityController::class, 'show'])->name('show');
             Route::get('/{city}/neighborhoods', [CityController::class, 'neighborhoods'])->name('neighborhoods');
             Route::get('/{city}/departments', [CityController::class, 'departments'])->name('departments');
         });

@@ -43,4 +43,9 @@ class City extends Model
     {
         return $this->hasMany(Ranking::class);
     }
+
+    public function latestRanking()
+    {
+        return $this->hasOne(Ranking::class)->latest();
+    }
 }

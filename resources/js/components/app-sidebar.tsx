@@ -1,10 +1,8 @@
-import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
-import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { LucideHome, LucideHelpCircle, Plus, Files, Award, Landmark, LayoutDashboard, Inbox, MapPin, Layers, FileText, Mails } from 'lucide-react';
+import { Award, Files, Inbox, Landmark, Layers, LayoutDashboard, LucideHome, Mails, MapPin, Plus } from 'lucide-react';
 import AppLogo from './app-logo';
 
 const mainNavItems: any[] = [
@@ -31,12 +29,7 @@ const mainNavItems: any[] = [
                 href: route('ranking.index'),
                 icon: Award,
             },
-            {
-                title: 'Formulário de Solicitação',
-                href: route('solicitation-form.index'),
-                icon: FileText,
-            },
-        ]
+        ],
     },
     {
         category: 'Admin',
@@ -61,7 +54,7 @@ const mainNavItems: any[] = [
                 href: route('admin.municipalities.index'),
                 icon: Landmark,
             },
-        ]
+        ],
     },
     {
         category: 'Painel Municipal',
@@ -86,22 +79,22 @@ const mainNavItems: any[] = [
                 href: route('municipality.departments.index'),
                 icon: Layers,
             },
-        ]
-    }
-];
-
-const footerNavItems: NavItem[] = [
-    {
-        title: 'Ajuda',
-        href: '',
-        icon: LucideHelpCircle,
+        ],
     },
 ];
+
+// const footerNavItems: NavItem[] = [
+//     {
+//         title: 'Ajuda',
+//         href: '',
+//         icon: LucideHelpCircle,
+//     },
+// ];
 
 export function AppSidebar() {
     const { auth } = usePage().props as any;
 
-    const navItems = mainNavItems.filter(menu => {
+    const navItems = mainNavItems.filter((menu) => {
         if (menu.category === 'Admin' && auth?.user?.role !== 'admin') {
             return false;
         }
@@ -113,7 +106,7 @@ export function AppSidebar() {
         if (menu.category === 'Painel' && !auth?.user?.role) {
             return false;
         }
-        
+
         return true;
     });
 
@@ -138,7 +131,7 @@ export function AppSidebar() {
             </SidebarContent>
 
             <SidebarFooter>
-                <NavFooter items={footerNavItems} className="mt-auto" />
+                {/* <NavFooter items={footerNavItems} className="mt-auto" /> */}
                 <NavUser />
             </SidebarFooter>
         </Sidebar>

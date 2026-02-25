@@ -31,15 +31,13 @@ class CalculateRanking extends Command
     {
         $cityId = $this->option('city');
         $stateId = $this->option('state');
-        
+
         $currentMonth = now()->month;
         $currentYear = now()->year;
 
-        // 1. Monta a query base de cidades
         $citiesQuery = City::query()
             ->with('municipality.departments:id,municipality_id');
 
-        // 2. Filtra se foi passado --city ou --state
         if ($cityId) {
             $this->info("Calculando notas APENAS para a cidade ID: $cityId (Mês: $currentMonth/$currentYear)...");
             $citiesQuery->where('id', $cityId);
@@ -57,14 +55,13 @@ class CalculateRanking extends Command
         }
 
         // =================================================================
-        // FASE 1: CALCULAR E SALVAR AS NOTAS (RESOLUTION)
-        // (Esta parte continua igual, com a correção do upsert)
+        // FASE 1: CALCULAR E SALVAR AS NOTAS
         // =================================================================
         $bar = $this->output->createProgressBar($totalCities);
         $bar->start();
 
         $citiesQuery->chunkById(100, function (Collection $cities) use ($bar, $currentMonth, $currentYear) {
-            
+
             $departmentIds = $cities
                 ->pluck('municipality.departments')
                 ->flatten()
@@ -74,7 +71,7 @@ class CalculateRanking extends Command
             $complaints = Complaint::whereIn('department_id', $departmentIds)
                 ->select('id', 'department_id', 'status_id')
                 ->get();
-            
+
             $complaintsByDept = $complaints->groupBy('department_id');
             $rankingData = [];
 
@@ -90,7 +87,7 @@ class CalculateRanking extends Command
 
                 $total = $cityComplaints->count();
                 $solved = $cityComplaints->where('status_id', ComplaintStatus::SOLVED)->count();
-                $resolution = CalcResolutionHelper::calc($cityComplaints); 
+                $resolution = CalcResolutionHelper::calc($cityComplaints);
 
                 $rankingData[] = [
                     'city_id' => $city->id,
@@ -98,7 +95,7 @@ class CalculateRanking extends Command
                     'total_complaints' => $total,
                     'solved_complaints' => $solved,
                     'resolution' => $resolution,
-                    'rank' => null, // Começa nulo (e o banco TEM que aceitar nulo)
+                    'rank' => null,
                     'month' => $currentMonth,
                     'year' => $currentYear,
                     'created_at' => now(),
@@ -106,11 +103,10 @@ class CalculateRanking extends Command
                 ];
             }
 
-            // CORREÇÃO CRÍTICA PARA O HISTÓRICO:
             Ranking::upsert(
                 $rankingData,
-                ['city_id', 'month', 'year'], // Chave única
-                ['state_id', 'total_complaints', 'solved_complaints', 'resolution', 'rank', 'updated_at'] // O que atualizar
+                ['city_id', 'month', 'year'],
+                ['state_id', 'total_complaints', 'solved_complaints', 'resolution', 'rank', 'updated_at']
             );
 
             $bar->advance($cities->count());
@@ -120,30 +116,26 @@ class CalculateRanking extends Command
         $this->info("\nFase 1 (Cálculo de Notas) concluída.");
 
         // =================================================================
-        // FASE 2: CALCULAR E SALVAR AS POSIÇÕES (RANK NACIONAL)
-        // (Aqui entra o Cenário B)
+        // FASE 2: CALCULAR E SALVAR AS POSIÇÕES
         // =================================================================
         $this->info("Iniciando Fase 2 (Cálculo de Posição Nacional)...");
 
-        // 1. Define o escopo de quais IDs vamos rankear
         $queryRank = Ranking::where('month', $currentMonth)
-                            ->where('year', $currentYear);
-        
+            ->where('year', $currentYear);
+
         if ($cityId) {
             $queryRank->where('city_id', $cityId);
         } elseif ($stateId) {
             $queryRank->where('state_id', $stateId);
         }
-        // Se não tiver filtro, ele pega TUDO (Brasil)
 
-        // 2. Pega os IDs, JÁ ORDENADOS (COM A NOVA LÓGICA DE DESEMPATE)
         $orderedRankings = Ranking::where('month', $currentMonth)
             ->where('year', $currentYear)
             ->when($cityId, fn($q) => $q->where('city_id', $cityId))
             ->when($stateId, fn($q) => $q->where('state_id', $stateId))
             ->join('cities', 'rankings.city_id', '=', 'cities.id')
             ->join('states', 'cities.state_id', '=', 'states.id')
-            ->select('rankings.*') 
+            ->select('rankings.*')
             ->orderBy('rankings.resolution', 'desc')
             ->orderBy('rankings.solved_complaints', 'desc')
             ->orderBy('cities.name', 'asc')
@@ -155,47 +147,43 @@ class CalculateRanking extends Command
             $this->info("Cálculo de ranking finalizado.");
             return 0;
         }
-        
-        $cases = []; 
-        $bindings = []; 
-        $ids = []; 
+
+        $cases = [];
+        $bindings = [];
+        $ids = [];
         $position = 1;
 
         foreach ($orderedRankings as $ranking) {
-            $cases[] = "WHEN ? THEN ?"; 
-            
+            $cases[] = "WHEN ? THEN ?";
+
             $bindings[] = $ranking->id;
             $bindings[] = $position++;
-            
+
             $ids[] = $ranking->id;
         }
 
         $idsSql = implode(',', array_fill(0, count($ids), '?'));
         $casesSql = implode(' ', $cases);
         $bindings = array_merge($bindings, $ids);
-        
+
         DB::update(
             "UPDATE rankings SET `rank` = (CASE `id` {$casesSql} END) WHERE `id` IN ({$idsSql})",
             $bindings
         );
 
-        $this->info("\nFase 2 (Cálculo de Posições Nacionais) concluída! ". $orderedRankings->count() ." cidades rankeadas.");
+        $this->info("\nFase 2 (Cálculo de Posições Nacionais) concluída! " . $orderedRankings->count() . " cidades rankeadas.");
         // =================================================================
-        // FASE 3: CÁLCULO DO RANK ESTADUAL (A NOVA FASE)
+        // FASE 3: CÁLCULO DO RANK ESTADUAL
         // =================================================================
         $this->info("Iniciando Fase 3 (Cálculo de Posição Estadual)...");
 
-        // 1. Define o escopo de QUAIS ESTADOS vamos rankear
         $stateIdsToRank = [];
         if ($cityId) {
-            // Se rodou para uma cidade, pega só o estado dela
             $city = City::find($cityId);
             $stateIdsToRank = [$city->state_id];
         } elseif ($stateId) {
-            // Se rodou para um estado, pega só ele
             $stateIdsToRank = [$stateId];
         } else {
-            // Se rodou nacional, pega todos os estados
             $this->info("Calculando ranking para todos os 27 estados...");
             $stateIdsToRank = State::pluck('id')->toArray();
         }
@@ -203,17 +191,14 @@ class CalculateRanking extends Command
         $stateBar = $this->output->createProgressBar(count($stateIdsToRank));
         $stateBar->start();
 
-        // 2. Loop para calcular o ranking DENTRO de cada estado
         foreach ($stateIdsToRank as $sId) {
-            
-            // Pega todos os rankings DAQUELE ESTADO (sId)
-            // Usa EXATAMENTE a mesma ordenação da Fase 2
+
             $orderedStateRankings = Ranking::where('month', $currentMonth)
                 ->where('year', $currentYear)
-                ->where('rankings.state_id', $sId) // <-- O FILTRO DO ESTADO
+                ->where('rankings.state_id', $sId)
                 ->join('cities', 'rankings.city_id', '=', 'cities.id')
                 ->join('states', 'cities.state_id', '=', 'states.id')
-                ->select('rankings.*') 
+                ->select('rankings.*')
                 ->orderBy('rankings.resolution', 'desc')
                 ->orderBy('rankings.solved_complaints', 'desc')
                 ->orderBy('cities.name', 'asc')
@@ -222,27 +207,25 @@ class CalculateRanking extends Command
 
             if ($orderedStateRankings->isEmpty()) {
                 $stateBar->advance();
-                continue; // Pula para o próximo estado
+                continue;
             }
 
-            // 3. Prepara o Batch Update (igualzinho à Fase 2)
-            $cases = []; 
-            $bindings = []; 
-            $ids = []; 
-            $position = 1; // <-- Reseta a posição para CADA estado
+            $cases = [];
+            $bindings = [];
+            $ids = [];
+            $position = 1;
 
             foreach ($orderedStateRankings as $ranking) {
-                $cases[] = "WHEN ? THEN ?"; 
-                $bindings[] = $ranking->id;     
-                $bindings[] = $position++; // Rank 1, 2, 3... daquele estado
-                $ids[] = $ranking->id;          
+                $cases[] = "WHEN ? THEN ?";
+                $bindings[] = $ranking->id;
+                $bindings[] = $position++;
+                $ids[] = $ranking->id;
             }
 
             $idsSql = implode(',', array_fill(0, count($ids), '?'));
             $casesSql = implode(' ', $cases);
             $bindings = array_merge($bindings, $ids);
-            
-            // 4. Executa o Batch Update, salvando na coluna 'rank_state'
+
             DB::update(
                 "UPDATE rankings SET `rank_state` = (CASE `id` {$casesSql} END) WHERE `id` IN ({$idsSql})",
                 $bindings

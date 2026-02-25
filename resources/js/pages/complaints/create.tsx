@@ -1,20 +1,21 @@
+import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Head, usePage, Link, useForm, router } from '@inertiajs/react';
-import { Plus, FileWarning, Hourglass, Check, Radar, UploadCloud, X } from 'lucide-react';
+import { Head, useForm, usePage } from '@inertiajs/react';
+import axios from 'axios';
+import { Check, UploadCloud, X } from 'lucide-react';
+import { Button } from 'primereact/button';
+import { Dropdown } from 'primereact/dropdown';
 import { InputText } from 'primereact/inputtext';
 import { InputTextarea } from 'primereact/inputtextarea';
-import { Label } from '@/components/ui/label';
-import { Dropdown } from 'primereact/dropdown';
-import { Button } from 'primereact/button';
-import { useState, useEffect } from 'react';
-import axios from 'axios';
+import { useEffect, useState } from 'react';
 
 export default function CreateComplaints() {
-    const { cities, states, categories, auth } = usePage().props as any;
+    const { states, categories, auth } = usePage().props as any;
+    const [cities, setCities] = useState<any[]>([]);
     const [neighborhoods, setNeighborhoods] = useState<any[]>([]);
     const [departments, setDepartments] = useState<any[]>([]);
-    const [previews, setPreviews] = useState<{ url: string; name: string; type: string; }[]>([]);
+    const [previews, setPreviews] = useState<{ url: string; name: string; type: string }[]>([]);
     const [fileErrors, setFileErrors] = useState<string[]>([]);
 
     const { data, setData, post, processing, errors, reset } = useForm({
@@ -76,7 +77,7 @@ export default function CreateComplaints() {
 
         const validFiles: File[] = [];
 
-        newFiles.forEach(file => {
+        newFiles.forEach((file) => {
             if (!ALLOWED_FILE_TYPES.includes(file.type)) {
                 errors.push(`"${file.name}": Tipo de arquivo não permitido.`);
             } else if (file.size > MAX_FILE_SIZE_BYTES) {
@@ -94,12 +95,12 @@ export default function CreateComplaints() {
             const allFiles = [...data.images, ...validFiles];
             setData('images', allFiles);
 
-            const newPreviews = validFiles.map(file => ({
+            const newPreviews = validFiles.map((file) => ({
                 url: URL.createObjectURL(file),
                 name: file.name,
-                type: file.type
+                type: file.type,
             }));
-            setPreviews(prev => [...prev, ...newPreviews]);
+            setPreviews((prev) => [...prev, ...newPreviews]);
         }
     };
 
@@ -115,31 +116,35 @@ export default function CreateComplaints() {
 
     useEffect(() => {
         return () => {
-            previews.forEach(preview => URL.revokeObjectURL(preview.url));
+            previews.forEach((preview) => URL.revokeObjectURL(preview.url));
         };
     }, [previews]);
 
     useEffect(() => {
-        if (data.city_id) {
-            axios.get(route('cities.neighborhoods', { city: data.city_id }))
-                .then(
-                    (response: any) => {
-                        setNeighborhoods([
-                            ...response.data,
-                            {
-                                name: "Outro",
-                                id: null,
-                            },
-                        ]);
-                    }
-                );
+        if (data.state_id) {
+            axios.get(route('cities.index', { state: data.state_id })).then((response: any) => {
+                setCities(response.data);
+            });
+        } else {
+            setCities([]);
+        }
+    }, [data.state_id]);
 
-            axios.get(route('cities.departments', { city: data.city_id }))
-                .then(
-                    (response: any) => {
-                        setDepartments(response.data);
-                    }
-                );
+    useEffect(() => {
+        if (data.city_id) {
+            axios.get(route('cities.neighborhoods', { city: data.city_id })).then((response: any) => {
+                setNeighborhoods([
+                    ...response.data,
+                    {
+                        name: 'Outro',
+                        id: null,
+                    },
+                ]);
+            });
+
+            axios.get(route('cities.departments', { city: data.city_id })).then((response: any) => {
+                setDepartments(response.data);
+            });
         } else {
             setNeighborhoods([]);
             setDepartments([]);
@@ -151,15 +156,15 @@ export default function CreateComplaints() {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Nova Reclamação" />
             <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
-                <div className='grid grid-cols-1 lg:grid-cols-3 gap-4 items-start'>
-                    <div className='col-span-2 border border-border rounded-xl p-6 bg-primary-foreground'>
-                        <div className='border-b border-border pb-2'>
+                <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-3">
+                    <div className="border-border bg-primary-foreground col-span-2 rounded-xl border p-6">
+                        <div className="border-border border-b pb-2">
                             <h2 className="text-xl font-bold">📝 Nova Reclamação</h2>
                             <p className="text-md text-muted-foreground">Relate um problema em sua cidade e ajude a torná-la melhor</p>
                         </div>
-                        <div className='flex flex-col gap-4 mt-4'>
+                        <div className="mt-4 flex flex-col gap-4">
                             <form className="flex flex-col gap-6" onSubmit={submit}>
-                                <div className='flex flex-col gap-2'>
+                                <div className="flex flex-col gap-2">
                                     <Label htmlFor="title">Título</Label>
                                     <InputText
                                         id="title"
@@ -174,7 +179,7 @@ export default function CreateComplaints() {
                                     />
                                     <span>{errors.title}</span>
                                 </div>
-                                <div className='flex flex-col gap-2'>
+                                <div className="flex flex-col gap-2">
                                     <Label htmlFor="description">Descrição</Label>
                                     <InputTextarea
                                         id="description"
@@ -195,15 +200,11 @@ export default function CreateComplaints() {
                                     <Label htmlFor="images">Fotos e Vídeos</Label>
                                     <label
                                         htmlFor="file-upload"
-                                        className="flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-border bg-background p-6 text-center transition-colors hover:border-primary"
+                                        className="border-border bg-background hover:border-primary flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed p-6 text-center transition-colors"
                                     >
-                                        <UploadCloud className="h-10 w-10 text-muted-foreground" />
-                                        <p className="mt-2 font-semibold text-foreground">
-                                            Clique para enviar ou arraste e solte
-                                        </p>
-                                        <p className="text-sm text-muted-foreground">
-                                            Imagens ou vídeos (PNG, JPG, MP4, etc.)
-                                        </p>
+                                        <UploadCloud className="text-muted-foreground h-10 w-10" />
+                                        <p className="text-foreground mt-2 font-semibold">Clique para enviar ou arraste e solte</p>
+                                        <p className="text-muted-foreground text-sm">Imagens ou vídeos (PNG, JPG, MP4, etc.)</p>
                                     </label>
                                     <input
                                         id="file-upload"
@@ -215,13 +216,13 @@ export default function CreateComplaints() {
                                         onChange={handleFileChange}
                                     />
                                     {/* Erros que vêm do Backend (Inertia) */}
-                                    {errors.images && <span className="text-red-500 text-sm mt-1">{errors.images}</span>}
+                                    {errors.images && <span className="mt-1 text-sm text-red-500">{errors.images}</span>}
 
                                     {/* Erros em tempo real do Frontend */}
                                     {fileErrors.length > 0 && (
                                         <div className="mt-2 flex flex-col gap-1">
                                             {fileErrors.map((error, index) => (
-                                                <span key={index} className="text-red-500 text-sm">
+                                                <span key={index} className="text-sm text-red-500">
                                                     - {error}
                                                 </span>
                                             ))}
@@ -232,7 +233,7 @@ export default function CreateComplaints() {
                                     {previews.length > 0 && (
                                         <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
                                             {previews.map((preview, index) => (
-                                                <div key={index} className="relative aspect-square rounded-lg border border-border bg-black">
+                                                <div key={index} className="border-border relative aspect-square rounded-lg border bg-black">
                                                     {preview.type.startsWith('image/') ? (
                                                         <img
                                                             src={preview.url}
@@ -253,7 +254,7 @@ export default function CreateComplaints() {
                                                     <button
                                                         type="button"
                                                         onClick={() => handleRemoveImage(index)}
-                                                        className="absolute -right-2 -top-2 z-10 flex h-6 w-6 items-center justify-center rounded-full border border-border bg-destructive text-destructive-foreground transition-transform hover:scale-110"
+                                                        className="border-border bg-destructive text-destructive-foreground absolute -top-2 -right-2 z-10 flex h-6 w-6 items-center justify-center rounded-full border transition-transform hover:scale-110"
                                                         aria-label={`Remover ${preview.name}`}
                                                     >
                                                         <X className="h-4 w-4" />
@@ -263,8 +264,8 @@ export default function CreateComplaints() {
                                         </div>
                                     )}
                                 </div>
-                                <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-                                    <div className='flex flex-col gap-2'>
+                                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                    <div className="flex flex-col gap-2">
                                         <Label htmlFor="state_id">Estado</Label>
                                         <Dropdown
                                             id="state_id"
@@ -276,24 +277,24 @@ export default function CreateComplaints() {
                                             placeholder="Selecione o estado"
                                             filter
                                             showClear
-                                            className="w-full! rounded-xl! bg-background!"
+                                            className="bg-background! w-full! rounded-xl!"
                                             panelClassName="bg-background!"
                                             required
                                         />
                                     </div>
-                                    <div className='flex flex-col gap-2'>
+                                    <div className="flex flex-col gap-2">
                                         <Label htmlFor="city_id">Cidade</Label>
                                         <Dropdown
                                             id="city_id"
                                             value={data.city_id}
-                                            options={(cities as any).filter((city: any) => city.state_id === data.state_id)}
+                                            options={(cities as any) || []}
                                             optionLabel="name"
                                             optionValue="id"
                                             onChange={(e) => setData('city_id', e.value)}
                                             placeholder="Selecione a cidade"
                                             filter
                                             showClear
-                                            className="w-full! rounded-xl! bg-background!"
+                                            className="bg-background! w-full! rounded-xl!"
                                             panelClassName="bg-background!"
                                             required
                                             disabled={!data.state_id}
@@ -311,27 +312,32 @@ export default function CreateComplaints() {
                                             placeholder="Selecione o bairro"
                                             filter
                                             showClear
-                                            className="w-full! rounded-xl! bg-background!"
+                                            className="bg-background! w-full! rounded-xl!"
                                             panelClassName="bg-background!"
                                             required
                                             disabled={!data.city_id}
                                         />
-                                        {
-                                            data.neighborhood_id === null && (
-                                                <InputText
-                                                    id="district"
-                                                    value={data.district}
-                                                    onChange={(e) => setData('district', e.target.value)}
-                                                    placeholder="Digite o bairro"
-                                                    className="w-full rounded-xl bg-background"
-                                                    required
-                                                />
-                                            )
-                                        }
+                                        {data.neighborhood_id === null && (
+                                            <InputText
+                                                id="district"
+                                                value={data.district}
+                                                onChange={(e) => setData('district', e.target.value)}
+                                                placeholder="Digite o bairro"
+                                                className="bg-background w-full rounded-xl"
+                                                required
+                                            />
+                                        )}
                                     </div>
                                     <div className="flex flex-col gap-2">
                                         <Label htmlFor="address">Endereço</Label>
-                                        <InputText id="address" value={data.address} onChange={(e) => setData('address', e.target.value)} placeholder="Digite o endereço" className="w-full rounded-xl bg-background" required />
+                                        <InputText
+                                            id="address"
+                                            value={data.address}
+                                            onChange={(e) => setData('address', e.target.value)}
+                                            placeholder="Digite o endereço"
+                                            className="bg-background w-full rounded-xl"
+                                            required
+                                        />
                                     </div>
                                 </div>
                                 <div className={`flex flex-col gap-2`}>
@@ -346,56 +352,64 @@ export default function CreateComplaints() {
                                         placeholder="Selecione o departamento"
                                         filter
                                         showClear
-                                        className="w-full! rounded-xl! bg-background!"
+                                        className="bg-background! w-full! rounded-xl!"
                                         panelClassName="bg-background!"
                                         required
                                         disabled={!data.city_id}
                                     />
                                 </div>
-                                <div className='mt-4 flex justify-end'>
+                                <div className="mt-4 flex justify-end">
                                     <Button type="submit" label="Enviar" className="w-full" disabled={processing} />
                                 </div>
                             </form>
                         </div>
                     </div>
-                    <div className='border border-border rounded-xl p-6 bg-primary-foreground'>
-                        <div className='border-b border-border pb-2'>
+                    <div className="border-border bg-primary-foreground rounded-xl border p-6">
+                        <div className="border-border border-b pb-2">
                             <h2 className="text-xl font-bold">💡 Dicas</h2>
                             <p className="text-md text-muted-foreground"> Dicas para uma boa reclamação</p>
                         </div>
-                        <div className='flex flex-col gap-4 mt-4'>
-                            <ul className='list-disc list-inside flex flex-col gap-1.5'>
-                                <li className='flex items-start gap-2'>
-                                    <Check className='w-5 h-5 text-green-500 flex-shrink-0 mt-0.5' />
+                        <div className="mt-4 flex flex-col gap-4">
+                            <ul className="flex list-inside list-disc flex-col gap-1.5">
+                                <li className="flex items-start gap-2">
+                                    <Check className="mt-0.5 h-5 w-5 flex-shrink-0 text-green-500" />
                                     Seja específico no título
                                 </li>
-                                <li className='flex items-start gap-2'>
-                                    <Check className='w-5 h-5 text-green-500 flex-shrink-0 mt-0.5' />
+                                <li className="flex items-start gap-2">
+                                    <Check className="mt-0.5 h-5 w-5 flex-shrink-0 text-green-500" />
                                     <span>Inclua fotos do problema</span>
                                 </li>
-                                <li className='flex items-start gap-2'>
-                                    <Check className='w-5 h-5 text-green-500 flex-shrink-0 mt-0.5' />
+                                <li className="flex items-start gap-2">
+                                    <Check className="mt-0.5 h-5 w-5 flex-shrink-0 text-green-500" />
                                     Descreva como afeta a comunidade
                                 </li>
-                                <li className='flex items-start gap-2'>
-                                    <Check className='w-5 h-5 text-green-500 flex-shrink-0 mt-0.5' />
+                                <li className="flex items-start gap-2">
+                                    <Check className="mt-0.5 h-5 w-5 flex-shrink-0 text-green-500" />
                                     Informe a localização exata
                                 </li>
-                                <li className='flex items-start gap-2'>
-                                    <Check className='w-5 h-5 text-green-500 flex-shrink-0 mt-0.5' />
+                                <li className="flex items-start gap-2">
+                                    <Check className="mt-0.5 h-5 w-5 flex-shrink-0 text-green-500" />
                                     Mencione se há riscos à segurança
                                 </li>
                             </ul>
                         </div>
-                        <div className='border-b border-border pb-2 mt-8'>
+                        <div className="border-border mt-8 border-b pb-2">
                             <h2 className="text-xl font-bold">📋 Exemplos</h2>
                             <p className="text-md text-muted-foreground">Exemplos por categoria</p>
                         </div>
-                        <div className='flex flex-col gap-1.5 mt-4 border-l-2 border-primary pl-4 ml-2'>
-                            <p><span className="font-bold">Vias Públicas:</span> Buracos, pavimento danificado</p>
-                            <p><span className="font-bold">Iluminação:</span> Postes queimados, ruas escuras</p>
-                            <p><span className="font-bold">Limpeza:</span> Lixo acumulado, entulho</p>
-                            <p><span className="font-bold">Transporte:</span> Pontos de ônibus danificados</p>
+                        <div className="border-primary mt-4 ml-2 flex flex-col gap-1.5 border-l-2 pl-4">
+                            <p>
+                                <span className="font-bold">Vias Públicas:</span> Buracos, pavimento danificado
+                            </p>
+                            <p>
+                                <span className="font-bold">Iluminação:</span> Postes queimados, ruas escuras
+                            </p>
+                            <p>
+                                <span className="font-bold">Limpeza:</span> Lixo acumulado, entulho
+                            </p>
+                            <p>
+                                <span className="font-bold">Transporte:</span> Pontos de ônibus danificados
+                            </p>
                         </div>
                     </div>
                 </div>
