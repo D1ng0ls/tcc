@@ -60,12 +60,8 @@ class CalculateRanking extends Command
         $bar = $this->output->createProgressBar($totalCities);
         $bar->start();
 
-        dump("\n[DEBUG] Preparando para iniciar os chunks das cidades...");
-
         try {
             $citiesQuery->chunkById(100, function (Collection $cities) use ($bar, $currentMonth, $currentYear) {
-
-                dump("\n[DEBUG] >>> Entrou no chunk! Processando lote de " . $cities->count() . " cidades.");
 
                 $departmentIds = $cities
                     ->pluck('municipality.departments')
@@ -74,17 +70,11 @@ class CalculateRanking extends Command
                     ->unique()
                     ->toArray();
 
-                dump("[DEBUG] Pegou os departamentos com sucesso. Total de IDs únicos: " . count($departmentIds));
-
                 if (empty($departmentIds)) {
-                    dump("[DEBUG] Lote sem departamentos. Pulando...");
                     $bar->advance($cities->count());
                     return;
                 }
 
-                dump("[DEBUG] Disparando query de agrupamento (statsByDept) no banco de dados...");
-
-                // Se o script travar aqui, é a query do banco que estourou
                 $statsByDept = DB::table('complaints')
                     ->select('department_id')
                     ->selectRaw('COUNT(id) as total')
@@ -93,8 +83,6 @@ class CalculateRanking extends Command
                     ->groupBy('department_id')
                     ->get()
                     ->keyBy('department_id');
-
-                dump("[DEBUG] Query retornou " . $statsByDept->count() . " resultados. Montando rankingData...");
 
                 $rankingData = [];
 
@@ -111,7 +99,6 @@ class CalculateRanking extends Command
                         }
                     }
 
-                    // ATENÇÃO: Se o método calcRaw não existir na classe CalcResolutionHelper, o script morre aqui!
                     $resolution = CalcResolutionHelper::calcRaw($total, $solved);
 
                     $rankingData[] = [
@@ -129,21 +116,15 @@ class CalculateRanking extends Command
                     ];
                 }
 
-                dump("[DEBUG] Array montado para o lote! Disparando o Ranking::upsert...");
-
-                // Se travar aqui, é o Upsert colidindo ou faltando índice/coluna unique
                 Ranking::upsert(
                     $rankingData,
                     ['city_id', 'month', 'year'],
                     ['state_id', 'total_complaints', 'solved_complaints', 'resolution', 'updated_at']
                 );
 
-                dump("[DEBUG] <<< Upsert feito com sucesso! Avançando barra de progresso.");
-
                 $bar->advance($cities->count());
             });
         } catch (\Throwable $e) {
-            // SE CAIR AQUI, A GENTE PEGOU O CULPADO
             $this->error("\n\n[ERRO FATAL CAPTURADO]: " . $e->getMessage() . " | Arquivo: " . $e->getFile() . " | Linha: " . $e->getLine());
             Log::error($e);
             return 1;
