@@ -36,8 +36,7 @@ class CalculateRanking extends Command
         $currentMonth = now()->month;
         $currentYear = now()->year;
 
-        $citiesQuery = City::query()
-            ->with('municipality.departments:id,municipality_id');
+        $citiesQuery = City::query();
 
         if ($cityId) {
             $this->info("Calculando notas APENAS para a cidade ID: $cityId (Mês: $currentMonth/$currentYear)...");
