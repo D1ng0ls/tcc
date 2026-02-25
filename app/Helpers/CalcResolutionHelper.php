@@ -14,6 +14,14 @@ class CalcResolutionHelper
             return null;
         }
         $resolved = $complaints->where('status_id', ComplaintStatus::SOLVED)->count();
-        return round(($resolved / $total ) * 100, 2);
+        return round(($resolved / $total) * 100, 2);
+    }
+
+    public static function calcRaw($total, $solved)
+    {
+        if ($total <= 0) {
+            return null;
+        }
+        return round(($solved / $total) * 100, 2);
     }
 }

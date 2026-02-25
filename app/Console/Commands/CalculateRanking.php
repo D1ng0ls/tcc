@@ -66,28 +66,39 @@ class CalculateRanking extends Command
                 ->pluck('municipality.departments')
                 ->flatten()
                 ->pluck('id')
-                ->unique();
+                ->unique()
+                ->toArray();
 
-            $complaints = Complaint::whereIn('department_id', $departmentIds)
-                ->select('id', 'department_id', 'status_id')
-                ->get();
+            if (empty($departmentIds)) {
+                $bar->advance($cities->count());
+                return;
+            }
 
-            $complaintsByDept = $complaints->groupBy('department_id');
+            $statsByDept = DB::table('complaints')
+                ->select('department_id')
+                ->selectRaw('COUNT(id) as total')
+                ->selectRaw('SUM(CASE WHEN status_id = ? THEN 1 ELSE 0 END) as solved', [ComplaintStatus::SOLVED])
+                ->whereIn('department_id', $departmentIds)
+                ->groupBy('department_id')
+                ->get()
+                ->keyBy('department_id');
+
             $rankingData = [];
 
             foreach ($cities as $city) {
-                $cityComplaints = new Collection();
+                $total = 0;
+                $solved = 0;
+
                 if ($city->municipality) {
                     foreach ($city->municipality->departments as $department) {
-                        if (isset($complaintsByDept[$department->id])) {
-                            $cityComplaints = $cityComplaints->concat($complaintsByDept[$department->id]);
+                        if (isset($statsByDept[$department->id])) {
+                            $total += $statsByDept[$department->id]->total;
+                            $solved += $statsByDept[$department->id]->solved;
                         }
                     }
                 }
 
-                $total = $cityComplaints->count();
-                $solved = $cityComplaints->where('status_id', ComplaintStatus::SOLVED)->count();
-                $resolution = CalcResolutionHelper::calc($cityComplaints);
+                $resolution = CalcResolutionHelper::calcRaw($total, $solved);
 
                 $rankingData[] = [
                     'city_id' => $city->id,
@@ -95,7 +106,8 @@ class CalculateRanking extends Command
                     'total_complaints' => $total,
                     'solved_complaints' => $solved,
                     'resolution' => $resolution,
-                    'rank' => null,
+                    'rank' => null, // Vai ser preenchido na Fase 2
+                    'rank_state' => null, // Vai ser preenchido na Fase 3
                     'month' => $currentMonth,
                     'year' => $currentYear,
                     'created_at' => now(),
@@ -106,7 +118,7 @@ class CalculateRanking extends Command
             Ranking::upsert(
                 $rankingData,
                 ['city_id', 'month', 'year'],
-                ['state_id', 'total_complaints', 'solved_complaints', 'resolution', 'rank', 'updated_at']
+                ['state_id', 'total_complaints', 'solved_complaints', 'resolution', 'updated_at']
             );
 
             $bar->advance($cities->count());
