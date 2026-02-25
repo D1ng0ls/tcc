@@ -25,7 +25,7 @@ php artisan migrate --force --no-interaction || true
 # Link de storage (ignora se já existe)
 php artisan storage:link >/dev/null 2>&1 || true
 
-php artisan db:seed --force --no-interaction || true
+# php artisan db:seed --force --no-interaction || true
 
 # Caches/optimize (com env real)
 php artisan config:cache
