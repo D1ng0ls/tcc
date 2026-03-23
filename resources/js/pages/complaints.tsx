@@ -53,7 +53,7 @@ const statusStyles = {
 };
 
 export default function Complaints() {
-    const { complaints, status, auth, city, resolution, ranking } = usePage().props as any;
+    const { complaints, status, auth, city, ranking } = usePage().props as any;
     const [open, setOpen] = useState<boolean>(false);
 
     const breadcrumbs: BreadcrumbItem[] = [

@@ -58,9 +58,9 @@ Route::domain(env('APP_DOMAIN'))->group(function () {
             'as' => 'cities.',
         ], function () {
             Route::get('/{state}', [CityController::class, 'index'])->name('index');
-            Route::get('/{stateUf}/{citySlug}', [CityController::class, 'show'])->name('show');
-            Route::get('/{city}/neighborhoods', [CityController::class, 'neighborhoods'])->name('neighborhoods');
-            Route::get('/{city}/departments', [CityController::class, 'departments'])->name('departments');
+            Route::get('cities/{city}/neighborhoods', [CityController::class, 'neighborhoods'])->name('neighborhoods');
+            Route::get('cities/{city}/departments', [CityController::class, 'departments'])->name('departments');
+            Route::get('cities/{stateUf}/{citySlug}', [CityController::class, 'show'])->name('show');
         });
 
         Route::group([

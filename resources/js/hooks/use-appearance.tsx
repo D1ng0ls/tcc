@@ -2,6 +2,9 @@ import { useCallback, useEffect, useState } from 'react';
 
 export type Appearance = 'light' | 'dark' | 'system';
 
+import darkThemeUrl from 'primereact/resources/themes/lara-dark-purple/theme.css?url';
+import lightThemeUrl from 'primereact/resources/themes/lara-light-purple/theme.css?url';
+
 const prefersDark = () => {
     if (typeof window === 'undefined') {
         return false;
@@ -22,12 +25,15 @@ const setCookie = (name: string, value: string, days = 365) => {
 const applyTheme = (appearance: Appearance) => {
     const isDark = appearance === 'dark' || (appearance === 'system' && prefersDark());
 
-
-    if (isDark) {
-        import('primereact/resources/themes/lara-dark-indigo/theme.css');
-    } else {
-        import('primereact/resources/themes/lara-light-indigo/theme.css');
+    let themeLink = document.getElementById('app-theme-link') as HTMLLinkElement;
+    if (!themeLink) {
+        themeLink = document.createElement('link');
+        themeLink.id = 'app-theme-link';
+        themeLink.rel = 'stylesheet';
+        document.head.appendChild(themeLink);
     }
+
+    themeLink.href = isDark ? darkThemeUrl : lightThemeUrl;
 
     document.documentElement.classList.toggle('dark', isDark);
 };

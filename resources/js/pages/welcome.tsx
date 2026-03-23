@@ -303,14 +303,14 @@ export default function Welcome() {
 
                         <div className="mt-8 flex flex-col items-center justify-center gap-4 lg:flex-row">
                             <Link
-                                href={'#'}
+                                href={route('register')}
                                 className="bg-primary text-primary-foreground hover:bg-primary/90 inline-block w-[220px] flex-shrink-0 rounded-lg px-5 py-3 font-semibold shadow-md transition-colors"
                             >
                                 Criar conta grátis
                             </Link>
 
                             <Link
-                                href={'#'}
+                                href={route('ranking.index')}
                                 className="border-foreground text-foreground hover:bg-foreground dark:hover:text-primary-foreground inline-block w-[220px] rounded-lg border px-5 py-3 text-base font-semibold transition-colors hover:text-white dark:border-white dark:text-white"
                             >
                                 Ver ranking completo

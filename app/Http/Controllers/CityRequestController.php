@@ -17,7 +17,7 @@ class CityRequestController extends Controller
     {
         CityRequest::create([
             ...$request->all(),
-            'user_id' => auth()->id(),
+            'user_id' => $request->user()->id,
         ]);
         return redirect()->back()->with('success', 'Solicitação enviada com sucesso!');
     }

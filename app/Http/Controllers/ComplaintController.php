@@ -8,14 +8,16 @@ use App\Actions\Complaint\CreateAction;
 use App\Actions\Complaint\RejectAction;
 use App\Http\Requests\Complaint\CreateRequest;
 use App\Models\Complaint;
+use App\Models\State;
 use App\Models\Status;
+use Illuminate\Http\Request;
 
 
 class ComplaintController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $user = auth()->user();
+        $user = $request->user();
 
         $complaints = Complaint::with(['status', 'neighborhood', 'department.municipality.city', 'user'])
             ->when(!$user->can('viewAny', Complaint::class), function ($query) use ($user) {
@@ -41,7 +43,9 @@ class ComplaintController extends Controller
 
     public function create()
     {
-        return Inertia::render('complaints/create');
+        return Inertia::render('complaints/create', [
+            'states' => State::select('id', 'name')->get(),
+        ]);
     }
 
     public function store(CreateRequest $request, CreateAction $createAction)
@@ -49,7 +53,7 @@ class ComplaintController extends Controller
         $images = $request->file('images', []);
 
         try {
-            $complaint = $createAction->execute($request, $images, auth()->user());
+            $complaint = $createAction->execute($request, $images, $request->user());
 
             return redirect()->route('complaints.show', $complaint->id)->with('success', 'Reclamação enviada com sucesso');
         } catch (\Exception $e) {

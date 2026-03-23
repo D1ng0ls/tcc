@@ -11,7 +11,7 @@ import { InputTextarea } from 'primereact/inputtextarea';
 import { useEffect, useState } from 'react';
 
 export default function CreateComplaints() {
-    const { states, categories, auth } = usePage().props as any;
+    const { states, auth } = usePage().props as any;
     const [cities, setCities] = useState<any[]>([]);
     const [neighborhoods, setNeighborhoods] = useState<any[]>([]);
     const [departments, setDepartments] = useState<any[]>([]);
@@ -21,10 +21,10 @@ export default function CreateComplaints() {
     const { data, setData, post, processing, errors, reset } = useForm({
         title: '',
         description: '',
-        department_id: 0 || undefined,
-        state_id: auth.user?.city?.state_id || undefined,
-        city_id: auth.user?.city?.id || undefined,
-        neighborhood_id: auth.user?.neighborhood?.id || undefined,
+        department_id: 0 || null,
+        state_id: auth.user?.city?.state_id || null,
+        city_id: auth.user?.city?.id || null,
+        neighborhood_id: auth.user?.neighborhood?.id || null,
         district: '',
         address: '',
         images: [] as File[],
@@ -124,6 +124,7 @@ export default function CreateComplaints() {
         if (data.state_id) {
             axios.get(route('cities.index', { state: data.state_id })).then((response: any) => {
                 setCities(response.data);
+                setData('city_id', auth.user?.city?.id || null);
             });
         } else {
             setCities([]);
@@ -148,10 +149,11 @@ export default function CreateComplaints() {
         } else {
             setNeighborhoods([]);
             setDepartments([]);
-            setData('neighborhood_id', undefined);
-            setData('department_id', undefined);
+            setData('neighborhood_id', null);
+            setData('department_id', null);
         }
     }, [data.city_id]);
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Nova Reclamação" />
