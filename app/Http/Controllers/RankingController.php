@@ -8,17 +8,61 @@ use App\Models\Ranking;
 use App\Models\State;
 use App\Models\Status;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 use Inertia\Inertia;
 
 class RankingController extends Controller
 {
+    /**
+     * Retorna o (month, year) mais recente disponível na tabela rankings.
+     * Garante que mesmo se o cron ainda não rodou no dia/mês atual,
+     * o ranking mostrado seja o último período calculado.
+     */
+    private function latestPeriod(): array
+    {
+        $latest = Ranking::orderByDesc('year')
+            ->orderByDesc('month')
+            ->select('month', 'year')
+            ->first();
+
+        if (! $latest) {
+            return ['month' => (int) date('m'), 'year' => (int) date('Y')];
+        }
+
+        return ['month' => (int) $latest->month, 'year' => (int) $latest->year];
+    }
+
+    /**
+     * Top 5 estados por média de resolução das cidades naquele mês/ano.
+     * Usa apenas estados com rankings calculados no período.
+     */
+    private function topStates(int $month, int $year, int $limit = 5)
+    {
+        return DB::table('rankings')
+            ->join('states', 'rankings.state_id', '=', 'states.id')
+            ->where('rankings.month', $month)
+            ->where('rankings.year', $year)
+            ->whereNotNull('rankings.resolution')
+            ->groupBy('states.id', 'states.uf', 'states.name')
+            ->selectRaw('states.id, states.uf, states.name')
+            ->selectRaw('ROUND(AVG(rankings.resolution), 1) as avg_resolution')
+            ->selectRaw('SUM(rankings.total_complaints) as total_complaints')
+            ->selectRaw('SUM(rankings.solved_complaints) as solved_complaints')
+            ->orderByDesc('avg_resolution')
+            ->orderByDesc('total_complaints')
+            ->orderBy('states.uf')
+            ->take($limit)
+            ->get();
+    }
+
     public function index(Request $request)
     {
         $search = $request->input('search');
+        $period = $this->latestPeriod();
 
-        $baseQuery = Ranking::where('month', date('m'))
-            ->where('year', date('Y'))
+        $baseQuery = Ranking::where('month', $period['month'])
+            ->where('year', $period['year'])
             ->with('city.state')
             ->orderBy('rank', 'asc');
 
@@ -33,6 +77,8 @@ class RankingController extends Controller
         return Inertia::render('ranking/ranking', [
             'ranking' => $paginatedQuery->paginate(10)->withQueryString(),
             'first5' => (clone $baseQuery)->take(5)->get(),
+            'top5States' => $this->topStates($period['month'], $period['year']),
+            'period' => $period,
             'filters' => [
                 'search' => $search,
             ],
@@ -71,17 +117,20 @@ class RankingController extends Controller
             return redirect()->route('ranking.index');
         }
 
-        $baseQuery = Ranking::where('month', date('m'))
-            ->where('year', date('Y'))
-            ->orderBy('rank', 'asc')
-            ->with('city.state');
+        $period = $this->latestPeriod();
 
-        $stateQuery = (clone $baseQuery)->where('state_id', $state->id);
+        $baseQuery = Ranking::where('month', $period['month'])
+            ->where('year', $period['year'])
+            ->where('state_id', $state->id)
+            ->orderBy('rank_state', 'asc')
+            ->with('city.state');
 
         return Inertia::render('ranking/ranking', [
             'state' => $state,
-            'ranking' => $stateQuery->paginate(10),
+            'ranking' => (clone $baseQuery)->paginate(10),
             'first5' => (clone $baseQuery)->take(5)->get(),
+            'top5States' => $this->topStates($period['month'], $period['year']),
+            'period' => $period,
         ]);
     }
 
@@ -98,21 +147,26 @@ class RankingController extends Controller
             return redirect()->route('ranking.state', $stateUf);
         }
 
-        $baseQuery = Ranking::where('month', date('m'))
-            ->where('year', date('Y'))
-            ->orderBy('rank', 'asc');
+        $period = $this->latestPeriod();
+
+        $stateScopedQuery = Ranking::where('month', $period['month'])
+            ->where('year', $period['year'])
+            ->where('state_id', $state->id)
+            ->orderBy('rank_state', 'asc')
+            ->with('city.state');
 
         return Inertia::render('ranking/ranking', [
             'state' => $state,
             'city' => $city,
-            'ranking' => (clone $baseQuery)
+            'ranking' => Ranking::where('month', $period['month'])
+                ->where('year', $period['year'])
                 ->where('city_id', $city->id)
+                ->orderBy('rank', 'asc')
                 ->with('city.state')
                 ->paginate(10),
-            'first5' => (clone $baseQuery)
-                ->with('city.state')
-                ->take(5)
-                ->get(),
+            'first5' => $stateScopedQuery->take(5)->get(),
+            'top5States' => $this->topStates($period['month'], $period['year']),
+            'period' => $period,
         ]);
     }
 }

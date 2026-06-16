@@ -1,6 +1,6 @@
 import { type BreadcrumbItem, type SharedData } from '@/types';
 import { Transition } from '@headlessui/react';
-import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import { FormEventHandler, useRef, useState } from 'react';
 
 import DeleteUser from '@/components/delete-user';
@@ -13,7 +13,7 @@ import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 import { InputMask } from 'primereact/inputmask';
 import { useInitials } from '@/hooks/use-initials';
-import { useEffect } from 'react';
+import { Trash2 } from 'lucide-react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -27,40 +27,56 @@ export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: 
 
     const getInitials = useInitials();
 
-    const inputRef = useRef(null);
-    const [preview, setPreview] = useState(auth.user.photo_url || null);
+    const inputRef = useRef<HTMLInputElement>(null);
+    const [preview, setPreview] = useState<string | null>(auth.user.photo_url || null);
+    const [uploadingPhoto, setUploadingPhoto] = useState(false);
+    const [photoError, setPhotoError] = useState<string | null>(null);
 
-    const { data, setData, post, errors, processing, recentlySuccessful } = useForm({
-        _method: 'patch',
+    const { data, setData, patch, errors, processing, recentlySuccessful } = useForm({
         name: auth.user.name || '',
         email: auth.user.email || '',
-        photo: null,
     });
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
+        patch(route('profile.update'), { preserveScroll: true });
+    };
 
-        post(route('profile.update'), {
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const localUrl = URL.createObjectURL(file);
+        setPreview(localUrl);
+        setPhotoError(null);
+        setUploadingPhoto(true);
+
+        const formData = new FormData();
+        formData.append('photo', file);
+
+        router.post(route('profile.photo.upload'), formData, {
             preserveScroll: true,
+            forceFormData: true,
+            onError: (errs) => {
+                setPhotoError((errs as any).photo ?? 'Erro ao enviar imagem.');
+                setPreview(auth.user.photo_url || null);
+            },
+            onFinish: () => {
+                setUploadingPhoto(false);
+                if (inputRef.current) inputRef.current.value = '';
+            },
         });
     };
 
-    const handleFileChange = (e: any) => {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        setData('photo', file);
-        setPreview(URL.createObjectURL(file));
+    const handleRemovePhoto = () => {
+        if (!preview) return;
+        setUploadingPhoto(true);
+        router.delete(route('profile.photo.remove'), {
+            preserveScroll: true,
+            onSuccess: () => setPreview(null),
+            onFinish: () => setUploadingPhoto(false),
+        });
     };
-
-    useEffect(() => {
-        if (data.photo) {
-            const formData = new FormData();
-            formData.append('name', data.name);
-            formData.append('email', data.email);
-            formData.append('photo', data.photo);
-        }
-    }, [data.photo]);
 
     const cpfMask = "999.999.999-99?99";
     const cnpjMask = "99.999.999/9999-99";
@@ -75,30 +91,44 @@ export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: 
                 <div className="space-y-6">
                     <HeadingSmall title="Informações" description="Atualize suas informações" />
 
-                    <form onSubmit={submit} className="space-y-6" encType="multipart/form-data">
+                    <form onSubmit={submit} className="space-y-6">
                         <div className="flex flex-col items-start gap-4">
-                            {preview ? (
-                                <img
-                                    src={preview as string}
-                                    alt="Preview"
-                                    className="w-20 h-20 rounded-full object-cover border"
-                                />
-                            ) : (
-                                <div className="w-20 h-20 rounded-full overflow-hidden flex items-center justify-center bg-accent text-lg">
-                                    {getInitials(auth.user.name)}
-                                </div>
-                            )}
+                            <div className="flex items-center gap-4">
+                                {preview ? (
+                                    <img
+                                        src={preview}
+                                        alt="Preview"
+                                        className={`h-20 w-20 rounded-full border object-cover transition-opacity ${uploadingPhoto ? 'opacity-50' : ''}`}
+                                    />
+                                ) : (
+                                    <div className="bg-accent flex h-20 w-20 items-center justify-center overflow-hidden rounded-full text-lg">
+                                        {getInitials(auth.user.name)}
+                                    </div>
+                                )}
+
+                                {preview && (
+                                    <button
+                                        type="button"
+                                        onClick={handleRemovePhoto}
+                                        disabled={uploadingPhoto}
+                                        className="text-muted-foreground hover:text-red-600 inline-flex items-center gap-1.5 text-sm transition-colors disabled:opacity-50"
+                                    >
+                                        <Trash2 size={14} />
+                                        Remover foto
+                                    </button>
+                                )}
+                            </div>
+
                             <input
                                 type="file"
                                 accept="image/*"
                                 onChange={handleFileChange}
                                 ref={inputRef}
-                                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4
-                     file:rounded-md file:border-0 file:text-sm file:font-semibold
-                     file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                                disabled={uploadingPhoto}
+                                className="block w-full text-sm text-gray-500 file:mr-4 file:rounded-md file:border-0 file:bg-blue-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-blue-700 hover:file:bg-blue-100"
                             />
-
-                            <InputError className="mt-2" message={errors.photo} />
+                            {uploadingPhoto && <p className="text-muted-foreground text-xs">Enviando foto…</p>}
+                            {photoError && <p className="text-sm text-red-600">{photoError}</p>}
                         </div>
 
                         <div className="grid gap-2">

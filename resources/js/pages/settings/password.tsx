@@ -7,6 +7,8 @@ import { Head, useForm } from '@inertiajs/react';
 import { FormEventHandler, useRef } from 'react';
 
 import HeadingSmall from '@/components/heading-small';
+import PasswordInput from '@/components/password-input';
+import PasswordRequirements from '@/components/password-requirements';
 import { Button } from '@/components/ui/button';
 import { InputText } from 'primereact/inputtext';
 import { Label } from '@/components/ui/label';
@@ -60,13 +62,11 @@ export default function Password() {
                         <div className="grid gap-2">
                             <Label htmlFor="current_password">Senha atual</Label>
 
-                            <InputText
+                            <PasswordInput
                                 id="current_password"
                                 ref={currentPasswordInput}
                                 value={data.current_password}
-                                onChange={(e) => setData('current_password', e.target.value)}
-                                type="password"
-                                className="w-full border border-border! rounded-xl! p-2 bg-background! text-foreground!"
+                                onChange={(e: any) => setData('current_password', e.target.value)}
                                 autoComplete="current-password"
                                 placeholder="Senha atual"
                             />
@@ -77,29 +77,26 @@ export default function Password() {
                         <div className="grid gap-2">
                             <Label htmlFor="password">Nova senha</Label>
 
-                            <InputText
+                            <PasswordInput
                                 id="password"
                                 ref={passwordInput}
                                 value={data.password}
-                                onChange={(e) => setData('password', e.target.value)}
-                                type="password"
-                                className="w-full border border-border! rounded-xl! p-2 bg-background! text-foreground!"
+                                onChange={(e: any) => setData('password', e.target.value)}
                                 autoComplete="new-password"
                                 placeholder="Nova senha"
                             />
 
+                            <PasswordRequirements value={data.password} className="mt-1" />
                             <InputError message={errors.password} />
                         </div>
 
                         <div className="grid gap-2">
                             <Label htmlFor="password_confirmation">Confirmar senha</Label>
 
-                            <InputText
+                            <PasswordInput
                                 id="password_confirmation"
                                 value={data.password_confirmation}
-                                onChange={(e) => setData('password_confirmation', e.target.value)}
-                                type="password"
-                                className="w-full border border-border! rounded-xl! p-2 bg-background! text-foreground!"
+                                onChange={(e: any) => setData('password_confirmation', e.target.value)}
                                 autoComplete="new-password"
                                 placeholder="Confirmar senha"
                             />

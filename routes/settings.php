@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\Settings\PasswordController;
 use App\Http\Controllers\Settings\ProfileController;
+use App\Models\City;
+use App\Models\State;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -13,11 +15,16 @@ Route::middleware('auth')->group(function () {
             Route::get('/', [ProfileController::class, 'edit'])->name('edit');
             Route::patch('/', [ProfileController::class, 'update'])->name('update');
             Route::delete('/', [ProfileController::class, 'destroy'])->name('destroy');
+            Route::post('/photo', [ProfileController::class, 'uploadPhoto'])->name('photo.upload');
+            Route::delete('/photo', [ProfileController::class, 'removePhoto'])->name('photo.remove');
         });
 
         Route::group(['prefix' => 'address', 'as' => 'address.'], function () {
             Route::get('/', function () {
-                return Inertia::render('settings/address');
+                return Inertia::render('settings/address', [
+                    'states' => State::select('id', 'name', 'uf')->orderBy('name')->get(),
+                    'cities' => City::select('id', 'name', 'state_id')->orderBy('name')->get(),
+                ]);
             })->name('edit');
             Route::put('/', [ProfileController::class, 'address'])->name('update');
         });

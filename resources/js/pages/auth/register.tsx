@@ -4,6 +4,8 @@ import { ArrowLeft, ArrowRight, LoaderCircle } from 'lucide-react';
 import { FormEventHandler } from 'react';
 
 import InputError from '@/components/input-error';
+import PasswordInput from '@/components/password-input';
+import PasswordRequirements from '@/components/password-requirements';
 import TextLink from '@/components/text-link';
 import { Button } from '@/components/ui/button';
 import { InputText } from 'primereact/inputtext';
@@ -198,34 +200,31 @@ export default function Register() {
                     <div className="grid gap-6" style={{ display: step === 3 ? 'grid' : 'none' }}>
                         <div className="grid gap-2">
                             <Label htmlFor="password">Senha</Label>
-                            <InputText
+                            <PasswordInput
                                 id="password"
-                                type="password"
                                 required
                                 tabIndex={3}
                                 autoComplete="new-password"
                                 value={data.password}
-                                onChange={(e) => setData('password', e.target.value)}
+                                onChange={(e: any) => setData('password', e.target.value)}
                                 disabled={processing}
                                 placeholder="Senha"
-                                className="w-full border border-border! rounded-xl! p-2 bg-background! text-foreground!"
                             />
+                            <PasswordRequirements value={data.password} className="mt-1" />
                             <InputError message={errors.password} />
                         </div>
 
                         <div className="grid gap-2">
                             <Label htmlFor="password_confirmation">Confirmar senha</Label>
-                            <InputText
+                            <PasswordInput
                                 id="password_confirmation"
-                                type="password"
                                 required
                                 tabIndex={4}
                                 autoComplete="new-password"
                                 value={data.password_confirmation}
-                                onChange={(e) => setData('password_confirmation', e.target.value)}
+                                onChange={(e: any) => setData('password_confirmation', e.target.value)}
                                 disabled={processing}
                                 placeholder="Confirmar Senha"
-                                className="w-full border border-border! rounded-xl! p-2 bg-background! text-foreground!"
                             />
                             <InputError message={errors.password_confirmation} />
                         </div>

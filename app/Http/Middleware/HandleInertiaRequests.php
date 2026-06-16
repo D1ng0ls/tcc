@@ -42,42 +42,30 @@ class HandleInertiaRequests extends Middleware
     {
         [$message, $author] = str(Inspiring::quotes()->random())->explode('-');
 
-        $shared = [
+        $municipalityUser = auth('municipality')->user();
+        $webUser = auth('web')->user();
+        $authUser = $municipalityUser ?? $webUser;
+        $authGuard = $municipalityUser ? 'municipality' : ($webUser ? 'web' : null);
+
+        return [
             ...parent::share($request),
             'name' => config('app.name'),
             'quote' => ['message' => trim($message), 'author' => trim($author)],
             'auth' => [
-                'user' => $request->user(),
+                'user' => $authUser?->loadMissing('city.state'),
+                'guard' => $authGuard,
             ],
             'ziggy' => fn(): array => [
                 ...(new Ziggy)->toArray(),
                 'location' => $request->url(),
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
-            'flash' => [ // <-- adicione isso
+            'flash' => [
                 'success' => fn() => $request->session()->get('success'),
                 'error' => fn() => $request->session()->get('error'),
                 'info' => fn() => $request->session()->get('info'),
                 'warn' => fn() => $request->session()->get('warn'),
             ],
         ];
-
-        if ($request->user()) {
-            $shared = array_merge($shared, [
-                'auth' => [
-                    'user' => $request->user()->loadMissing('city.state'),
-                ],
-            ]);
-        }
-
-        if (auth()->guard('municipality')->user()) {
-            $shared = array_merge($shared, [
-                'auth' => [
-                    'user' => $request->user('municipality')->loadMissing('city.state'),
-                ],
-            ]);
-        }
-
-        return $shared;
     }
 }

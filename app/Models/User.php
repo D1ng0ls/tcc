@@ -63,4 +63,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(Complaint::class);
     }
+
+    public function userNotifications()
+    {
+        return $this->hasMany(UserNotification::class)->orderByDesc('id');
+    }
 }

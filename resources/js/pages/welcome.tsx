@@ -6,17 +6,40 @@ import { Building2, CheckCheck, ExternalLink, FilePenLine, Search, Star, Users }
 import { InputText } from 'primereact/inputtext';
 import { useEffect, useState } from 'react';
 
-type CityCardProps = {
-    rank: number;
-    name: string;
-    state: string;
-    score: number;
+type WelcomeStats = {
+    cities: number;
     complaints: number;
-    resolvedRate: string;
+    resolved: number;
+    users: number;
+};
+
+type Top3Ranking = {
+    id: number;
+    rank: number;
+    total_complaints: number;
+    solved_complaints: number;
+    resolution: number | null;
+    city: {
+        name: string;
+        slug: string;
+        state: { name: string; uf: string };
+    };
+};
+
+type WelcomePageProps = SharedData & {
+    stats: WelcomeStats;
+    top3: Top3Ranking[];
+};
+
+const formatNumber = (value: number) => value.toLocaleString('pt-BR');
+
+const formatRate = (total: number, solved: number) => {
+    if (total <= 0) return '—';
+    return `${Math.round((solved / total) * 100)}%`;
 };
 
 export default function Welcome() {
-    const { auth } = usePage<SharedData>().props;
+    const { auth, stats: statsData, top3 } = usePage<WelcomePageProps>().props;
 
     const [search, setSearch] = useState<string>('');
     const [loading, setLoading] = useState<boolean>(false);
@@ -28,30 +51,24 @@ export default function Welcome() {
     const stats = [
         {
             icon: Building2,
-            value: '500+',
+            value: formatNumber(statsData.cities),
             label: 'Cidades Cadastradas',
         },
         {
             icon: FilePenLine,
-            value: '25.847',
+            value: formatNumber(statsData.complaints),
             label: 'Reclamações Registradas',
         },
         {
             icon: CheckCheck,
-            value: '18.234',
+            value: formatNumber(statsData.resolved),
             label: 'Problemas Resolvidos',
         },
         {
             icon: Users,
-            value: '12.560',
+            value: formatNumber(statsData.users),
             label: 'Cidadãos Ativos',
         },
-    ];
-
-    const mockCities: CityCardProps[] = [
-        { rank: 1, name: 'São Caetano do Sul', state: 'São Paulo', score: 98.5, complaints: 445, resolvedRate: '98%' },
-        { rank: 2, name: 'Águas de São Pedro', state: 'São Paulo', score: 97.2, complaints: 212, resolvedRate: '97%' },
-        { rank: 3, name: 'Florianópolis', state: 'Santa Catarina', score: 95.8, complaints: 834, resolvedRate: '96%' },
     ];
 
     const getMedalColor = (rank: number) => {
@@ -114,6 +131,19 @@ export default function Welcome() {
         return () => clearTimeout(delayDebounceFn);
     }, [search]);
 
+    useEffect(() => {
+        const hash = window.location.hash;
+        if (!hash) return;
+
+        const id = hash.slice(1);
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                const target = document.getElementById(id);
+                if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+        });
+    }, []);
+
     return (
         <>
             <GuestLayout className="mx-auto max-w-7xl py-8">
@@ -127,7 +157,6 @@ export default function Welcome() {
 
                         <div className="relative w-full">
                             {' '}
-                            {/* Container relativo para o dropdown */}
                             <div className="border-border dark:bg-primary-foreground focus-within:ring-primary/50 mt-4 flex w-full items-center justify-between gap-2 rounded-full border bg-white p-2 transition-all focus-within:ring-2">
                                 <Search size={20} className="ml-3 flex-shrink-0 text-gray-400" />
 
@@ -139,14 +168,12 @@ export default function Welcome() {
                                     className="w-full !border-none !bg-transparent focus:!ring-0"
                                 />
 
-                                {/* Exemplo de Loader simples */}
                                 {loading && <div className="border-primary mr-2 h-5 w-5 animate-spin rounded-full border-b-2"></div>}
 
                                 <button className="bg-primary text-primary-foreground hover:bg-primary/90 flex-shrink-0 rounded-full px-6 py-2.5 font-semibold transition-colors">
                                     Buscar
                                 </button>
                             </div>
-                            {/* LISTA DE RESULTADOS */}
                             {search && !loading && results && (
                                 <div className="border-border absolute z-10 mt-2 w-full overflow-hidden rounded-2xl border bg-white shadow-xl dark:bg-zinc-800">
                                     <ul className="flex max-h-60 flex-col overflow-y-auto p-2 text-left text-sm">
@@ -179,7 +206,6 @@ export default function Welcome() {
                                     </ul>
                                 </div>
                             )}
-                            {/* ESTADO VAZIO */}
                             {!results ||
                                 (search && !loading && results && results.cities.length <= 0 && results.states.length <= 0 && (
                                     <div className="border-border absolute z-10 mt-2 w-full rounded-2xl border bg-white p-4 shadow-xl dark:bg-zinc-800">
@@ -198,14 +224,13 @@ export default function Welcome() {
 
                 <div className="bg-card py-12 sm:py-24">
                     <div className="mx-auto max-w-7xl px-6 lg:px-8">
-                        {/* Grid responsivo para os 4 itens */}
                         <div className="grid grid-cols-1 gap-12 text-center sm:grid-cols-2 lg:grid-cols-4">
                             {stats.map((stat) => {
                                 const Icon = stat.icon;
                                 return (
                                     <div key={stat.label} className="flex flex-col items-center">
                                         <Icon size={40} className="text-primary" />
-                                        <p className="text-foreground mt-4 text-4xl font-bold tracking-tight">{stat.value}</p>
+                                        <p className="text-foreground mt-4 text-4xl font-bold tracking-tight">+ {stat.value}</p>
                                         <p className="text-muted-foreground mt-2 text-base">{stat.label}</p>
                                     </div>
                                 );
@@ -214,9 +239,8 @@ export default function Welcome() {
                     </div>
                 </div>
 
-                <div className="bg-background">
+                <div id="cidades-destaque" className="bg-background scroll-mt-24">
                     <div className="mx-auto max-w-7xl px-6 lg:px-8">
-                        {/* Título da Seção */}
                         <div className="mx-auto max-w-2xl text-center">
                             <h2 className="text-foreground text-3xl font-bold tracking-tight sm:text-4xl">Cidades em Destaque</h2>
                             <p className="text-muted-foreground mt-4 text-lg leading-8">
@@ -224,62 +248,59 @@ export default function Welcome() {
                             </p>
                         </div>
 
-                        {/* Grid Responsivo para os Cards */}
                         <div className="mx-auto mt-10 grid max-w-none grid-cols-1 gap-8 sm:mt-12 lg:grid-cols-3">
-                            {mockCities.map((city) => (
-                                <div
-                                    key={city.rank}
-                                    className="bg-card border-primary hover:shadow-primary/20 flex flex-col gap-y-4 rounded-2xl border-l-4 p-6 shadow-lg transition-all"
+                            {top3.map((item) => (
+                                <Link
+                                    href={route('cities.show', {
+                                        stateUf: item.city.state.uf.toLowerCase(),
+                                        citySlug: item.city.slug,
+                                    })}
+                                    key={item.id}
+                                    className="bg-card border-primary hover:shadow-primary/20 flex flex-col gap-y-4 rounded-2xl border-l-4 p-6 shadow-lg transition-all hover:-translate-y-0.5 hover:shadow-xl"
                                 >
-                                    {/* Topo do Card: Nomes e Ranking */}
                                     <div className="flex items-start justify-between">
                                         <div>
-                                            <h3 className="text-foreground text-xl font-semibold">{city.name}</h3>
-                                            <p className="text-muted-foreground text-sm">{city.state}</p>
+                                            <h3 className="text-foreground text-xl font-semibold">{item.city.name}</h3>
+                                            <p className="text-muted-foreground text-sm">{item.city.state.name}</p>
                                         </div>
                                         <div
-                                            className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-sm font-bold ${getMedalColor(city.rank)}`}
+                                            className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-sm font-bold ${getMedalColor(item.rank)}`}
                                         >
-                                            {city.rank}
+                                            {item.rank}
                                         </div>
                                     </div>
 
-                                    {/* Badge de Pontuação */}
                                     <div className="inline-flex items-center gap-1.5 self-start rounded-full bg-green-500/20 px-3 py-1 text-sm font-medium text-green-400">
                                         <Star size={14} />
-                                        {city.score.toFixed(1)}
+                                        {item.resolution ?? 0}
                                     </div>
 
-                                    {/* Estatísticas Finais */}
                                     <div className="border-border flex justify-between border-t pt-4">
                                         <div className="text-center">
-                                            <p className="text-foreground text-2xl font-bold">{city.complaints}</p>
+                                            <p className="text-foreground text-2xl font-bold">{formatNumber(item.total_complaints)}</p>
                                             <p className="text-muted-foreground text-xs">Reclamações</p>
                                         </div>
                                         <div className="text-center">
-                                            <p className="text-foreground text-2xl font-bold">{city.resolvedRate}</p>
+                                            <p className="text-foreground text-2xl font-bold">{formatRate(item.total_complaints, item.solved_complaints)}</p>
                                             <p className="text-muted-foreground text-xs">Resolvidas</p>
                                         </div>
                                     </div>
-                                </div>
+                                </Link>
                             ))}
                         </div>
                     </div>
                 </div>
 
-                <div className="bg-card py-12 sm:py-24">
+                <div id="como-funciona" className="bg-card py-12 sm:py-24">
                     <div className="mx-auto max-w-7xl px-6 lg:px-8">
-                        {/* Título da Seção */}
                         <div className="mx-auto max-w-2xl text-center">
                             <h2 className="text-foreground text-3xl font-bold tracking-tight sm:text-4xl">Como Funciona</h2>
                             <p className="text-muted-foreground mt-4 text-lg leading-8">Sua voz pode transformar a cidade em poucos passos.</p>
                         </div>
 
-                        {/* 2. LAYOUT RESPONSIVO COM GRID */}
                         <div className="mx-auto mt-12 grid max-w-none grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
                             {steps.map((step) => (
                                 <div key={step.number} className="flex flex-col items-center text-center">
-                                    {/* 3. CÍRCULO ROXO COM O NÚMERO */}
                                     <div className="bg-primary text-primary-foreground flex h-12 w-12 items-center justify-center rounded-full">
                                         <span className="text-xl font-bold">{step.number}</span>
                                     </div>

@@ -18,7 +18,7 @@ class CalculateRanking extends Command
     /**
      * A assinatura do comando.
      */
-    protected $signature = 'app:calculate-ranking {--city= : ID da cidade} {--state= : ID do estado}';
+    protected $signature = 'app:calculate-ranking {--city= : ID da cidade} {--state= : ID do estado} {--month= : Mês alvo (1-12)} {--year= : Ano alvo}';
 
     /**
      * A descrição do comando.
@@ -33,8 +33,8 @@ class CalculateRanking extends Command
         $cityId = $this->option('city');
         $stateId = $this->option('state');
 
-        $currentMonth = now()->month;
-        $currentYear = now()->year;
+        $currentMonth = $this->option('month') ? (int) $this->option('month') : now()->month;
+        $currentYear = $this->option('year') ? (int) $this->option('year') : now()->year;
 
         $citiesQuery = City::query();
 
@@ -145,7 +145,7 @@ class CalculateRanking extends Command
             ->join('cities', 'rankings.city_id', '=', 'cities.id')
             ->join('states', 'cities.state_id', '=', 'states.id')
             ->orderBy('rankings.resolution', 'desc')
-            ->orderBy('rankings.solved_complaints', 'desc')
+            ->orderBy('rankings.total_complaints', 'desc')
             ->orderBy('cities.name', 'asc')
             ->orderBy('states.uf', 'asc')
             ->pluck('rankings.id');
@@ -201,7 +201,7 @@ class CalculateRanking extends Command
                 ->join('cities', 'rankings.city_id', '=', 'cities.id')
                 ->join('states', 'cities.state_id', '=', 'states.id')
                 ->orderBy('rankings.resolution', 'desc')
-                ->orderBy('rankings.solved_complaints', 'desc')
+                ->orderBy('rankings.total_complaints', 'desc')
                 ->orderBy('cities.name', 'asc')
                 ->orderBy('states.uf', 'asc')
                 ->pluck('rankings.id');

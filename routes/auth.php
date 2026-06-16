@@ -20,7 +20,7 @@ Route::middleware('guest:web')->group(function () {
         ->name('login');
 
     Route::post('login', [AuthenticatedSessionController::class, 'store'])
-        ->middleware('throttle:5,15');
+        ->middleware(app()->isProduction() ? 'throttle:5,15' : 'throttle:100,1');
 
     Route::get('forgot-password', [PasswordResetLinkController::class, 'create'])
         ->name('password.request');
