@@ -119,6 +119,14 @@ class ProfileController extends Controller
             'password' => Hash::make($validated['password']),
         ]);
 
-        return back()->with('success', 'Senha atualizada com sucesso.');
+        // Mantém a sessão atual válida (atualiza o hash guardado) e encerra as
+        // demais sessões da prefeitura — que ainda têm o hash antigo — no próximo
+        // request, via middleware municipality.session (RF012).
+        $request->session()->put(
+            \App\Http\Middleware\AuthenticateMunicipalitySession::SESSION_KEY,
+            $municipality->getAuthPassword()
+        );
+
+        return back()->with('success', 'Senha atualizada com sucesso. As sessões em outros dispositivos foram encerradas.');
     }
 }

@@ -26,11 +26,42 @@ class ComplaintController extends Controller
             $query->where('status_id', (int) $status);
         }
 
+        if ($departmentId = $request->input('department_id')) {
+            $query->where('department_id', (int) $departmentId);
+        }
+
+        if ($cityId = $request->input('city_id')) {
+            $query->whereHas('department.municipality', fn ($q) => $q->where('city_id', (int) $cityId));
+        }
+
+        if ($dateFrom = $request->input('date_from')) {
+            $query->whereDate('created_at', '>=', $dateFrom);
+        }
+
+        if ($dateTo = $request->input('date_to')) {
+            $query->whereDate('created_at', '<=', $dateTo);
+        }
+
         if ($search = trim((string) $request->input('search', ''))) {
             $query->where('title', 'like', "%{$search}%");
         }
 
         return $query;
+    }
+
+    /**
+     * Espelha os filtros aplicados de volta pro frontend (para preservar o estado).
+     */
+    private function filterState(Request $request): array
+    {
+        return [
+            'status'        => $request->input('status'),
+            'department_id' => $request->input('department_id'),
+            'city_id'       => $request->input('city_id'),
+            'date_from'     => $request->input('date_from'),
+            'date_to'       => $request->input('date_to'),
+            'search'        => $request->input('search'),
+        ];
     }
 
     public function index(Request $request)
@@ -53,15 +84,18 @@ class ComplaintController extends Controller
 
         $complaints = $query->orderByDesc('id')->paginate(20)->withQueryString();
 
+        // Departamentos que aparecem nas reclamações do próprio cidadão (fonte do filtro).
+        $departments = \App\Models\Department::whereIn(
+            'id',
+            (clone $base)->select('department_id')->distinct()->pluck('department_id')->filter()
+        )->orderBy('name')->get(['id', 'name']);
+
         return Inertia::render('complaints/index', [
             'complaints'  => $complaints,
             'stats'       => $stats,
-            'departments' => collect($complaints->items())->pluck('department')->unique('id')->values(),
+            'departments' => $departments,
             'status'      => Status::all(),
-            'filters'     => [
-                'status' => $request->input('status'),
-                'search' => $request->input('search'),
-            ],
+            'filters'     => $this->filterState($request),
             'viewMode'    => 'mine',
         ]);
     }
@@ -84,15 +118,18 @@ class ComplaintController extends Controller
 
         $complaints = $query->orderByDesc('id')->paginate(20)->withQueryString();
 
+        // Admin filtra em escala nacional: oferece as cidades que possuem reclamações.
+        $cities = \App\Models\City::whereHas('municipality.departments.complaints')
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
         return Inertia::render('complaints/index', [
             'complaints'  => $complaints,
             'stats'       => $stats,
-            'departments' => collect($complaints->items())->pluck('department')->unique('id')->values(),
+            'departments' => collect(),
+            'cities'      => $cities,
             'status'      => Status::all(),
-            'filters'     => [
-                'status' => $request->input('status'),
-                'search' => $request->input('search'),
-            ],
+            'filters'     => $this->filterState($request),
             'viewMode'    => 'admin',
         ]);
     }

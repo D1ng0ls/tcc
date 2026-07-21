@@ -30,9 +30,11 @@ Route::domain(env('APP_DOMAIN'))->group(function () {
         Route::get('/{stateUf}/{citySlug}', [RankingController::class, 'city'])->name('city');
     });
 
+    // RF015: solicitar perfil de gestor exige cidadão autenticado.
     Route::group([
         'prefix' => 'solicitation-form',
         'as' => 'solicitation-form.',
+        'middleware' => 'auth:web',
     ], function () {
         Route::get('/', [CityRequestController::class, 'index'])->name('index');
         Route::post('/', [CityRequestController::class, 'store'])->name('store')->middleware('throttle:2,60');
@@ -89,7 +91,6 @@ Route::domain(env('APP_DOMAIN'))->group(function () {
                 'as' => 'solicitations.',
             ], function () {
                 Route::get('/', [AdminController::class, 'solicitation'])->name('index');
-                Route::get('/create', [AdminController::class, 'create'])->name('create');
                 Route::patch('/approve/{cityRequest}', [AdminController::class, 'approve'])->name('approve');
                 Route::patch('/reject/{cityRequest}', [AdminController::class, 'reject'])->name('reject');
             });

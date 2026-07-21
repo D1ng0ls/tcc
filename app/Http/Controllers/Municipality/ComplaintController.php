@@ -46,6 +46,18 @@ class ComplaintController extends Controller
             $query->where('status_id', (int) $status);
         }
 
+        if ($departmentId = $request->input('department_id')) {
+            $query->where('department_id', (int) $departmentId);
+        }
+
+        if ($dateFrom = $request->input('date_from')) {
+            $query->whereDate('created_at', '>=', $dateFrom);
+        }
+
+        if ($dateTo = $request->input('date_to')) {
+            $query->whereDate('created_at', '<=', $dateTo);
+        }
+
         if ($search = trim((string) $request->input('search', ''))) {
             $query->where('title', 'like', "%{$search}%");
         }
@@ -58,8 +70,11 @@ class ComplaintController extends Controller
             'departments' => $municipality->departments()->get(),
             'status'      => Status::all(),
             'filters'     => [
-                'status' => $request->input('status'),
-                'search' => $request->input('search'),
+                'status'        => $request->input('status'),
+                'department_id' => $request->input('department_id'),
+                'date_from'     => $request->input('date_from'),
+                'date_to'       => $request->input('date_to'),
+                'search'        => $request->input('search'),
             ],
             'viewMode'    => 'municipality',
         ]);

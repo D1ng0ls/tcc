@@ -159,11 +159,6 @@ class AdminController extends Controller
         return Inertia::render('admin/solicitations', compact('cityRequests'));
     }
 
-    public function create()
-    {
-        return Inertia::render('admin/solicitations/create');
-    }
-
     public function municipalities()
     {
         return Inertia::render('admin/municipalities');
@@ -317,5 +312,48 @@ class AdminController extends Controller
         ]);
 
         return redirect()->back()->with('success', 'Solicitação rejeitada com sucesso');
+    }
+
+    /**
+     * Lista de contas de cidadãos (perfil "user") para o painel do administrador,
+     * com busca por nome/e-mail e contagem de reclamações.
+     */
+    public function users(Request $request)
+    {
+        $request->validate(['search' => 'nullable|string|max:255']);
+        $search = $request->input('search');
+
+        $users = User::where('role', 'user')
+            ->with('city.state')
+            ->withCount('complaints')
+            ->when($search, function ($query, $search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%");
+                });
+            })
+            ->orderBy('name')
+            ->paginate(20)
+            ->withQueryString();
+
+        return Inertia::render('admin/users', [
+            'users' => $users,
+            'filters' => ['search' => $search],
+        ]);
+    }
+
+    /**
+     * Exclui (soft delete) a conta de um cidadão. Não permite excluir
+     * administradores.
+     */
+    public function destroyUser(User $user)
+    {
+        if ($user->role === 'admin') {
+            abort(403, 'Não é permitido excluir contas de administrador.');
+        }
+
+        $user->delete();
+
+        return redirect()->back()->with('success', 'Conta de cidadão excluída com sucesso.');
     }
 }

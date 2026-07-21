@@ -11,7 +11,7 @@ import ComplaintCard from '@/components/complaint-card';
 
 export default function Complaints() {
 
-    const { complaints, status, auth, viewMode, filters: initialFilters, stats } = usePage().props as any;
+    const { complaints, status, auth, viewMode, filters: initialFilters, stats, departments, cities } = usePage().props as any;
     const isAdminView = viewMode === 'admin';
     const isMunicipalityView = viewMode === 'municipality';
     // Agora todos os controllers devolvem um paginator
@@ -35,9 +35,22 @@ export default function Complaints() {
         },
     ];
 
-    const [filters, setFilters] = useState<{ status: number | null; search: string }>({
+    type Filters = {
+        status: number | null;
+        search: string;
+        department_id: number | null;
+        city_id: number | null;
+        date_from: string;
+        date_to: string;
+    };
+
+    const [filters, setFilters] = useState<Filters>({
         status: initialFilters?.status ? Number(initialFilters.status) : null,
         search: initialFilters?.search ?? '',
+        department_id: initialFilters?.department_id ? Number(initialFilters.department_id) : null,
+        city_id: initialFilters?.city_id ? Number(initialFilters.city_id) : null,
+        date_from: initialFilters?.date_from ?? '',
+        date_to: initialFilters?.date_to ?? '',
     });
 
     /**
@@ -45,11 +58,22 @@ export default function Complaints() {
      * o que recarrega o paginator filtrado vindo do servidor.
      * Sempre volta pra página 1 ao trocar um filtro.
      */
-    const navigateWithFilters = (next: { status: number | null; search: string }) => {
+    const navigateWithFilters = (next: Filters) => {
         const params: Record<string, string> = {};
         if (next.status) params.status = String(next.status);
+        if (next.department_id) params.department_id = String(next.department_id);
+        if (next.city_id) params.city_id = String(next.city_id);
+        if (next.date_from) params.date_from = next.date_from;
+        if (next.date_to) params.date_to = next.date_to;
         if (next.search.trim()) params.search = next.search.trim();
         router.get(pageHref, params, { preserveState: true, preserveScroll: true, replace: true });
+    };
+
+    // Aplica um filtro imediato (dropdowns/datas — sem debounce).
+    const applyFilter = (patch: Partial<Filters>) => {
+        const next = { ...filters, ...patch };
+        setFilters(next);
+        navigateWithFilters(next);
     };
 
     // Debounce na busca (300ms)
@@ -137,8 +161,8 @@ export default function Complaints() {
                         </div>
                     </div>
 
-                    <div className="border border-border rounded-xl bg-gray-100 dark:bg-zinc-900 p-4 flex gap-4">
-                        <div className="w-full sm:w-1/3 flex flex-col">
+                    <div className="border border-border rounded-xl bg-gray-100 dark:bg-zinc-900 p-4 flex flex-wrap gap-4">
+                        <div className="flex flex-col min-w-[150px] flex-1">
                             <label className="text-sm font-medium text-muted-foreground mb-1">Status</label>
                             <Dropdown
                                 value={filters.status}
@@ -152,7 +176,59 @@ export default function Complaints() {
                             />
                         </div>
 
-                        <div className="w-full flex flex-col">
+                        {!isAdminView && (departments?.length ?? 0) > 0 && (
+                            <div className="flex flex-col min-w-[170px] flex-1">
+                                <label className="text-sm font-medium text-muted-foreground mb-1">Departamento</label>
+                                <Dropdown
+                                    value={filters.department_id}
+                                    options={departments}
+                                    optionLabel="name"
+                                    optionValue="id"
+                                    onChange={(e: DropdownChangeEvent) => applyFilter({ department_id: e.value ?? null })}
+                                    placeholder="Todos"
+                                    showClear
+                                    className="w-full"
+                                />
+                            </div>
+                        )}
+
+                        {isAdminView && (
+                            <div className="flex flex-col min-w-[170px] flex-1">
+                                <label className="text-sm font-medium text-muted-foreground mb-1">Cidade</label>
+                                <Dropdown
+                                    value={filters.city_id}
+                                    options={cities}
+                                    optionLabel="name"
+                                    optionValue="id"
+                                    onChange={(e: DropdownChangeEvent) => applyFilter({ city_id: e.value ?? null })}
+                                    placeholder="Todas"
+                                    showClear
+                                    filter
+                                    className="w-full"
+                                />
+                            </div>
+                        )}
+
+                        <div className="flex flex-col min-w-[140px]">
+                            <label className="text-sm font-medium text-muted-foreground mb-1">De</label>
+                            <input
+                                type="date"
+                                value={filters.date_from}
+                                onChange={(e) => applyFilter({ date_from: e.target.value })}
+                                className="w-full border border-border rounded-md p-2 bg-background text-foreground"
+                            />
+                        </div>
+                        <div className="flex flex-col min-w-[140px]">
+                            <label className="text-sm font-medium text-muted-foreground mb-1">Até</label>
+                            <input
+                                type="date"
+                                value={filters.date_to}
+                                onChange={(e) => applyFilter({ date_to: e.target.value })}
+                                className="w-full border border-border rounded-md p-2 bg-background text-foreground"
+                            />
+                        </div>
+
+                        <div className="flex flex-col min-w-[180px] flex-[2]">
                             <label className="text-sm font-medium text-muted-foreground mb-1">Buscar</label>
                             <InputText
                                 value={filters.search}
