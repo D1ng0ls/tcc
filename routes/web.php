@@ -116,9 +116,8 @@ Route::domain(env('APP_DOMAIN'))->group(function () {
                 'prefix' => 'users',
                 'as' => 'users.',
             ], function () {
-                Route::get('/', function () {
-                    return Inertia::render('admin/users');
-                })->name('index');
+                Route::get('/', [AdminController::class, 'users'])->name('index');
+                Route::delete('/{user}', [AdminController::class, 'destroyUser'])->name('destroy');
             });
 
             Route::group([

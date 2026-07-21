@@ -30,6 +30,7 @@ export default function Register() {
         birth_date: Date | null;
         city_id: number | null;
         address: string;
+        consent: boolean;
     };
 
     const { data, setData, post, processing, errors, reset } = useForm<Required<RegisterForm>>({
@@ -41,6 +42,7 @@ export default function Register() {
         birth_date: null,
         city_id: null,
         address: '',
+        consent: false,
     });
 
     const submit: FormEventHandler = (e) => {
@@ -229,11 +231,29 @@ export default function Register() {
                             <InputError message={errors.password_confirmation} />
                         </div>
 
+                        <div className="grid gap-2">
+                            <label htmlFor="consent" className="flex items-start gap-2 text-sm text-muted-foreground cursor-pointer">
+                                <input
+                                    id="consent"
+                                    type="checkbox"
+                                    className="mt-1 cursor-pointer"
+                                    checked={data.consent}
+                                    onChange={(e) => setData('consent', e.target.checked)}
+                                    disabled={processing}
+                                />
+                                <span>
+                                    Li e concordo com o tratamento dos meus dados pessoais para uso na plataforma,
+                                    em conformidade com a Lei Geral de Proteção de Dados (LGPD).
+                                </span>
+                            </label>
+                            <InputError message={errors.consent} />
+                        </div>
+
                         <div className="flex gap-2">
                             <Button type="button" className="mt-2 text-md cursor-pointer" tabIndex={5} disabled={processing} onClick={() => setStep(2)}>
                                 <ArrowLeft className="h-4 w-4" />
                             </Button>
-                            <Button type="submit" className="mt-2 w-full text-md cursor-pointer" tabIndex={5} disabled={processing || !data.password || !data.password_confirmation}>
+                            <Button type="submit" className="mt-2 w-full text-md cursor-pointer" tabIndex={5} disabled={processing || !data.password || !data.password_confirmation || !data.consent}>
                                 {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
                                 Criar conta
                             </Button>

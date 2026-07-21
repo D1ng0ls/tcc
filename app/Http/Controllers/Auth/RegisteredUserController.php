@@ -43,6 +43,7 @@ class RegisteredUserController extends Controller
             'birth_date' => 'required|date',
             'city_id' => 'required|exists:cities,id',
             'address' => 'required|string|max:255',
+            'consent' => 'accepted',
         ], [
             'name.required' => 'O nome é obrigatório.',
             'email.required' => 'O email é obrigatório.',
@@ -55,6 +56,7 @@ class RegisteredUserController extends Controller
             'city_id.required' => 'A cidade é obrigatória.',
             'city_id.exists' => 'A cidade informada não existe.',
             'address.required' => 'O endereço é obrigatório.',
+            'consent.accepted' => 'É necessário aceitar o tratamento dos dados pessoais conforme a LGPD.',
         ]);
 
         $user = User::create([
@@ -65,6 +67,7 @@ class RegisteredUserController extends Controller
             'birth_date' => \Carbon\Carbon::parse($request->birth_date)->format('Y-m-d'),
             'city_id' => $request->city_id,
             'address' => $request->address,
+            'consent_at' => now(),
         ]);
 
         event(new Registered($user));
