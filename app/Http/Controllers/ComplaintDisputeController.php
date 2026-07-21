@@ -54,6 +54,7 @@ class ComplaintDisputeController extends Controller
         ]);
 
         ComplaintEventLogger::log($complaint, 'dispute_opened', $request->input('reason'));
+        ComplaintNotifier::disputeOpened($complaint);
 
         return redirect()->back()->with('success', 'Contestação enviada para análise do administrador.');
     }

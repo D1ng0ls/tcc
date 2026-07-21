@@ -42,4 +42,23 @@ class ComplaintNotifier
             'link' => '/complaints/show/' . $complaint->id,
         ]);
     }
+
+    /**
+     * Notifica o cidadão dono da complaint quando a prefeitura abre uma
+     * contestação (disputa administrativa) sobre a avaliação "Não resolvida".
+     */
+    public static function disputeOpened(Complaint $complaint): void
+    {
+        if (! $complaint->user_id) {
+            return;
+        }
+
+        UserNotification::create([
+            'user_id' => $complaint->user_id,
+            'type' => 'dispute_opened',
+            'title' => "A prefeitura contestou a avaliação da sua reclamação #{$complaint->id}",
+            'body' => $complaint->title ? Str::limit($complaint->title, 140) : null,
+            'link' => '/complaints/show/' . $complaint->id,
+        ]);
+    }
 }
