@@ -56,7 +56,9 @@ return [
             'prefix' => '',
             'prefix_indexes' => true,
             'strict' => true,
-            'engine' => null,
+            // Força InnoDB: o app usa foreign keys (não suportadas por MyISAM) e
+            // índices utf8mb4 longos. Alguns ambientes têm default_storage_engine=MyISAM.
+            'engine' => env('DB_ENGINE', 'InnoDB'),
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],
