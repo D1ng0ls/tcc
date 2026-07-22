@@ -28,6 +28,9 @@ class UserFactory extends Factory
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
+            // cpf e birth_date são NOT NULL na tabela users
+            'cpf' => fake()->unique()->numerify('###########'),
+            'birth_date' => fake()->date('Y-m-d', '2005-01-01'),
             'remember_token' => Str::random(10),
         ];
     }
