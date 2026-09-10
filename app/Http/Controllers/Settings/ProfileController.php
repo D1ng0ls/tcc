@@ -8,6 +8,7 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -57,7 +58,54 @@ class ProfileController extends Controller
 
         $user->save();
 
-        return to_route('profile.edit');
+        return to_route('profile.edit')->with('success', 'Perfil atualizado com sucesso.');
+    }
+
+    /**
+     * Upload imediato da foto de perfil (auto-save).
+     * Apaga foto anterior se houver.
+     */
+    public function uploadPhoto(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'photo' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
+        ], [
+            'photo.required' => 'Selecione uma imagem.',
+            'photo.image' => 'O arquivo deve ser uma imagem.',
+            'photo.mimes' => 'A imagem deve ser jpg, png, gif ou webp.',
+            'photo.max' => 'A imagem deve ter no máximo 5MB.',
+        ]);
+
+        $user = $request->user();
+
+        if ($user->photo_url && Str::startsWith($user->photo_url, '/storage/')) {
+            Storage::disk('public')->delete(Str::after($user->photo_url, '/storage/'));
+        }
+
+        $file = $request->file('photo');
+        $filename = Str::uuid() . '.' . $file->getClientOriginalExtension();
+        $path = $file->storeAs('profiles', $filename, 'public');
+        $user->photo_url = '/storage/' . $path;
+        $user->save();
+
+        return back()->with('success', 'Foto de perfil atualizada.');
+    }
+
+    /**
+     * Remove a foto de perfil atual.
+     */
+    public function removePhoto(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+
+        if ($user->photo_url && Str::startsWith($user->photo_url, '/storage/')) {
+            Storage::disk('public')->delete(Str::after($user->photo_url, '/storage/'));
+        }
+
+        $user->photo_url = null;
+        $user->save();
+
+        return back()->with('success', 'Foto de perfil removida.');
     }
 
     public function address(Request $request): RedirectResponse

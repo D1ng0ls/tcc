@@ -49,4 +49,24 @@ class Complaint extends Model
     {
         return $this->hasMany(Archive::class);
     }
+
+    public function messages()
+    {
+        return $this->hasMany(ComplaintMessage::class)->orderBy('created_at', 'asc');
+    }
+
+    public function events()
+    {
+        return $this->hasMany(ComplaintEvent::class)->orderBy('created_at', 'asc');
+    }
+
+    public function disputes()
+    {
+        return $this->hasMany(ComplaintDispute::class);
+    }
+
+    public function latestDispute()
+    {
+        return $this->hasOne(ComplaintDispute::class)->latestOfMany();
+    }
 }

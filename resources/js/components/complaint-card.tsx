@@ -1,7 +1,12 @@
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import { MapPin, Clock, User } from 'lucide-react';
 
 export default function ComplaintCard({ complaint, auth }: { complaint: any, auth: any }) {
+    const { auth: sharedAuth } = usePage().props as any;
+    const isMunicipality = sharedAuth?.guard === 'municipality';
+    const showRoute = isMunicipality
+        ? route('municipality.complaints.show', complaint.id)
+        : route('complaints.show', complaint.id);
     const statusStyles = {
         1: {
             badge: 'bg-sky-100 text-sky-800',
@@ -58,7 +63,7 @@ export default function ComplaintCard({ complaint, auth }: { complaint: any, aut
                 </div>
 
                 <div className="flex items-center gap-4 mt-6 pt-4 border-t border-border/50">
-                    <Link href={route('complaints.show', complaint.id)}>
+                    <Link href={showRoute}>
                         <button className="px-6 py-2 font-semibold text-primary-foreground bg-primary rounded-lg hover:bg-primary/90 transition-colors cursor-pointer">
                             Ver detalhes
                         </button>

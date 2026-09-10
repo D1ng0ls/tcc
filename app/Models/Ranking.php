@@ -20,11 +20,6 @@ class Ranking extends Model
         'rank_state',
     ];
 
-    protected $casts = [
-        'month' => 'date',
-        'year' => 'date',
-    ];
-
     public function city()
     {
         return $this->belongsTo(City::class);

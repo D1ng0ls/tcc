@@ -55,7 +55,12 @@ export default function CreateComplaints() {
     const submit = (e: any) => {
         e.preventDefault();
         post(route('complaints.store'), {
-            onFinish: () => reset(),
+            forceFormData: true,
+            onSuccess: () => {
+                reset();
+                setPreviews([]);
+                setFileErrors([]);
+            },
         });
     };
 
@@ -360,8 +365,25 @@ export default function CreateComplaints() {
                                         disabled={!data.city_id}
                                     />
                                 </div>
+                                {/* Mostra qualquer erro de validação que não foi exibido inline */}
+                                {Object.keys(errors).length > 0 && (
+                                    <div className="rounded-lg border border-red-400 bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-300">
+                                        <p className="font-semibold mb-1">Corrija os erros antes de enviar:</p>
+                                        <ul className="list-disc pl-5">
+                                            {Object.entries(errors).map(([field, msg]) => (
+                                                <li key={field}>{msg as string}</li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
+
                                 <div className="mt-4 flex justify-end">
-                                    <Button type="submit" label="Enviar" className="w-full" disabled={processing} />
+                                    <Button
+                                        type="submit"
+                                        label={processing ? 'Enviando…' : 'Enviar'}
+                                        className="w-full"
+                                        disabled={processing}
+                                    />
                                 </div>
                             </form>
                         </div>

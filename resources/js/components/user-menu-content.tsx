@@ -2,7 +2,7 @@ import { DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSep
 import { UserInfo } from '@/components/user-info';
 import { useMobileNavigation } from '@/hooks/use-mobile-navigation';
 import { type User } from '@/types';
-import { Link, router } from '@inertiajs/react';
+import { Link, router, usePage } from '@inertiajs/react';
 import { LogOut, Settings } from 'lucide-react';
 
 interface UserMenuContentProps {
@@ -11,6 +11,11 @@ interface UserMenuContentProps {
 
 export function UserMenuContent({ user }: UserMenuContentProps) {
     const cleanup = useMobileNavigation();
+    const { auth } = usePage().props as any;
+    const isMunicipality = auth?.guard === 'municipality';
+
+    const settingsRoute = isMunicipality ? route('municipality.settings.edit') : route('profile.edit');
+    const logoutRoute = isMunicipality ? route('municipality.logout') : route('logout');
 
     const handleLogout = () => {
         cleanup();
@@ -27,7 +32,7 @@ export function UserMenuContent({ user }: UserMenuContentProps) {
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
                 <DropdownMenuItem asChild>
-                    <Link className="block w-full" href={route('profile.edit')} as="button" prefetch onClick={cleanup}>
+                    <Link className="block w-full" href={settingsRoute} as="button" prefetch onClick={cleanup}>
                         <Settings className="mr-2" />
                         Configurações
                     </Link>
@@ -35,7 +40,7 @@ export function UserMenuContent({ user }: UserMenuContentProps) {
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-                <Link className="block w-full" method="post" href={route('logout')} as="button" onClick={handleLogout}>
+                <Link className="block w-full" method="post" href={logoutRoute} as="button" onClick={handleLogout}>
                     <LogOut className="mr-2" />
                     Sair
                 </Link>

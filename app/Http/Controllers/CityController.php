@@ -19,7 +19,7 @@ class CityController extends Controller
         return $state->cities()->select('id', 'name')->get();
     }
 
-    public function show($stateUf, $citySlug)
+    public function show(Request $request, $stateUf, $citySlug)
     {
         $state = State::where('uf', strtoupper($stateUf))->first();
         if (!$state) {
@@ -31,19 +31,33 @@ class CityController extends Controller
             return redirect()->route('home');
         }
 
-        $departments = $city->municipality->departments()->get();
+        if (! $city->municipality) {
+            return redirect()->route('home');
+        }
 
-        $complaints = Complaint::whereIn('department_id', $departments->pluck('id'))
-            ->orderBy('id', 'desc')
+        $departments = $city->municipality->departments()->get();
+        $departmentIds = $departments->pluck('id');
+
+        // Paginação (20/pág) — usada na listagem
+        $complaintsPaginated = Complaint::whereIn('department_id', $departmentIds)
             ->with(['status', 'neighborhood', 'department.municipality.city', 'user'])
-            ->get();
+            ->orderByDesc('id')
+            ->paginate(20)
+            ->withQueryString();
+
+        // Agregados independentes da página (para os cards do topo)
+        $totals = [
+            'total' => Complaint::whereIn('department_id', $departmentIds)->count(),
+            'open' => Complaint::whereIn('department_id', $departmentIds)->where('status_id', \App\ComplaintStatus::OPEN)->count(),
+            'solved' => Complaint::whereIn('department_id', $departmentIds)->where('status_id', \App\ComplaintStatus::SOLVED)->count(),
+        ];
 
         return Inertia::render('complaints', [
-            'complaints' => $complaints,
-            'city' => $city->load('state'),
+            'complaints' => $complaintsPaginated,
+            'totals' => $totals,
+            'city' => $city->load(['state', 'municipality:id,city_id,name,photo_url,active']),
             'ranking' => $city->latestRanking,
             'status' => Status::all(),
-            'resolution' => CalcResolutionHelper::calc($complaints),
         ]);
     }
 

@@ -1,8 +1,5 @@
-import { SVGAttributes } from 'react';
-import logo from '../assets/logo.png';
+import { Building2 } from 'lucide-react';
 
-export default function AppLogoIcon({className} : any) {
-    return (
-        <img src={logo} alt="Logo" className={className}/>
-    );
+export default function AppLogoIcon({ className }: { className?: string }) {
+    return <Building2 className={className} strokeWidth={2} />;
 }

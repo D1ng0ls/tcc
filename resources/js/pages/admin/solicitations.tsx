@@ -1,8 +1,20 @@
 import AppLayout from '@/layouts/app-layout';
 import { Head, usePage, router } from '@inertiajs/react';
+import { useEffect } from 'react';
 
 export default function AdminSolicitations() {
     const { cityRequests } = usePage().props as any;
+
+    // Refetch quando a aba volta a ter foco — evita estado obsoleto após PATCH
+    useEffect(() => {
+        const onVisible = () => {
+            if (document.visibilityState === 'visible') {
+                router.reload({ only: ['cityRequests'], preserveScroll: true });
+            }
+        };
+        document.addEventListener('visibilitychange', onVisible);
+        return () => document.removeEventListener('visibilitychange', onVisible);
+    }, []);
 
     const breadcrumbs = [
         {
@@ -11,13 +23,23 @@ export default function AdminSolicitations() {
         },
     ];
 
+    const refresh = () => {
+        router.reload({ only: ['cityRequests'], preserveScroll: true });
+    };
+
     const handleApprove = (cityRequest: any) => {
-        router.patch(route('admin.solicitations.approve', cityRequest.id));
-    }
+        router.patch(route('admin.solicitations.approve', cityRequest.id), {}, {
+            preserveScroll: true,
+            onSuccess: refresh,
+        });
+    };
 
     const handleReject = (cityRequest: any) => {
-        router.patch(route('admin.solicitations.reject', cityRequest.id));
-    }
+        router.patch(route('admin.solicitations.reject', cityRequest.id), {}, {
+            preserveScroll: true,
+            onSuccess: refresh,
+        });
+    };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>

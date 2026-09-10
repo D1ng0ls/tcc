@@ -3,6 +3,8 @@ import { LoaderCircle } from 'lucide-react';
 import { FormEventHandler } from 'react';
 
 import InputError from '@/components/input-error';
+import PasswordInput from '@/components/password-input';
+import PasswordRequirements from '@/components/password-requirements';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -58,30 +60,29 @@ export default function ResetPassword({ token, email }: ResetPasswordProps) {
 
                     <div className="grid gap-2">
                         <Label htmlFor="password">Senha</Label>
-                        <Input
+                        <PasswordInput
                             id="password"
-                            type="password"
                             name="password"
                             autoComplete="new-password"
                             value={data.password}
                             className="mt-1 block w-full"
                             autoFocus
-                            onChange={(e) => setData('password', e.target.value)}
+                            onChange={(e: any) => setData('password', e.target.value)}
                             placeholder="Senha"
                         />
+                        <PasswordRequirements value={data.password} className="mt-1" />
                         <InputError message={errors.password} />
                     </div>
 
                     <div className="grid gap-2">
                         <Label htmlFor="password_confirmation">Confirmar senha</Label>
-                        <Input
+                        <PasswordInput
                             id="password_confirmation"
-                            type="password"
                             name="password_confirmation"
                             autoComplete="new-password"
                             value={data.password_confirmation}
                             className="mt-1 block w-full"
-                            onChange={(e) => setData('password_confirmation', e.target.value)}
+                            onChange={(e: any) => setData('password_confirmation', e.target.value)}
                             placeholder="Confirmar senha"
                         />
                         <InputError message={errors.password_confirmation} className="mt-2" />

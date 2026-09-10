@@ -1,94 +1,137 @@
 import AppLayout from '@/layouts/app-layout';
 import GuestLayout from '@/layouts/guest-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Head, usePage, useForm, Link } from '@inertiajs/react';
-import { FileWarning, Hourglass, Check, Radar, MapPin, Clock, Eye, User, Star } from 'lucide-react';
-import { useState } from 'react';
+import { Head, usePage, useForm, Link, router } from '@inertiajs/react';
+import { ChevronLeft, ChevronRight, FileWarning, Hourglass, Check, Radar, MapPin, Clock, Eye, User, Star } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import { Dropdown, type DropdownChangeEvent } from 'primereact/dropdown';
 import { Calendar } from 'primereact/calendar';
 import { InputText } from 'primereact/inputtext';
 import ComplaintCard from '@/components/complaint-card';
 
-interface Filters {
-    status: string | null;
-    category: string | null;
-    period: Date | null;
-    search: string;
-}
-
-type ComplaintProps = {
-    id: number;
-    title: string;
-    status: 'Aberto' | 'Em andamento' | 'Fechado';
-    category: string;
-    description: string;
-    location: string;
-    time: string;
-};
-
 export default function Complaints() {
 
-    const { complaints, status, auth } = usePage().props as any;
+    const { complaints, status, auth, viewMode, filters: initialFilters, stats, departments, cities } = usePage().props as any;
+    const isAdminView = viewMode === 'admin';
+    const isMunicipalityView = viewMode === 'municipality';
+    // Agora todos os controllers devolvem um paginator
+    const complaintList: any[] = complaints?.data ?? [];
+
+    const pageTitle = isAdminView
+        ? 'Reclamações'
+        : isMunicipalityView
+          ? 'Reclamações da prefeitura'
+          : 'Minhas Reclamações';
+    const pageHref = isAdminView
+        ? '/admin/complaints'
+        : isMunicipalityView
+          ? '/complaints' // no subdomínio cid.* essa é a rota municipality.complaints.index
+          : '/complaints';
 
     const breadcrumbs: BreadcrumbItem[] = [
         {
-            title: 'Minhas Reclamações',
-            href: '/complaints',
+            title: pageTitle,
+            href: pageHref,
         },
     ];
 
-    const [filters, setFilters] = useState<Filters>({
-        status: null,
-        category: null,
-        period: null,
-        search: '',
-    });
-
-    const handleFilterChange = (field: keyof Filters, value: any) => {
-        setFilters((prev) => ({ ...prev, [field]: value }));
+    type Filters = {
+        status: number | null;
+        search: string;
+        department_id: number | null;
+        city_id: number | null;
+        date_from: string;
+        date_to: string;
     };
 
-    const filteredComplaints = complaints.filter((c: ComplaintProps & { status_id: number }) => {
-        let ok = true;
-
-        if (filters.status && c.status_id !== filters.status) {
-            ok = false;
-        }
-
-        if (filters.search && !c.title.toLowerCase().includes(filters.search.toLowerCase())) {
-            ok = false;
-        }
-
-        if (filters.period) {
-            const created = new Date(c.time);
-            ok = created.toDateString() === filters.period.toDateString();
-        }
-
-        return ok;
+    const [filters, setFilters] = useState<Filters>({
+        status: initialFilters?.status ? Number(initialFilters.status) : null,
+        search: initialFilters?.search ?? '',
+        department_id: initialFilters?.department_id ? Number(initialFilters.department_id) : null,
+        city_id: initialFilters?.city_id ? Number(initialFilters.city_id) : null,
+        date_from: initialFilters?.date_from ?? '',
+        date_to: initialFilters?.date_to ?? '',
     });
+
+    /**
+     * Aplica filtros via Inertia: navega pra mesma rota com query string,
+     * o que recarrega o paginator filtrado vindo do servidor.
+     * Sempre volta pra página 1 ao trocar um filtro.
+     */
+    const navigateWithFilters = (next: Filters) => {
+        const params: Record<string, string> = {};
+        if (next.status) params.status = String(next.status);
+        if (next.department_id) params.department_id = String(next.department_id);
+        if (next.city_id) params.city_id = String(next.city_id);
+        if (next.date_from) params.date_from = next.date_from;
+        if (next.date_to) params.date_to = next.date_to;
+        if (next.search.trim()) params.search = next.search.trim();
+        router.get(pageHref, params, { preserveState: true, preserveScroll: true, replace: true });
+    };
+
+    // Aplica um filtro imediato (dropdowns/datas — sem debounce).
+    const applyFilter = (patch: Partial<Filters>) => {
+        const next = { ...filters, ...patch };
+        setFilters(next);
+        navigateWithFilters(next);
+    };
+
+    // Debounce na busca (300ms)
+    const firstRender = useRef(true);
+    useEffect(() => {
+        if (firstRender.current) {
+            firstRender.current = false;
+            return;
+        }
+        const t = setTimeout(() => navigateWithFilters(filters), 300);
+        return () => clearTimeout(t);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [filters.search]);
+
+    // Refetch ao voltar pra aba (evita BFCache mostrando status antigo
+    // depois que o usuário muda o status na single complaint)
+    useEffect(() => {
+        const onVisible = () => {
+            if (document.visibilityState === 'visible') {
+                router.reload({ only: ['complaints', 'stats'], preserveScroll: true });
+            }
+        };
+        document.addEventListener('visibilitychange', onVisible);
+        window.addEventListener('pageshow', onVisible);
+        return () => {
+            document.removeEventListener('visibilitychange', onVisible);
+            window.removeEventListener('pageshow', onVisible);
+        };
+    }, []);
+
+    const handleStatusChange = (value: number | null) => {
+        const next = { ...filters, status: value };
+        setFilters(next);
+        navigateWithFilters(next); // status muda imediato (sem debounce)
+    };
 
     const cards = [
         {
             title: 'Total de reclamações',
-            value: complaints.length,
+            value: stats?.total ?? complaints?.total ?? 0,
             icon: FileWarning,
             color: 'bg-blue-500',
         },
         {
             title: 'Em andamento',
-            value: complaints.filter((c: any) => c.status_id === 2).length,
+            value: stats?.in_progress ?? 0,
             icon: Hourglass,
             color: 'bg-yellow-500',
         },
         {
             title: 'Resolvidos',
-            value: complaints.filter((c: any) => c.status_id === 4).length,
+            value: stats?.solved ?? 0,
             icon: Check,
             color: 'bg-green-500',
         },
         {
             title: 'Abertos',
-            value: complaints.filter((c: any) => c.status_id === 1).length,
+            value: stats?.open ?? 0,
             icon: Radar,
             color: 'bg-violet-500',
         },
@@ -97,7 +140,7 @@ export default function Complaints() {
     return (
         <>
             <AppLayout breadcrumbs={breadcrumbs}>
-                <Head title="Minhas reclamações" />
+                <Head title={pageTitle} />
 
                 <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
                     <div className="border border-border rounded-xl p-4 bg-gray-100 dark:bg-zinc-900">
@@ -118,26 +161,78 @@ export default function Complaints() {
                         </div>
                     </div>
 
-                    <div className="border border-border rounded-xl bg-gray-100 dark:bg-zinc-900 p-4 flex gap-4">
-                        <div className="w-full sm:w-1/3 flex flex-col">
+                    <div className="border border-border rounded-xl bg-gray-100 dark:bg-zinc-900 p-4 flex flex-wrap gap-4">
+                        <div className="flex flex-col min-w-[150px] flex-1">
                             <label className="text-sm font-medium text-muted-foreground mb-1">Status</label>
                             <Dropdown
                                 value={filters.status}
                                 options={status}
                                 optionLabel="name"
                                 optionValue="id"
-                                onChange={(e: DropdownChangeEvent) => handleFilterChange('status', e.value)}
+                                onChange={(e: DropdownChangeEvent) => handleStatusChange(e.value ?? null)}
                                 placeholder="Todos"
                                 showClear
                                 className="w-full"
                             />
                         </div>
 
-                        <div className="w-full flex flex-col">
+                        {!isAdminView && (departments?.length ?? 0) > 0 && (
+                            <div className="flex flex-col min-w-[170px] flex-1">
+                                <label className="text-sm font-medium text-muted-foreground mb-1">Departamento</label>
+                                <Dropdown
+                                    value={filters.department_id}
+                                    options={departments}
+                                    optionLabel="name"
+                                    optionValue="id"
+                                    onChange={(e: DropdownChangeEvent) => applyFilter({ department_id: e.value ?? null })}
+                                    placeholder="Todos"
+                                    showClear
+                                    className="w-full"
+                                />
+                            </div>
+                        )}
+
+                        {isAdminView && (
+                            <div className="flex flex-col min-w-[170px] flex-1">
+                                <label className="text-sm font-medium text-muted-foreground mb-1">Cidade</label>
+                                <Dropdown
+                                    value={filters.city_id}
+                                    options={cities}
+                                    optionLabel="name"
+                                    optionValue="id"
+                                    onChange={(e: DropdownChangeEvent) => applyFilter({ city_id: e.value ?? null })}
+                                    placeholder="Todas"
+                                    showClear
+                                    filter
+                                    className="w-full"
+                                />
+                            </div>
+                        )}
+
+                        <div className="flex flex-col min-w-[140px]">
+                            <label className="text-sm font-medium text-muted-foreground mb-1">De</label>
+                            <input
+                                type="date"
+                                value={filters.date_from}
+                                onChange={(e) => applyFilter({ date_from: e.target.value })}
+                                className="w-full border border-border rounded-md p-2 bg-background text-foreground"
+                            />
+                        </div>
+                        <div className="flex flex-col min-w-[140px]">
+                            <label className="text-sm font-medium text-muted-foreground mb-1">Até</label>
+                            <input
+                                type="date"
+                                value={filters.date_to}
+                                onChange={(e) => applyFilter({ date_to: e.target.value })}
+                                className="w-full border border-border rounded-md p-2 bg-background text-foreground"
+                            />
+                        </div>
+
+                        <div className="flex flex-col min-w-[180px] flex-[2]">
                             <label className="text-sm font-medium text-muted-foreground mb-1">Buscar</label>
                             <InputText
                                 value={filters.search}
-                                onChange={(e) => handleFilterChange('search', e.target.value)}
+                                onChange={(e) => setFilters((prev) => ({ ...prev, search: e.target.value }))}
                                 placeholder="Digite para buscar..."
                                 className="w-full"
                             />
@@ -145,8 +240,8 @@ export default function Complaints() {
                     </div>
 
                     <div className="border border-border rounded-xl bg-gray-100 dark:bg-zinc-900 p-4 flex flex-col gap-4">
-                        {filteredComplaints.length > 0 ? (
-                            filteredComplaints.map((complaint: any) => (
+                        {complaintList.length > 0 ? (
+                            complaintList.map((complaint: any) => (
                                 <ComplaintCard key={complaint.id} complaint={complaint} auth={auth} />
                             ))
                         ) : (
@@ -156,6 +251,38 @@ export default function Complaints() {
                             </div>
                         )}
                     </div>
+
+                    {complaints?.last_page > 1 && (
+                        <div className="border-border flex items-center justify-between gap-2 rounded-xl border bg-gray-100 p-3 text-sm dark:bg-zinc-900">
+                            <button
+                                onClick={() => complaints.prev_page_url && router.get(complaints.prev_page_url, {}, { preserveScroll: true })}
+                                disabled={!complaints.prev_page_url}
+                                className="text-muted-foreground bg-card border-border bg-primary-foreground hover:bg-muted flex items-center gap-2 rounded-md border px-3 py-1.5 transition-colors disabled:opacity-50"
+                            >
+                                <ChevronLeft size={16} />
+                                <span className="hidden sm:block">Anterior</span>
+                            </button>
+
+                            <div className="text-muted-foreground">
+                                Página <span className="text-foreground font-semibold">{complaints.current_page}</span>
+                                <span className="mx-1">de</span>
+                                <span>{complaints.last_page}</span>
+                                <span className="hidden sm:inline">
+                                    <span className="mx-2">•</span>
+                                    {complaints.total} total
+                                </span>
+                            </div>
+
+                            <button
+                                onClick={() => complaints.next_page_url && router.get(complaints.next_page_url, {}, { preserveScroll: true })}
+                                disabled={!complaints.next_page_url}
+                                className="text-muted-foreground bg-card border-border bg-primary-foreground hover:bg-muted flex items-center gap-2 rounded-md border px-3 py-1.5 transition-colors disabled:opacity-50"
+                            >
+                                <span className="hidden sm:block">Próxima</span>
+                                <ChevronRight size={16} />
+                            </button>
+                        </div>
+                    )}
                 </div>
             </AppLayout>
 

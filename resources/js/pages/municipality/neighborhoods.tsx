@@ -2,15 +2,33 @@ import AppLayout from '@/layouts/app-layout';
 import { BreadcrumbItem } from '@/types';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import { InputText } from 'primereact/inputtext';
-import { LoaderCircle, Plus, Search } from 'lucide-react';
+import { Check, LoaderCircle, Plus, Search, Sparkles, X } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from 'primereact/button';
 import { Dialog } from 'primereact/dialog';
 import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog';
 import Headline from '@/components/ui/headline';
 
+type Suggestion = {
+    id: number;
+    name: string;
+    hits: number;
+    created_at: string;
+};
+
 export default function Neighborhood() {
-    const { neighborhoods } = usePage().props;
+    const { neighborhoods, pendingSuggestions } = usePage().props as any;
+    const suggestions: Suggestion[] = pendingSuggestions || [];
+
+    const approveSuggestion = (s: Suggestion) => {
+        if (!confirm(`Aprovar o bairro "${s.name}"? Será criado e adicionado à lista.`)) return;
+        router.patch(route('municipality.neighborhoods.suggestions.approve', s.id), {}, { preserveScroll: true });
+    };
+
+    const ignoreSuggestion = (s: Suggestion) => {
+        if (!confirm(`Ignorar a sugestão "${s.name}"?`)) return;
+        router.patch(route('municipality.neighborhoods.suggestions.ignore', s.id), {}, { preserveScroll: true });
+    };
     const [selectedNeighborhood, setSelectedNeighborhood] = useState({}) as any;
     const [visible, setVisible] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -75,6 +93,60 @@ export default function Neighborhood() {
                     title="Gerenciar Bairros 🏙️" 
                     description="Adicione, edite ou remova os bairros da cidade" 
                 />
+
+                {/* ===== SUGESTÕES PENDENTES ===== */}
+                {suggestions.length > 0 && (
+                    <div className="border border-amber-500/50 bg-amber-50/40 dark:bg-amber-950/20 rounded-xl p-6">
+                        <div className="mb-4 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <Sparkles className="h-5 w-5 text-amber-500" />
+                                <h2 className="text-lg font-bold">
+                                    Bairros sugeridos pelos cidadãos
+                                    <span className="ml-2 rounded-full bg-amber-500/20 px-2 py-0.5 text-xs font-semibold text-amber-700 dark:text-amber-300">
+                                        {suggestions.length}
+                                    </span>
+                                </h2>
+                            </div>
+                            <p className="text-muted-foreground text-xs">
+                                Aprove para incluir na lista oficial • Ignore para deixar apenas na reclamação
+                            </p>
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-3">
+                            {suggestions.map((s) => (
+                                <div
+                                    key={s.id}
+                                    className="border-border bg-primary-foreground flex items-center justify-between rounded-lg border p-3"
+                                >
+                                    <div className="min-w-0 flex-1">
+                                        <p className="text-foreground truncate font-semibold">{s.name}</p>
+                                        <p className="text-muted-foreground text-xs">
+                                            {s.hits} reclamação{s.hits === 1 ? '' : 's'}
+                                        </p>
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                        <button
+                                            onClick={() => approveSuggestion(s)}
+                                            title="Aprovar"
+                                            className="inline-flex items-center gap-1 rounded-md bg-green-500/20 px-2 py-1 text-xs font-semibold text-green-700 hover:bg-green-500/40 cursor-pointer dark:text-green-300"
+                                        >
+                                            <Check className="h-3 w-3" />
+                                            Aprovar
+                                        </button>
+                                        <button
+                                            onClick={() => ignoreSuggestion(s)}
+                                            title="Ignorar"
+                                            className="inline-flex items-center gap-1 rounded-md bg-gray-500/20 px-2 py-1 text-xs font-semibold text-gray-700 hover:bg-gray-500/40 cursor-pointer dark:text-gray-300"
+                                        >
+                                            <X className="h-3 w-3" />
+                                            Ignorar
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
 
                 <div className="flex flex-col flex-wrap justify-between items-center gap-4 p-8 border border-border rounded-xl bg-primary-foreground">
 

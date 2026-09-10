@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Settings;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
@@ -39,6 +40,13 @@ class PasswordController extends Controller
             'password' => Hash::make($validated['password']),
         ]);
 
-        return back();
+        // Invalida as demais sessões ativas do usuário (mantém a atual),
+        // encerrando o acesso em outros dispositivos após a troca de senha.
+        DB::table('sessions')
+            ->where('user_id', $request->user()->id)
+            ->where('id', '!=', $request->session()->getId())
+            ->delete();
+
+        return back()->with('success', 'Senha atualizada com sucesso. As sessões em outros dispositivos foram encerradas.');
     }
 }

@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\City;
+use App\Models\State;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
@@ -20,7 +22,10 @@ class RegisteredUserController extends Controller
      */
     public function create(): Response
     {
-        return Inertia::render('auth/register');
+        return Inertia::render('auth/register', [
+            'states' => State::select('id', 'name', 'uf')->orderBy('name')->get(),
+            'cities' => City::select('id', 'name', 'state_id')->orderBy('name')->get(),
+        ]);
     }
 
     /**
@@ -38,6 +43,7 @@ class RegisteredUserController extends Controller
             'birth_date' => 'required|date',
             'city_id' => 'required|exists:cities,id',
             'address' => 'required|string|max:255',
+            'consent' => 'accepted',
         ], [
             'name.required' => 'O nome é obrigatório.',
             'email.required' => 'O email é obrigatório.',
@@ -50,6 +56,7 @@ class RegisteredUserController extends Controller
             'city_id.required' => 'A cidade é obrigatória.',
             'city_id.exists' => 'A cidade informada não existe.',
             'address.required' => 'O endereço é obrigatório.',
+            'consent.accepted' => 'É necessário aceitar o tratamento dos dados pessoais conforme a LGPD.',
         ]);
 
         $user = User::create([
@@ -60,6 +67,7 @@ class RegisteredUserController extends Controller
             'birth_date' => \Carbon\Carbon::parse($request->birth_date)->format('Y-m-d'),
             'city_id' => $request->city_id,
             'address' => $request->address,
+            'consent_at' => now(),
         ]);
 
         event(new Registered($user));

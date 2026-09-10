@@ -29,15 +29,10 @@ class ComplaintPolicy
 
     public function view($auth, Complaint $complaint)
     {
-        if ($auth instanceof \App\Models\User) {
-            return $auth->id === $complaint->user_id || $auth->role === 'admin';
-        }
-
-        if ($auth instanceof \App\Models\Municipality) {
-            return $auth->id === $complaint->department->municipality_id;
-        }
-
-        return false;
+        // Reclamação é pública — qualquer pessoa (autenticada ou não) pode
+        // visualizar a página de detalhes. Dados sensíveis do autor (CPF, etc.)
+        // devem ser sanitizados na renderização (UC011/RNF006).
+        return true;
     }
 
     public function approve(User $user, Complaint $complaint)
