@@ -2,15 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Complaint;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class DashboardController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        return Inertia::render('dashboard', [
-            //todo: colocar os parametros pega ideia no adminController função index
-        ]);
+        $myComplaints = $request->user()->complaints;
+
+        return Inertia::render('dashboard', compact('myComplaints'));
     }
 }
