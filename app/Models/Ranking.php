@@ -20,6 +20,11 @@ class Ranking extends Model
         'rank_state',
     ];
 
+    // decimal(5,2) chega do PDO como string; o front espera número (ex.: 66.67).
+    protected $casts = [
+        'resolution' => 'float',
+    ];
+
     public function city()
     {
         return $this->belongsTo(City::class);

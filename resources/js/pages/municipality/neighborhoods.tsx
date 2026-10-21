@@ -3,7 +3,7 @@ import { BreadcrumbItem } from '@/types';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import { InputText } from 'primereact/inputtext';
 import { Check, LoaderCircle, Plus, Search, Sparkles, X } from 'lucide-react';
-import { useState } from 'react';
+import { FormEvent, useState } from 'react';
 import { Button } from 'primereact/button';
 import { Dialog } from 'primereact/dialog';
 import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog';
@@ -40,23 +40,28 @@ export default function Neighborhood() {
 
     const [isFormVisible, setIsFormVisible] = useState(false);
 
-    const { data, setData, patch, processing, errors, reset } = useForm({
+    const { data, setData, processing, errors, reset } = useForm({
         name: '',
     });
 
-    const handleSubmit = () => {
+    const handleSubmit = (e?: FormEvent) => {
+        e?.preventDefault();
         if (processing || loading) return;
         setLoading(true);
         router.post(route('municipality.neighborhoods.store'), data, {
             onSuccess: () => {setIsFormVisible(false); reset();},
+            onFinish: () => setLoading(false),
         });
     };
 
-    const handleUpdate = () => {
-        if (processing || loading) return;
-        setLoading(true);
-        patch(route('municipality.neighborhoods.update', selectedNeighborhood.id), {
-            onSuccess: () => {setVisible(false); reset();},
+    // Formulário próprio do diálogo "Modificar": editar não apaga o rascunho do campo Adicionar.
+    const editForm = useForm({ name: '' });
+
+    const handleUpdate = (e?: FormEvent) => {
+        e?.preventDefault();
+        if (editForm.processing) return;
+        editForm.patch(route('municipality.neighborhoods.update', selectedNeighborhood.id), {
+            onSuccess: () => { setVisible(false); editForm.reset(); },
         });
     };
 
@@ -64,14 +69,14 @@ export default function Neighborhood() {
         if (processing || loading) return;
         setLoading(true);
         router.delete(route('municipality.neighborhoods.destroy', neighborhood_id), {
-            onSuccess: () => setLoading(false),
+            onFinish: () => setLoading(false),
         });
     };
 
     const handleDeleteConfirm = (neighborhood: any) => {
         if (processing || loading) return;
         confirmDialog({
-            message: `Ao excluir um bairro, todos os reclamações associadas a ele serão transferidas para o bairro "Outros".`,
+            message: `Ao excluir um bairro, todas as reclamações associadas a ele serão transferidas para o bairro "Outros".`,
             header: `Tem certeza que deseja excluir o bairro ${neighborhood.name}?`,
             icon: 'pi pi-exclamation-triangle',
             acceptLabel: 'Sim',
@@ -116,10 +121,11 @@ export default function Neighborhood() {
                             {suggestions.map((s) => (
                                 <div
                                     key={s.id}
-                                    className="border-border bg-primary-foreground flex items-center justify-between rounded-lg border p-3"
+                                    className="border-border bg-primary-foreground flex flex-wrap items-center justify-between gap-2 rounded-lg border p-3"
                                 >
-                                    <div className="min-w-0 flex-1">
-                                        <p className="text-foreground truncate font-semibold">{s.name}</p>
+                                    {/* Nome inteiro visível (quebra linha) para a prefeitura saber o que está aprovando */}
+                                    <div className="min-w-[10rem] flex-1">
+                                        <p className="text-foreground font-semibold break-words" title={s.name}>{s.name}</p>
                                         <p className="text-muted-foreground text-xs">
                                             {s.hits} reclamação{s.hits === 1 ? '' : 's'}
                                         </p>
@@ -195,9 +201,7 @@ export default function Neighborhood() {
                                                     <button
                                                         onClick={() => {
                                                             setSelectedNeighborhood(neighborhood);
-                                                            reset({
-                                                                name: neighborhood.name || '',
-                                                            });
+                                                            editForm.setData('name', neighborhood.name || '');
                                                             setVisible(true);
                                                         }}
                                                         disabled={processing || loading}
@@ -229,27 +233,27 @@ export default function Neighborhood() {
             </div>
             <Dialog
                 visible={visible}
-                onHide={() => { setVisible(false); reset(); setSelectedNeighborhood({}) }}
+                onHide={() => { setVisible(false); editForm.reset(); setSelectedNeighborhood({}) }}
                 header={`Modificar ${selectedNeighborhood?.name}`}
                 position="center"
                 className='w-full max-w-xl'
             >
-                <div className="flex flex-col gap-4">
+                <form onSubmit={handleUpdate} className="flex flex-col gap-4">
                     <div className="flex flex-col gap-4">
                         <InputText
-                            value={data.name}
-                            onChange={(e) => setData('name', e.target.value)}
+                            value={editForm.data.name}
+                            onChange={(e) => editForm.setData('name', e.target.value)}
                             placeholder="Nome"
                         />
                     </div>
                     <Button
-                        onClick={() => handleUpdate()}
+                        type="submit"
                         className="mt-4 self-end"
-                        disabled={processing}
+                        disabled={editForm.processing}
                     >
                         Salvar
                     </Button>
-                </div>
+                </form>
             </Dialog>
         </AppLayout>
     );

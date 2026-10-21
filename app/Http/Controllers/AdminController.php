@@ -155,7 +155,7 @@ class AdminController extends Controller
             ])
             ->orderBy('created_at', 'desc')
             ->get()
-            ->load('city');
+            ->load('city.state'); // UF: há centenas de cidades homônimas entre estados
         return Inertia::render('admin/solicitations', compact('cityRequests'));
     }
 
@@ -177,6 +177,7 @@ class AdminController extends Controller
         $direction = $request->input('direction', 'asc');
 
         $municipalities = Municipality::with(['city.state'])
+            ->withCasts(['efficiency' => 'float'])
             ->withCount(['departments as complaints_count' => function ($q) {
                 $q->join('complaints', 'departments.id', '=', 'complaints.department_id');
             }])
@@ -215,9 +216,12 @@ class AdminController extends Controller
                 break;
             case 'name':
             default:
-                $municipalities->join('cities', 'municipalities.city_id', '=', 'cities.id')
-                    ->orderBy('cities.name', $direction)
-                    ->select('municipalities.*');
+                // Ordena pelo nome da cidade via subquery: um join + select('municipalities.*')
+                // apagava as colunas agregadas (reclamações, usuários, eficiência) da listagem.
+                $municipalities->orderBy(
+                    \App\Models\City::select('name')->whereColumn('cities.id', 'municipalities.city_id'),
+                    $direction
+                );
                 break;
         }
 

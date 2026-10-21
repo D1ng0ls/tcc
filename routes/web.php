@@ -17,7 +17,7 @@ use App\Models\Complaint;
 
 require __DIR__ . '/municipality.php';
 
-Route::domain(env('APP_DOMAIN'))->group(function () {
+Route::domain(config('app.domain'))->group(function () {
     Route::get('/', [WelcomeController::class, 'index'])->name('home');
 
     Route::group([
@@ -37,7 +37,7 @@ Route::domain(env('APP_DOMAIN'))->group(function () {
         'middleware' => 'auth:web',
     ], function () {
         Route::get('/', [CityRequestController::class, 'index'])->name('index');
-        Route::post('/', [CityRequestController::class, 'store'])->name('store')->middleware('throttle:2,60');
+        Route::post('/', [CityRequestController::class, 'store'])->name('store')->middleware('throttle:5,60,solicitation'); // prefixo: contador próprio (sem ele, divide a chave com o reenvio de e-mail)
     });
 
     Route::get('cities/{stateUf}/{citySlug}', [CityController::class, 'show'])->name('cities.show');
@@ -46,6 +46,19 @@ Route::domain(env('APP_DOMAIN'))->group(function () {
     // contestar, aprovar/rejeitar continuam protegidas dentro do grupo auth abaixo.
     Route::get('/complaints/show/{complaint}', [ComplaintController::class, 'show'])->name('complaints.show');
 
+    // Listas auxiliares dos formulários (estado → cidades → bairros/departamentos). Ficam fora
+    // do 'verified' porque a solicitação de gestor (RF015/UC008) exige apenas login.
+    Route::group([
+        'prefix' => 'cities',
+        'as' => 'cities.',
+        'middleware' => 'auth:web',
+    ], function () {
+        Route::get('/{state}', [CityController::class, 'index'])->name('index');
+        Route::get('cities/{city}/neighborhoods', [CityController::class, 'neighborhoods'])->name('neighborhoods');
+        Route::get('cities/{city}/departments', [CityController::class, 'departments'])->name('departments');
+    });
+
+    // E-mail verificado é exigido para registrar e acompanhar reclamações (UC009) e no painel admin.
     Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
@@ -69,15 +82,6 @@ Route::domain(env('APP_DOMAIN'))->group(function () {
         });
 
         Route::delete('/complaint-messages/{message}', [ComplaintMessageController::class, 'destroy'])->name('complaint-messages.destroy');
-
-        Route::group([
-            'prefix' => 'cities',
-            'as' => 'cities.',
-        ], function () {
-            Route::get('/{state}', [CityController::class, 'index'])->name('index');
-            Route::get('cities/{city}/neighborhoods', [CityController::class, 'neighborhoods'])->name('neighborhoods');
-            Route::get('cities/{city}/departments', [CityController::class, 'departments'])->name('departments');
-        });
 
         Route::group([
             'prefix' => 'admin',

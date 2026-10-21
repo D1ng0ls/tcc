@@ -39,7 +39,7 @@ Routing mirrors this:
 - [routes/municipality.php](routes/municipality.php) — `cid.{APP_DOMAIN}` subdomain, uses `auth:municipality`. The municipality back-office (departments, neighborhoods, complaint workflow).
 - [routes/auth.php](routes/auth.php) and [routes/settings.php](routes/settings.php) — split out of `web.php`.
 
-Both routes files use `Route::domain(...)`, so **env `APP_DOMAIN` must be set** for routes to resolve in any environment. When adding routes, decide which guard/domain group they belong to.
+Both routes files use `Route::domain(config('app.domain'))` — set **`APP_DOMAIN`** in `.env` (falls back to the host of `APP_URL`); routes read it through config so `config:cache` in the deploy keeps working. When adding routes, decide which guard/domain group they belong to.
 
 The same complaint resource is exposed under both trees — `App\Http\Controllers\ComplaintController` (citizen view, approve/reject) and `App\Http\Controllers\Municipality\ComplaintController` (start/end workflow). `web.php` reuses the municipality controller's `start`/`end` actions for the citizen-facing patch routes.
 

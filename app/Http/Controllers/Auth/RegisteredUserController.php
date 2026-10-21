@@ -70,10 +70,20 @@ class RegisteredUserController extends Controller
             'consent_at' => now(),
         ]);
 
-        event(new Registered($user));
-
         Auth::login($user);
 
-        return to_route('dashboard');
+        // O evento dispara o envio do link de verificação. Uma falha do servidor de
+        // e-mail não pode derrubar o cadastro: a conta já existe e o cidadão pode
+        // pedir o reenvio na tela "Verifique seu e-mail".
+        try {
+            event(new Registered($user));
+        } catch (\Throwable $e) {
+            report($e);
+
+            return to_route('verification.notice')
+                ->with('error', 'Conta criada, mas não foi possível enviar o e-mail de verificação agora. Use o botão abaixo para reenviar.');
+        }
+
+        return to_route('verification.notice');
     }
 }

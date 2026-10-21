@@ -31,7 +31,6 @@ type PendingItem = {
     created_at: string;
     neighborhood: { name: string } | null;
     department: { id: number; name: string } | null;
-    user: { name: string } | null;
 };
 
 type DepartmentTotal = {

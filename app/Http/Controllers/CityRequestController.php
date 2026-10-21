@@ -35,8 +35,10 @@ class CityRequestController extends Controller
     }
     public function store(CreateRequest $request)
     {
+        // Só os campos validados: o status nasce sempre "pendente" (default do model) e
+        // não pode ser forjado no POST (ex.: status=approved furando a triagem do admin).
         CityRequest::create([
-            ...$request->all(),
+            ...$request->validated(),
             'user_id' => $request->user()->id,
         ]);
         return redirect()->back()->with('success', 'Solicitação enviada com sucesso!');

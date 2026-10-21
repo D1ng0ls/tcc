@@ -120,7 +120,6 @@ export default function Welcome() {
                     }),
                 );
                 setResults(response.data);
-                console.log(response.data);
             } catch (error) {
                 console.error('Erro na busca', error);
             } finally {

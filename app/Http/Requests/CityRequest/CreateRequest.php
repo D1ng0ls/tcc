@@ -2,6 +2,9 @@
 
 namespace App\Http\Requests\CityRequest;
 
+use App\Models\CityRequest;
+use App\Models\Municipality;
+use Closure;
 use Illuminate\Foundation\Http\FormRequest;
 use App\RequestEnum;
 
@@ -23,7 +26,28 @@ class CreateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'city_id' => 'required|exists:cities,id',
+            'city_id' => [
+                'bail',
+                'required',
+                'exists:cities,id',
+                // Prefeitura já ativa: a conta institucional existe e é gerida pelo administrador (RF018/RF020).
+                function (string $attribute, mixed $value, Closure $fail) {
+                    if (Municipality::where('city_id', $value)->where('active', true)->exists()) {
+                        $fail('A prefeitura desta cidade já está ativa na plataforma. Para trocar o responsável, fale com o administrador.');
+                    }
+                },
+                // UC008: apenas uma solicitação em aberto por par (cidadão, prefeitura).
+                function (string $attribute, mixed $value, Closure $fail) {
+                    $pending = CityRequest::where('user_id', $this->user()->id)
+                        ->where('city_id', $value)
+                        ->where('status', RequestEnum::PENDING->value)
+                        ->exists();
+
+                    if ($pending) {
+                        $fail('Você já tem uma solicitação pendente para esta cidade. Aguarde a análise do administrador.');
+                    }
+                },
+            ],
             'requester' => 'required|string|max:255',
             'email' => 'required|email|max:255',
         ];

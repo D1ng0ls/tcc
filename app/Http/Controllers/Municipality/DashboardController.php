@@ -6,6 +6,7 @@ use App\ComplaintStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Complaint;
 use App\Models\Ranking;
+use App\Support\ComplaintPrivacy;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -33,10 +34,11 @@ class DashboardController extends Controller
 
         $pendingActions = (clone $base)
             ->where('status_id', ComplaintStatus::OPEN)
-            ->with(['neighborhood', 'department', 'user'])
+            ->with(['neighborhood', 'department'])
             ->orderByDesc('id')
             ->take(5)
             ->get();
+        ComplaintPrivacy::hideAuthors($pendingActions);
 
         $byDepartment = (clone $base)
             ->selectRaw('department_id, COUNT(*) as total')

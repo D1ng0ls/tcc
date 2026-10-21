@@ -297,10 +297,11 @@ export default function Ranking() {
                                     })}
                                     className="hover:bg-muted/40 -mx-1 flex items-center gap-3 rounded-md px-1 py-1.5 transition-colors"
                                 >
+                                    {/* Na página de um estado, o top 5 é estadual: mostra a posição no estado */}
                                     <div
-                                        className={`flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold ${getMedalColor(rank.rank)}`}
+                                        className={`flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold ${getMedalColor(state ? rank.rank_state : rank.rank)}`}
                                     >
-                                        {rank.rank}
+                                        {state ? rank.rank_state : rank.rank}
                                     </div>
                                     <div className="min-w-0 flex-grow">
                                         <p className="text-foreground truncate text-sm font-semibold">{rank.city.name}</p>

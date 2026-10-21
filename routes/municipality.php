@@ -11,7 +11,7 @@ use App\Http\Controllers\Municipality\ProfileController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
-Route::domain('cid.' . env('APP_DOMAIN'))->as('municipality.')->group(function () {
+Route::domain('cid.' . config('app.domain'))->as('municipality.')->group(function () {
     Route::middleware('guest:municipality')->group(function () {
         Route::get('/', function () {
             return redirect()->route('municipality.login');

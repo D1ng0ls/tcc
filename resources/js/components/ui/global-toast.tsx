@@ -17,7 +17,12 @@ export default function GlobalToast() {
                 });
             });
         }
+    }, [props.errors]);
 
+    // Efeito separado: recargas parciais (router.reload({ only: [...] })) trazem um objeto
+    // `errors` novo mas mantêm o `flash` anterior — com um efeito só, a última mensagem
+    // de sucesso reaparecia a cada recarga.
+    useEffect(() => {
         if (props?.flash?.error) {
             toast.current?.show({
                 severity: 'error',
@@ -53,7 +58,7 @@ export default function GlobalToast() {
                 life: 4000
             });
         }
-    }, [props.errors, props.flash]);
+    }, [props.flash]);
 
     return <Toast ref={toast} />;
 }

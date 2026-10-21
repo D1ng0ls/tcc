@@ -58,6 +58,19 @@ class ProfileController extends Controller
 
         $user->save();
 
+        // Novo e-mail precisa ser confirmado de novo: envia o link para o endereço atualizado.
+        if ($user->wasChanged('email')) {
+            try {
+                $user->sendEmailVerificationNotification();
+            } catch (\Throwable $e) {
+                report($e);
+
+                return to_route('profile.edit')->with('warn', 'Perfil atualizado, mas não foi possível enviar o e-mail de verificação. Use o link "Reenviar" abaixo.');
+            }
+
+            return to_route('profile.edit')->with('success', 'Perfil atualizado. Enviamos um link de verificação para o novo e-mail.');
+        }
+
         return to_route('profile.edit')->with('success', 'Perfil atualizado com sucesso.');
     }
 

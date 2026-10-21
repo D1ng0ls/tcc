@@ -14,7 +14,7 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        User::updateOrCreate(
+        $admin = User::updateOrCreate(
             ['email' => config('app.admin.email')],
             [
                 'name' => 'admin',
@@ -24,6 +24,11 @@ class DatabaseSeeder extends Seeder
                 'role' => 'admin',
             ]
         );
+
+        // O admin não passa pelo cadastro; sem isso o painel /admin (middleware 'verified') ficaria bloqueado.
+        if (! $admin->hasVerifiedEmail()) {
+            $admin->markEmailAsVerified();
+        }
 
         $this->call([
             StateCitySeeder::class,

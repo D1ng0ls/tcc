@@ -18,10 +18,16 @@ export default function AdminSolicitations() {
 
     const breadcrumbs = [
         {
-            title: 'Dashboard',
+            title: 'Solicitações',
             href: '/admin/solicitations',
         },
     ];
+
+    const STATUS_LABELS: Record<string, string> = {
+        pending: 'Pendente',
+        approved: 'Aprovada',
+        rejected: 'Rejeitada',
+    };
 
     const refresh = () => {
         router.reload({ only: ['cityRequests'], preserveScroll: true });
@@ -43,7 +49,7 @@ export default function AdminSolicitations() {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Dashboard" />
+            <Head title="Solicitações" />
             <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
                 <div className="flex flex-row flex-wrap justify-between items-center gap-4 p-8 border border-border rounded-xl bg-primary-foreground">
                     <div>
@@ -69,12 +75,16 @@ export default function AdminSolicitations() {
                                 <tbody className="divide-y divide-muted dark:divide-muted-foreground">
                                     {(cityRequests || []).map((request: any) => (
                                         <tr className="hover:bg-muted group cursor-pointer">
-                                            <td className="px-6 py-4 whitespace-nowrap font-medium">{request.city.name}</td>
+                                            {/* sem nowrap: o " - UF" pode quebrar linha em vez de alargar a tabela */}
+                                            <td className="px-6 py-4 font-medium">
+                                                {request.city.name}
+                                                {request.city.state?.uf && <span className="whitespace-nowrap"> - {request.city.state.uf}</span>}
+                                            </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-muted-foreground">{request.requester}</td>
                                             <td className="px-6 py-4 whitespace-nowrap text-muted-foreground">{request.email}</td>
                                             <td className="px-6 py-4 whitespace-nowrap text-muted-foreground">{new Date(request.created_at).toLocaleDateString()}</td>
                                             <td className="px-6 py-4 whitespace-nowrap text-center">
-                                                <span className={`font-medium ${request.status === 'approved' ? 'text-green-700 bg-green-100' : request.status === 'rejected' ? 'text-red-700 bg-red-100' : 'text-amber-700 bg-yellow-100' } px-2 py-1 rounded-full text-xs`}>{request.status}</span>
+                                                <span className={`font-medium ${request.status === 'approved' ? 'text-green-700 bg-green-100' : request.status === 'rejected' ? 'text-red-700 bg-red-100' : 'text-amber-700 bg-yellow-100' } px-2 py-1 rounded-full text-xs`}>{STATUS_LABELS[request.status] ?? request.status}</span>
                                             </td>
                                             {request.status === 'pending' && (
                                                 <td className="px-6 py-4 whitespace-nowrap flex items-center justify-center gap-2 group-hover:opacity-100 opacity-0">

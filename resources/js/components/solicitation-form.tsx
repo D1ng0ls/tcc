@@ -20,7 +20,7 @@ export default function SolicitationForm({ initialCity }: { initialCity?: Initia
     const { auth, states } = usePage().props as any;
     const user = auth?.user;
 
-    const { data, setData, post, processing, errors } = useForm<{
+    const { data, setData, post, processing, errors, clearErrors } = useForm<{
         requester: string;
         email: string;
         city_id: number | undefined;
@@ -58,6 +58,7 @@ export default function SolicitationForm({ initialCity }: { initialCity?: Initia
     const onStateChange = (sid: number | undefined) => {
         setStateId(sid);
         setData('city_id', undefined);
+        clearErrors('city_id');
         setCities([]);
         if (sid) loadCities(sid);
     };
@@ -136,7 +137,10 @@ export default function SolicitationForm({ initialCity }: { initialCity?: Initia
                     options={cities}
                     optionLabel="name"
                     optionValue="id"
-                    onChange={(e) => setData('city_id', e.value)}
+                    onChange={(e) => {
+                        setData('city_id', e.value);
+                        clearErrors('city_id'); // o erro era da cidade anterior
+                    }}
                     placeholder={loadingCities ? 'Carregando cidades…' : 'Selecione a cidade'}
                     filter
                     showClear

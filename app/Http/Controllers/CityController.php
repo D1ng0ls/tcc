@@ -10,6 +10,7 @@ use App\Models\Department;
 use App\Models\Neighborhood;
 use App\Models\State;
 use App\Models\Status;
+use App\Support\ComplaintPrivacy;
 use Inertia\Inertia;
 
 class CityController extends Controller
@@ -38,12 +39,14 @@ class CityController extends Controller
         $departments = $city->municipality->departments()->get();
         $departmentIds = $departments->pluck('id');
 
-        // Paginação (20/pág) — usada na listagem
+        // Paginação (20/pág) — usada na listagem. Página pública: nada que identifique
+        // o autor (RNF006/RT006) e só os dados públicos da prefeitura.
         $complaintsPaginated = Complaint::whereIn('department_id', $departmentIds)
-            ->with(['status', 'neighborhood', 'department.municipality.city', 'user'])
+            ->with(['status', 'neighborhood', 'department.municipality:id,name,city_id,photo_url', 'department.municipality.city'])
             ->orderByDesc('id')
             ->paginate(20)
             ->withQueryString();
+        ComplaintPrivacy::hideAuthors($complaintsPaginated);
 
         // Agregados independentes da página (para os cards do topo)
         $totals = [

@@ -91,7 +91,7 @@ export default function AdminDisputes() {
                         <div>
                             <h1 className="text-2xl font-bold">Contestações</h1>
                             <p className="text-muted-foreground text-sm">
-                                Reclamações marcadas como não resolvidas que o cidadão contestou.
+                                Reclamações marcadas como não resolvidas pelo cidadão cuja avaliação a prefeitura contestou.
                             </p>
                         </div>
                     </div>

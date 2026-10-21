@@ -12,6 +12,7 @@ use App\Http\Requests\Complaint\CreateRequest;
 use App\Models\Complaint;
 use App\Models\State;
 use App\Models\Status;
+use App\Support\ComplaintPrivacy;
 use Illuminate\Http\Request;
 
 
@@ -79,7 +80,7 @@ class ComplaintController extends Controller
             'solved' => (clone $base)->where('status_id', \App\ComplaintStatus::SOLVED)->count(),
         ];
 
-        $query = (clone $base)->with(['status', 'neighborhood', 'department.municipality.city', 'user']);
+        $query = (clone $base)->with(['status', 'neighborhood', 'department.municipality.city']);
         $this->applyFilters($query, $request);
 
         $complaints = $query->orderByDesc('id')->paginate(20)->withQueryString();
@@ -113,7 +114,7 @@ class ComplaintController extends Controller
             'solved' => (clone $base)->where('status_id', \App\ComplaintStatus::SOLVED)->count(),
         ];
 
-        $query = (clone $base)->with(['status', 'neighborhood', 'department.municipality.city', 'user']);
+        $query = (clone $base)->with(['status', 'neighborhood', 'department.municipality.city', 'user:id,name']);
         $this->applyFilters($query, $request);
 
         $complaints = $query->orderByDesc('id')->paginate(20)->withQueryString();
@@ -141,14 +142,18 @@ class ComplaintController extends Controller
         $complaint->load(
             'status',
             'neighborhood',
+            'department.municipality:id,name,city_id,photo_url',
             'department.municipality.city.state',
             'archives',
-            'department',
-            'user:id,name', // não vaza CPF/endereço do autor (RNF006/UC011)
+            'user:id,name', // nunca CPF/endereço/e-mail do autor (RNF006/UC011)
             'messages',
             'events',
             'disputes',
         );
+
+        // Identidade do autor só para ele mesmo e para o admin; os demais veem "Cidadão".
+        ComplaintPrivacy::forViewer($complaint);
+
         return Inertia::render('complaints/show', compact('complaint'));
     }
 

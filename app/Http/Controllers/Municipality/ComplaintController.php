@@ -7,6 +7,7 @@ use App\Actions\Complaint\StartAction;
 use App\Http\Controllers\Controller;
 use App\Models\Complaint;
 use App\Models\Status;
+use App\Support\ComplaintPrivacy;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
@@ -40,7 +41,8 @@ class ComplaintController extends Controller
             'solved' => (clone $base)->where('status_id', \App\ComplaintStatus::SOLVED)->count(),
         ];
 
-        $query = (clone $base)->with(['status', 'neighborhood', 'department.municipality.city', 'user']);
+        // Sem a relação 'user': a prefeitura vê o problema, não quem o reportou (RNF006).
+        $query = (clone $base)->with(['status', 'neighborhood', 'department.municipality.city']);
 
         if ($status = $request->input('status')) {
             $query->where('status_id', (int) $status);
@@ -63,6 +65,7 @@ class ComplaintController extends Controller
         }
 
         $complaints = $query->orderByDesc('id')->paginate(20)->withQueryString();
+        ComplaintPrivacy::hideAuthors($complaints);
 
         return Inertia::render('complaints/index', [
             'complaints'  => $complaints,
@@ -86,14 +89,17 @@ class ComplaintController extends Controller
         $complaint->load(
             'status',
             'neighborhood',
+            'department.municipality:id,name,city_id,photo_url',
             'department.municipality.city.state',
             'archives',
-            'department',
-            'user',
             'messages',
             'events',
             'disputes',
         );
+
+        // A prefeitura atende o problema sem saber quem o reportou: o autor aparece como "Cidadão".
+        ComplaintPrivacy::forViewer($complaint);
+
         return Inertia::render('complaints/show', [
             'complaint' => $complaint,
         ]);

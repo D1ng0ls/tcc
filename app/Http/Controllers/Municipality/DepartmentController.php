@@ -10,6 +10,17 @@ use Inertia\Inertia;
 
 class DepartmentController extends Controller
 {
+    /**
+     * Garante que o departamento pertence à prefeitura logada. Sem isso,
+     * bastaria trocar o id na URL para editar/excluir departamentos de outra prefeitura.
+     */
+    private function authorizeDepartment(Department $department): void
+    {
+        if ((int) $department->municipality_id !== (int) auth()->guard('municipality')->user()->id) {
+            abort(403);
+        }
+    }
+
     public function index()
     {
         $departmentIds = auth()->guard('municipality')
@@ -45,6 +56,8 @@ class DepartmentController extends Controller
 
     public function update(Request $request, Department $department)
     {
+        $this->authorizeDepartment($department);
+
         if($department->is_default){
             return redirect()->back()->withErrors('Não é possível editar um departamento padrão!');
         }
@@ -53,6 +66,14 @@ class DepartmentController extends Controller
             'name' => 'required|string|max:255',
         ]);
 
+        $duplicate = Department::where('municipality_id', $department->municipality_id)
+            ->where('name', $request->name)
+            ->where('id', '!=', $department->id)
+            ->exists();
+        if ($duplicate) {
+            return redirect()->back()->withErrors('Departamento já existe!');
+        }
+
         $department->update($request->only('name'));
 
         return redirect()->route('municipality.departments.index')->with('success', 'Departamento atualizado com sucesso!');
@@ -60,28 +81,35 @@ class DepartmentController extends Controller
 
     public function destroy(Department $department)
     {
-        DB::beginTransaction();
+        $this->authorizeDepartment($department);
 
         if($department->is_default){
             return redirect()->back()->withErrors('Não é possível excluir um departamento padrão!');
         }
 
+        // Destino das reclamações realocadas (RF005): o departamento padrão "Outros" da mesma prefeitura.
+        $fallbackId = Department::where('municipality_id', $department->municipality_id)
+            ->where('name', 'Outros')
+            ->where('id', '!=', $department->id)
+            ->value('id');
+
+        if (! $fallbackId) {
+            return redirect()->back()->withErrors('Departamento "Outros" não encontrado para realocar as reclamações.');
+        }
+
         try {
-            $departmentId= auth()->guard('municipality')->user()->departments()->where('name', 'Outros')->first()->pluck('id');
+            DB::transaction(function () use ($department, $fallbackId) {
+                $department->complaints()->update([
+                    'department_id' => $fallbackId,
+                ]);
 
-            $department->complaints()->update([
-                'department_id' => $departmentId,
-            ]);
-
-            $department->delete();
-
-            DB::commit();
-
-            return redirect()->back()->with('success', 'Departamento excluído com sucesso!');
-        } catch (\Exception $e) {
-            DB::rollBack();
+                $department->delete();
+            });
+        } catch (\Throwable $e) {
             \Log::error('Erro ao excluir departamento: ' . $e->getMessage());
             return redirect()->back()->withErrors('Erro ao excluir departamento!');
         }
+
+        return redirect()->back()->with('success', 'Departamento excluído com sucesso!');
     }
 }

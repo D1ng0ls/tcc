@@ -56,6 +56,21 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Domínio da aplicação
+    |--------------------------------------------------------------------------
+    |
+    | Domínio principal (cidadãos e administrador). O painel das prefeituras
+    | responde em "cid." + este domínio (routes/municipality.php). As rotas leem
+    | config('app.domain') em vez de env() para continuar funcionando com
+    | `php artisan config:cache` (usado no deploy). Sem APP_DOMAIN, usa o host
+    | de APP_URL.
+    |
+    */
+
+    'domain' => env('APP_DOMAIN', parse_url((string) env('APP_URL', 'http://localhost'), PHP_URL_HOST)),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |
@@ -78,7 +93,7 @@ return [
     |
     */
 
-    'locale' => env('APP_LOCALE', 'en'),
+    'locale' => env('APP_LOCALE', 'pt_BR'),
 
     'fallback_locale' => env('APP_FALLBACK_LOCALE', 'en'),
 

@@ -56,8 +56,9 @@ export default function ComplaintCard({ complaint, auth }: { complaint: any, aut
                 <div className="flex items-center gap-6 mt-4 text-sm text-muted-foreground">
                     <div className="flex items-center gap-1.5"><MapPin size={16} /><span>{complaint?.department?.municipality?.city?.name}</span></div>
                     <div className="flex items-center gap-1.5"><Clock size={16} /><span>{new Date(complaint?.created_at).toLocaleDateString()}</span></div>
-                    {(auth.user?.role === 'admin' || !!auth.user?.active) && (
-                        <div className="flex items-center gap-1.5"><User size={16} /><span>{complaint?.user?.name}</span></div>
+                    {/* Autor só para o admin; prefeitura e público não recebem esse dado (RNF006). */}
+                    {auth.user?.role === 'admin' && complaint?.user?.name && (
+                        <div className="flex items-center gap-1.5"><User size={16} /><span>{complaint.user.name}</span></div>
                     )}
                     <div className="flex items-center gap-1.5"> <span className="px-3 py-1 text-xs font-medium text-primary bg-primary/10 rounded-full">{complaint?.department?.name}</span></div>
                 </div>

@@ -199,16 +199,16 @@ export default function ShowComplaint() {
     const showRejectedInfoAdmin =
         statusId === STATUS_REJECTED && isAdmin;
 
-    const [contestReason, setContestReason] = useState('');
     const [contestOpen, setContestOpen] = useState(false);
+    // O textarea escreve direto no form: chamar setData() logo antes do post() enviava o
+    // valor antigo (estado do React ainda não atualizado) e a justificativa se perdia.
     const contestForm = useForm({ reason: '' });
     const submitContest = (e: FormEvent) => {
         e.preventDefault();
-        contestForm.setData('reason', contestReason);
         contestForm.post(route('municipality.complaints.disputes.store', complaint.id), {
             preserveScroll: true,
             onSuccess: () => {
-                setContestReason('');
+                contestForm.reset();
                 setContestOpen(false);
             },
         });
@@ -242,15 +242,11 @@ export default function ShowComplaint() {
     };
 
     const startComplaint = () => {
-        let url = auth?.user?.active ? route('municipality.complaints.start', complaint.id) : route('complaints.start', complaint.id);
-        console.log(url);
-        patch(url);
+        patch(isMunicipalityCtx ? route('municipality.complaints.start', complaint.id) : route('complaints.start', complaint.id));
     };
 
     const endComplaint = () => {
-        let url = auth?.user?.active ? route('municipality.complaints.end', complaint.id) : route('complaints.end', complaint.id)
-        console.log(url);
-        patch(url);
+        patch(isMunicipalityCtx ? route('municipality.complaints.end', complaint.id) : route('complaints.end', complaint.id));
     };
 
 
@@ -286,19 +282,25 @@ export default function ShowComplaint() {
                             ) : (
                                 <form onSubmit={submitContest} className="mt-3 flex flex-col gap-2">
                                     <textarea
-                                        value={contestReason}
-                                        onChange={(e) => setContestReason(e.target.value)}
+                                        value={contestForm.data.reason}
+                                        onChange={(e) => contestForm.setData('reason', e.target.value)}
                                         placeholder="Explique por que sua prefeitura está contestando…"
                                         rows={3}
                                         maxLength={2000}
                                         className="border-border bg-background text-foreground w-full resize-y rounded-md border p-2 text-sm"
                                     />
+                                    {contestForm.errors.reason && (
+                                        <span className="text-sm text-red-500">{contestForm.errors.reason}</span>
+                                    )}
                                     <div className="flex items-center justify-end gap-2">
+                                        <span className="text-muted-foreground mr-auto text-xs">
+                                            {contestForm.data.reason.length}/2000
+                                        </span>
                                         <button
                                             type="button"
                                             onClick={() => {
                                                 setContestOpen(false);
-                                                setContestReason('');
+                                                contestForm.reset();
                                             }}
                                             className="text-muted-foreground hover:text-foreground cursor-pointer text-sm"
                                         >
@@ -327,10 +329,20 @@ export default function ShowComplaint() {
                         <Flag className="text-amber-600 mt-0.5 h-5 w-5 flex-shrink-0" />
                         <div className="flex-1">
                             <p className="font-semibold text-amber-700 dark:text-amber-300">
-                                Contestação em análise pelo administrador
+                                {isAdmin ? 'Contestação aguardando decisão do administrador' : 'Contestação em análise pelo administrador'}
                             </p>
                             <p className="text-muted-foreground mt-1 text-sm">
-                                Aguarde a decisão da equipe administrativa.
+                                {isAdmin ? (
+                                    <>
+                                        A prefeitura contestou a avaliação do cidadão. Decida em{' '}
+                                        <Link href={route('admin.disputes.index')} className="text-foreground font-medium underline">
+                                            Contestações
+                                        </Link>
+                                        .
+                                    </>
+                                ) : (
+                                    'Aguarde a decisão da equipe administrativa.'
+                                )}
                             </p>
                         </div>
                     </div>
@@ -381,17 +393,18 @@ export default function ShowComplaint() {
                     </h2>
 
                     <div className="flex items-center gap-6 mt-4 text-sm text-muted-foreground">
-                        <div className="flex items-center gap-1.5"><MapPin size={16} /><span>{complaint?.address} - {complaint?.neighborhood?.name || complaint?.district}, {complaint?.department?.municipality?.city?.name} - {complaint?.department?.municipality?.city?.state?.uf}</span></div>
+                        <div className="flex items-center gap-1.5"><MapPin size={16} /><span>{complaint?.address}{(complaint?.neighborhood?.name || complaint?.district) && <> - {complaint?.neighborhood?.name || complaint?.district}</>}, {complaint?.department?.municipality?.city?.name} - {complaint?.department?.municipality?.city?.state?.uf}</span></div>
                         <div className="flex items-center gap-1.5"><Clock size={16} /><span>{timeAgo}</span></div>
-                        {(auth.user?.role === 'admin' || auth.user?.active) && (
-                            <div className="flex items-center gap-1.5"><User size={16} /><span>{complaint?.user?.name}</span></div>
+                        {/* Identidade do autor: só o admin vê (o backend nem envia para os demais). */}
+                        {isAdmin && complaint?.user?.name && (
+                            <div className="flex items-center gap-1.5"><User size={16} /><span>{complaint.user.name}</span></div>
                         )}
                     </div>
 
                     <div className="flex justify-between items-center my-4">
                         <div className="flex items-center gap-1.5"> <span className="px-3 py-1 text-sm font-medium text-primary bg-primary/10 rounded-full">{complaint?.department?.name}</span></div>
                         <div className="flex flex-row gap-2">
-                            {(complaint?.status_id === 3 && auth.user?.role === 'user' || auth.user?.role === 'admin') && (
+                            {((statusId === 3 && isOwner) || isAdmin) && (
                                 <>
                                     <button onClick={() => approveComplaint()} className={"w-fit cursor-pointer border border-green-500 bg-primary-foreground rounded-xl py-2 px-4 group flex items-center justify-center gap-2 font-semibold text-foreground hover:bg-green-500/60 transition-all duration-200"}>
                                         Aprovar
@@ -403,7 +416,7 @@ export default function ShowComplaint() {
                                     </button>
                                 </>
                             )}
-                            {(auth.user?.active || auth.user?.role === 'admin') && (
+                            {(isMunicipalityOfComplaint || isAdmin) && (
                                 <>
                                     {(complaint?.status_id === 1 || auth.user?.role === 'admin') && (
                                         <button onClick={() => startComplaint()} className={"w-fit cursor-pointer border border-orange-500 bg-primary-foreground rounded-xl py-2 px-4 group flex items-center justify-center gap-2 font-semibold text-foreground hover:bg-orange-500/60 transition-all duration-200"}>
@@ -534,9 +547,14 @@ export default function ShowComplaint() {
                                         default:
                                             title = `Status alterado para "${toLabel}"`;
                                     }
+                                    // As descrições acima assumem o ator do fluxo normal; o admin pode
+                                    // aplicar qualquer transição, então não atribui a ação ao cidadão/prefeitura.
+                                    if (ev.actor_type === 'admin') {
+                                        description = 'Status alterado pelo administrador.';
+                                    }
                                 } else if (ev.type === 'dispute_opened') {
                                     title = 'Contestação aberta';
-                                    description = 'O cidadão pediu revisão da decisão. Aguardando análise do administrador.';
+                                    description = 'A prefeitura contestou a avaliação do cidadão. Aguardando análise do administrador.';
                                     dotColor = 'bg-amber-500';
                                     textColor = 'text-amber-500';
                                     Icon = Flag;
@@ -599,7 +617,7 @@ export default function ShowComplaint() {
                             {(complaint?.messages ?? []).length === 0 ? (
                                 <div className="border-2 border-dashed border-border rounded-lg py-8 text-center text-sm text-muted-foreground">
                                     Nenhuma mensagem ainda.{' '}
-                                    {canPostMessage && 'Seja o primeiro a escrever abaixo.'}
+                                    {canPostMessage && !chatLocked && 'Seja o primeiro a escrever abaixo.'}
                                 </div>
                             ) : (
                                 (complaint.messages as any[]).map((m) => (
@@ -611,7 +629,7 @@ export default function ShowComplaint() {
                                             <div className="flex items-center gap-2">
                                                 {messageIconFor(m)}
                                                 <span className="text-foreground text-sm font-semibold">
-                                                    {m.author_name}
+                                                    {m.author_name ?? ACTOR_LABELS[m.author_type] ?? 'Cidadão'}
                                                 </span>
                                                 {m.is_admin && (
                                                     <span className="rounded-full bg-purple-500/20 px-2 py-0.5 text-[10px] font-semibold text-purple-700 dark:text-purple-300">

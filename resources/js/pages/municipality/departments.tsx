@@ -3,7 +3,7 @@ import { BreadcrumbItem } from '@/types';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import { InputText } from 'primereact/inputtext';
 import { LoaderCircle, Plus, Search } from 'lucide-react';
-import { useState } from 'react';
+import { FormEvent, useState } from 'react';
 import { Button } from 'primereact/button';
 import { Dialog } from 'primereact/dialog';
 import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog';
@@ -22,23 +22,28 @@ export default function Department() {
 
     const [isFormVisible, setIsFormVisible] = useState(false);
 
-    const { data, setData, patch, processing, errors, reset } = useForm({
+    const { data, setData, processing, errors, reset } = useForm({
         name: '',
     });
 
-    const handleSubmit = () => {
+    const handleSubmit = (e?: FormEvent) => {
+        e?.preventDefault();
         if (processing || loading) return;
         setLoading(true);
         router.post(route('municipality.departments.store'), data, {
             onSuccess: () => { reset(); },
+            onFinish: () => setLoading(false),
         });
     };
 
-    const handleUpdate = () => {
-        if (processing || loading) return;
-        setLoading(true);
-        patch(route('municipality.departments.update', selectedDepartment.id), {
-            onSuccess: () => { setVisible(false); reset(); },
+    // Formulário próprio do diálogo "Modificar": editar não apaga o rascunho do campo Adicionar.
+    const editForm = useForm({ name: '' });
+
+    const handleUpdate = (e?: FormEvent) => {
+        e?.preventDefault();
+        if (editForm.processing) return;
+        editForm.patch(route('municipality.departments.update', selectedDepartment.id), {
+            onSuccess: () => { setVisible(false); editForm.reset(); },
         });
     };
 
@@ -46,14 +51,14 @@ export default function Department() {
         if (processing || loading) return;
         setLoading(true);
         router.delete(route('municipality.departments.destroy', department_id), {
-            onSuccess: () => setLoading(false),
+            onFinish: () => setLoading(false),
         });
     };
 
     const handleDeleteConfirm = (department: any) => {
         if (processing || loading) return;
         confirmDialog({
-            message: `Ao excluir um departamento, todos os reclamações associadas a ele serão transferidas para o departamento "Outros".`,
+            message: `Ao excluir um departamento, todas as reclamações associadas a ele serão transferidas para o departamento "Outros".`,
             header: `Tem certeza que deseja excluir o departamento ${department.name}?`,
             icon: 'pi pi-exclamation-triangle',
             acceptLabel: 'Sim',
@@ -92,7 +97,7 @@ export default function Department() {
                                             id="name"
                                             value={data.name}
                                             onChange={(e) => setData('name', e.target.value)}
-                                            placeholder="Ex: Centro"
+                                            placeholder="Ex: Iluminação Pública"
                                             className={`w-full ${errors.name ? 'p-invalid' : ''}`}
                                             autoFocus
                                         />
@@ -124,9 +129,7 @@ export default function Department() {
                                                         <button
                                                             onClick={() => {
                                                                 setSelectedDepartment(department);
-                                                                reset({
-                                                                    name: department.name || '',
-                                                                });
+                                                                editForm.setData('name', department.name || '');
                                                                 setVisible(true);
                                                             }}
                                                             disabled={processing || loading}
@@ -161,27 +164,27 @@ export default function Department() {
             </div>
             <Dialog
                 visible={visible}
-                onHide={() => { setVisible(false); reset(); setSelectedDepartment({}) }}
+                onHide={() => { setVisible(false); editForm.reset(); setSelectedDepartment({}) }}
                 header={`Modificar ${selectedDepartment?.name}`}
                 position="center"
                 className='w-full max-w-xl'
             >
-                <div className="flex flex-col gap-4">
+                <form onSubmit={handleUpdate} className="flex flex-col gap-4">
                     <div className="flex flex-col gap-4">
                         <InputText
-                            value={data.name}
-                            onChange={(e) => setData('name', e.target.value)}
+                            value={editForm.data.name}
+                            onChange={(e) => editForm.setData('name', e.target.value)}
                             placeholder="Nome"
                         />
                     </div>
                     <Button
-                        onClick={() => handleUpdate(selectedDepartment)}
+                        type="submit"
                         className="mt-4 self-end"
-                        disabled={processing}
+                        disabled={editForm.processing}
                     >
                         Salvar
                     </Button>
-                </div>
+                </form>
             </Dialog>
         </AppLayout>
     );

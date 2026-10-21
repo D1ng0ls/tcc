@@ -8,10 +8,22 @@ use App\Models\Neighborhood;
 use App\Models\NeighborhoodSuggestion;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
 class NeighborhoodController extends Controller
 {
+    /**
+     * Garante que o bairro pertence à cidade da prefeitura logada. Sem isso,
+     * bastaria trocar o id na URL para editar/excluir bairros de outra cidade.
+     */
+    private function authorizeNeighborhood(Neighborhood $neighborhood): void
+    {
+        if ((int) $neighborhood->city_id !== (int) auth()->guard('municipality')->user()->city_id) {
+            abort(403);
+        }
+    }
+
     public function index()
     {
         $municipality = auth()->guard('municipality')->user();
@@ -75,8 +87,11 @@ class NeighborhoodController extends Controller
                 'resolved_at' => now(),
             ]);
 
-            // Vincula complaints existentes com o district idêntico ao novo neighborhood
-            Complaint::whereNull('neighborhood_id')
+            // Vincula ao novo neighborhood as complaints DESTA prefeitura com o district
+            // idêntico. O escopo pelos departamentos impede capturar reclamações de
+            // outras cidades que usaram o mesmo nome livre (ex.: "Centro").
+            Complaint::whereIn('department_id', $municipality->departments()->pluck('id'))
+                ->whereNull('neighborhood_id')
                 ->where('district', $suggestion->name)
                 ->update([
                     'neighborhood_id' => $neighborhood->id,
@@ -111,11 +126,14 @@ class NeighborhoodController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-        ]);
-
         $city = auth()->guard('municipality')->user()->city;
+
+        $request->validate([
+            'name' => ['required', 'string', 'max:255', Rule::unique('neighborhoods', 'name')->where('city_id', $city->id)],
+        ], [
+            'name.required' => 'O nome do bairro é obrigatório.',
+            'name.unique' => 'Já existe um bairro com esse nome nesta cidade.',
+        ]);
 
         $city->neighborhoods()->create($request->only('name'));
 
@@ -124,8 +142,16 @@ class NeighborhoodController extends Controller
 
     public function update(Request $request, Neighborhood $neighborhood)
     {
+        $this->authorizeNeighborhood($neighborhood);
+
         $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => [
+                'required', 'string', 'max:255',
+                Rule::unique('neighborhoods', 'name')->where('city_id', $neighborhood->city_id)->ignore($neighborhood->id),
+            ],
+        ], [
+            'name.required' => 'O nome do bairro é obrigatório.',
+            'name.unique' => 'Já existe um bairro com esse nome nesta cidade.',
         ]);
 
         $neighborhood->update($request->only('name'));
@@ -135,23 +161,19 @@ class NeighborhoodController extends Controller
 
     public function destroy(Neighborhood $neighborhood)
     {
-        DB::beginTransaction();
+        $this->authorizeNeighborhood($neighborhood);
 
         try {
-            $districtName = $neighborhood->name;
+            DB::transaction(function () use ($neighborhood) {
+                // As reclamações vinculadas mantêm o nome como texto livre ("Outros").
+                $neighborhood->complaints()->update([
+                    'district' => $neighborhood->name,
+                    'neighborhood_id' => null,
+                ]);
 
-            $neighborhood->complaints()->update([
-                'district' => $districtName,
-                'neighborhood_id' => null,
-            ]);
-
-            $neighborhood->delete();
-
-            DB::commit();
-
-            return redirect()->back()->with('success', 'Bairro excluído com sucesso!');
-        } catch (\Exception $e) {
-            DB::rollBack();
+                $neighborhood->delete();
+            });
+        } catch (\Throwable $e) {
             \Log::error('Erro ao excluir bairro: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Erro ao excluir bairro!');
         }

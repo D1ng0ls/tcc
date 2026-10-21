@@ -17,7 +17,8 @@ class WelcomeController extends Controller
             'cities' => City::count(),
             'complaints' => Complaint::count(),
             'resolved' => Complaint::where('status_id', ComplaintStatus::SOLVED)->count(),
-            'users' => User::count(),
+            // "Cidadãos Ativos": só contas de cidadão com e-mail verificado (sem o admin).
+            'users' => User::where('role', 'user')->whereNotNull('email_verified_at')->count(),
         ];
 
         $latest = Ranking::orderByDesc('year')

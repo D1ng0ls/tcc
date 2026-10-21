@@ -45,3 +45,55 @@ function something()
 {
     // ..
 }
+
+/**
+ * Status na mesma ordem do StatusSeeder (ids 1..6 = constantes de App\ComplaintStatus).
+ */
+function seedComplaintStatuses(): void
+{
+    foreach ([
+        ['Aberto', 'municipality'], ['Em andamento', 'municipality'], ['Encerrado', 'municipality'],
+        ['Resolvido', 'user'], ['Não resolvido', 'user'], ['Fechado', 'system'],
+    ] as [$name, $type]) {
+        \App\Models\Status::firstOrCreate(['name' => $name], ['type' => $type]);
+    }
+}
+
+/**
+ * Cidade com prefeitura ativa e o departamento padrão "Outros".
+ *
+ * @return array{city: \App\Models\City, municipality: \App\Models\Municipality, outros: \App\Models\Department}
+ */
+function cityWithMunicipality(string $cityName): array
+{
+    $state = \App\Models\State::firstOrCreate(['uf' => 'SP'], ['name' => 'São Paulo']);
+    $slug = \Illuminate\Support\Str::slug($cityName);
+    $city = \App\Models\City::create(['name' => $cityName, 'state_id' => $state->id, 'slug' => $slug]);
+
+    $municipality = \App\Models\Municipality::create([
+        'name' => "Prefeitura de {$cityName}",
+        'email' => "prefeitura@{$slug}.sp.gov.br",
+        'password' => \Illuminate\Support\Facades\Hash::make('Senha@1234'),
+        'photo_url' => 'avatar.png',
+        'active' => true,
+        'city_id' => $city->id,
+    ]);
+
+    $outros = \App\Models\Department::create([
+        'name' => 'Outros', 'municipality_id' => $municipality->id, 'is_default' => true,
+    ]);
+
+    return ['city' => $city, 'municipality' => $municipality, 'outros' => $outros];
+}
+
+function makeComplaint(\App\Models\User $author, \App\Models\Department $department, array $attributes = []): \App\Models\Complaint
+{
+    return \App\Models\Complaint::create(array_merge([
+        'title' => 'Buraco na rua',
+        'description' => 'Buraco grande em frente ao número 100.',
+        'address' => 'Rua das Flores, 100',
+        'user_id' => $author->id,
+        'department_id' => $department->id,
+        'status_id' => \App\ComplaintStatus::OPEN,
+    ], $attributes));
+}
