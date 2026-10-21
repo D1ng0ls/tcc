@@ -34,11 +34,6 @@ php artisan event:cache
 php artisan view:cache
 php artisan optimize
 
-# Agendador do Laravel (routes/console.php — ex.: ranking diário). A imagem não tem
-# cron, então um laço em segundo plano roda schedule:run a cada minuto, como www-data
-# (mesmo dono de storage/, para não criar arquivos de log como root).
-su -s /bin/sh www-data -c 'while true; do php /var/www/html/artisan schedule:run --no-interaction >> /var/www/html/storage/logs/scheduler.log 2>&1; sleep 60; done' &
-
 php-fpm -D
 
 exec nginx -g "daemon off;"
