@@ -10,6 +10,8 @@ class Department extends Model
 
     protected $fillable = [
         'name',
+        'description',
+        'keywords',
         'municipality_id',
         'is_default'
     ];
@@ -22,5 +24,10 @@ class Department extends Model
     public function complaints()
     {
         return $this->hasMany(Complaint::class);
+    }
+
+    public function users()
+    {
+        return $this->hasMany(DepartmentUser::class);
     }
 }

@@ -10,7 +10,9 @@ import GuestLayout from '@/layouts/guest-layout';
 import { type BreadcrumbItem } from '@/types';
 import { type ReactNode } from 'react';
 import { Head, usePage, useForm, Link, router } from '@inertiajs/react';
-import { AlertCircle, ArrowLeft, Building2, Check, ClipboardList, Clock, Flag, History, Lock, MapPin, RotateCcw, Search, Send, Shield, ThumbsDown, ThumbsUp, Trash2, User, Wrench, TrafficCone, CircleCheckBig, Construction } from 'lucide-react';
+import { Dialog } from 'primereact/dialog';
+import { Dropdown } from 'primereact/dropdown';
+import { AlertCircle, ArrowLeft, ArrowRightLeft, Building2, Check, ClipboardList, Clock, Flag, History, Lock, MapPin, RotateCcw, Search, Send, Shield, ThumbsDown, ThumbsUp, Trash2, User, Wrench, TrafficCone, CircleCheckBig, Construction } from 'lucide-react';
 
 // Map status_id -> human label (curto, pra timeline)
 const STATUS_LABELS: Record<number, string> = {
@@ -37,6 +39,13 @@ const ACTOR_LABELS: Record<string, string> = {
     admin: 'Administrador',
     system: 'Sistema',
 };
+
+// Ação feita por um usuário de departamento: o departamento é público; o nome da pessoa só
+// chega do servidor para o master, para o mesmo departamento e para o admin.
+function memberLabel(row: { member_department_name?: string | null; member_name?: string | null }) {
+    if (!row.member_department_name) return '';
+    return ` · ${row.member_department_name}${row.member_name ? ` (${row.member_name})` : ''}`;
+}
 
 /**
  * Single da complaint é pública: visitantes (sem login) também acessam.
@@ -117,7 +126,7 @@ const statusStyles = {
 };
 
 export default function ShowComplaint() {
-    const { cities, states, categories, neighborhoods, complaint, auth } = usePage().props as any;
+    const { cities, states, categories, neighborhoods, complaint, auth, departments } = usePage().props as any;
     const timeAgo = useTimeAgo(complaint?.created_at);
 
     const { data, setData, patch, processing, errors, reset } = useForm({
@@ -133,8 +142,11 @@ export default function ShowComplaint() {
     const isMunicipalityCtx = auth?.guard === 'municipality';
     const isAdmin = auth?.user?.role === 'admin';
     const isOwner = auth?.guard === 'web' && auth?.user?.id === complaint?.user_id;
+    // Usuário de departamento só atende o próprio departamento; o master, a prefeitura inteira.
     const isMunicipalityOfComplaint =
-        isMunicipalityCtx && auth?.user?.id === complaint?.department?.municipality_id;
+        isMunicipalityCtx &&
+        auth?.user?.id === complaint?.department?.municipality_id &&
+        (!auth?.member || auth.member.department_id === complaint?.department_id);
     const canPostMessage = isOwner || isAdmin || isMunicipalityOfComplaint;
 
     const messageForm = useForm({ body: '' });
@@ -214,6 +226,26 @@ export default function ShowComplaint() {
         });
     };
 
+    // ---------- Encaminhar para outro departamento ----------
+    // A prefeitura corrige o departamento quando o cidadão escolheu o errado (enquanto a
+    // reclamação está aberta ou em andamento).
+    const canChangeDepartment = isMunicipalityOfComplaint && (statusId === 1 || statusId === 2);
+    const [departmentDialogOpen, setDepartmentDialogOpen] = useState(false);
+    const departmentForm = useForm<{ department_id: number | null }>({ department_id: null });
+    const otherDepartments = ((departments ?? []) as Array<{ id: number; name: string }>).filter(
+        (department) => department.id !== complaint?.department_id,
+    );
+    const submitDepartment = (e: FormEvent) => {
+        e.preventDefault();
+        departmentForm.patch(route('municipality.complaints.department', complaint.id), {
+            preserveScroll: true,
+            onSuccess: () => {
+                departmentForm.reset();
+                setDepartmentDialogOpen(false);
+            },
+        });
+    };
+
     // ---------- Timeline ----------
     const events = (complaint?.events ?? []) as Array<{
         id: number;
@@ -222,6 +254,8 @@ export default function ShowComplaint() {
         to_status: number | null;
         actor_type: string;
         actor_name: string | null;
+        member_name?: string | null;
+        member_department_name?: string | null;
         note: string | null;
         created_at: string;
     }>;
@@ -402,7 +436,19 @@ export default function ShowComplaint() {
                     </div>
 
                     <div className="flex justify-between items-center my-4">
-                        <div className="flex items-center gap-1.5"> <span className="px-3 py-1 text-sm font-medium text-primary bg-primary/10 rounded-full">{complaint?.department?.name}</span></div>
+                        <div className="flex items-center gap-2">
+                            <span className="px-3 py-1 text-sm font-medium text-primary bg-primary/10 rounded-full">{complaint?.department?.name}</span>
+                            {canChangeDepartment && (
+                                <button
+                                    type="button"
+                                    onClick={() => setDepartmentDialogOpen(true)}
+                                    className="text-muted-foreground hover:text-foreground flex cursor-pointer items-center gap-1 text-sm underline-offset-2 hover:underline"
+                                >
+                                    <ArrowRightLeft size={14} />
+                                    Encaminhar
+                                </button>
+                            )}
+                        </div>
                         <div className="flex flex-row gap-2">
                             {((statusId === 3 && isOwner) || isAdmin) && (
                                 <>
@@ -558,6 +604,12 @@ export default function ShowComplaint() {
                                     dotColor = 'bg-amber-500';
                                     textColor = 'text-amber-500';
                                     Icon = Flag;
+                                } else if (ev.type === 'department_changed') {
+                                    title = 'Encaminhada para outro departamento';
+                                    description = ev.note ?? '';
+                                    dotColor = 'bg-blue-500';
+                                    textColor = 'text-blue-500';
+                                    Icon = ArrowRightLeft;
                                 } else if (ev.type === 'dispute_resolved') {
                                     title = 'Contestação resolvida pelo administrador';
                                     description = 'A contestação foi analisada e decidida pelo admin.';
@@ -593,8 +645,9 @@ export default function ShowComplaint() {
                                             <p className="text-muted-foreground mt-1 text-xs">
                                                 Por: <span className="font-medium">{ACTOR_LABELS[ev.actor_type] ?? ev.actor_type}</span>
                                                 {ev.actor_name && <> — {ev.actor_name}</>}
+                                                {memberLabel(ev)}
                                             </p>
-                                            {ev.note && (
+                                            {ev.note && ev.type !== 'department_changed' && (
                                                 <p className="text-muted-foreground mt-1 text-xs italic">"{ev.note}"</p>
                                             )}
                                         </div>
@@ -630,6 +683,7 @@ export default function ShowComplaint() {
                                                 {messageIconFor(m)}
                                                 <span className="text-foreground text-sm font-semibold">
                                                     {m.author_name ?? ACTOR_LABELS[m.author_type] ?? 'Cidadão'}
+                                                    {memberLabel(m)}
                                                 </span>
                                                 {m.is_admin && (
                                                     <span className="rounded-full bg-purple-500/20 px-2 py-0.5 text-[10px] font-semibold text-purple-700 dark:text-purple-300">
@@ -712,6 +766,43 @@ export default function ShowComplaint() {
 
                 </div>
             </div>
+            <Dialog
+                visible={departmentDialogOpen}
+                onHide={() => {
+                    setDepartmentDialogOpen(false);
+                    departmentForm.reset();
+                    departmentForm.clearErrors();
+                }}
+                header="Encaminhar para outro departamento"
+                className="w-full max-w-lg"
+            >
+                <form onSubmit={submitDepartment} className="flex flex-col gap-4">
+                    <p className="text-muted-foreground text-sm">
+                        Hoje em <span className="text-foreground font-medium">{complaint?.department?.name}</span>. O cidadão é avisado e a
+                        mudança fica no histórico.
+                    </p>
+                    <Dropdown
+                        value={departmentForm.data.department_id}
+                        options={otherDepartments}
+                        optionLabel="name"
+                        optionValue="id"
+                        onChange={(e) => departmentForm.setData('department_id', e.value)}
+                        placeholder="Escolha o departamento"
+                        filter
+                        className="w-full"
+                    />
+                    {departmentForm.errors.department_id && (
+                        <span className="text-sm text-red-500">{departmentForm.errors.department_id}</span>
+                    )}
+                    <button
+                        type="submit"
+                        disabled={!departmentForm.data.department_id || departmentForm.processing}
+                        className="bg-primary text-primary-foreground self-end rounded-lg px-4 py-2 font-semibold disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                        {departmentForm.processing ? 'Encaminhando…' : 'Encaminhar'}
+                    </button>
+                </form>
+            </Dialog>
         </PageShell>
     );
 }

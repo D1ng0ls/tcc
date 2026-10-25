@@ -29,6 +29,8 @@ class ComplaintPrivacy
      */
     public static function forViewer(Complaint $complaint): Complaint
     {
+        self::hideMemberNames($complaint);
+
         if (self::viewerCanSeeAuthor($complaint)) {
             return $complaint;
         }
@@ -52,6 +54,39 @@ class ComplaintPrivacy
         }
 
         return $complaint;
+    }
+
+    /**
+     * Nome da pessoa da prefeitura que agiu (histórico e mensagens). O departamento é público;
+     * a pessoa só aparece para o admin, para o master da prefeitura e para quem é do mesmo
+     * departamento dela. Os demais (cidadãos, visitantes, outros departamentos) veem só o departamento.
+     */
+    public static function hideMemberNames(Complaint $complaint): void
+    {
+        $municipalityId = $complaint->department?->municipality_id;
+        $viewer = Panel::member();
+
+        $canSee = function ($row) use ($municipalityId, $viewer): bool {
+            if (auth('web')->user()?->role === 'admin') {
+                return true;
+            }
+            if (auth('municipality')->check()) {
+                return (int) auth('municipality')->id() === (int) $municipalityId;
+            }
+
+            return $viewer !== null
+                && (int) $viewer->municipality_id === (int) $municipalityId
+                && (int) $viewer->department_id === (int) $row->member_department_id;
+        };
+
+        foreach (['events', 'messages'] as $relation) {
+            if (! $complaint->relationLoaded($relation)) {
+                continue;
+            }
+            $complaint->{$relation}
+                ->filter(fn ($row) => $row->member_id && ! $canSee($row))
+                ->each->makeHidden(['member_id', 'member_name']);
+        }
     }
 
     /**

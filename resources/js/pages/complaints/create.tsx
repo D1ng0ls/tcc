@@ -1,9 +1,11 @@
 import { Label } from '@/components/ui/label';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { suggestDepartment, type DepartmentOption } from '@/lib/suggest-department';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, useForm, usePage } from '@inertiajs/react';
 import axios from 'axios';
-import { Check, UploadCloud, X } from 'lucide-react';
+import { Check, CircleHelp, Sparkles, UploadCloud, X } from 'lucide-react';
 import { Button } from 'primereact/button';
 import { Dropdown } from 'primereact/dropdown';
 import { InputText } from 'primereact/inputtext';
@@ -14,14 +16,17 @@ export default function CreateComplaints() {
     const { states, auth } = usePage().props as any;
     const [cities, setCities] = useState<any[]>([]);
     const [neighborhoods, setNeighborhoods] = useState<any[]>([]);
-    const [departments, setDepartments] = useState<any[]>([]);
+    const [departments, setDepartments] = useState<DepartmentOption[]>([]);
+    // Enquanto o cidadão não escolhe o departamento na mão, ele é sugerido pelo texto da reclamação.
+    const [departmentChosenByUser, setDepartmentChosenByUser] = useState(false);
+    const [suggestedDepartmentId, setSuggestedDepartmentId] = useState<number | null>(null);
     const [previews, setPreviews] = useState<{ url: string; name: string; type: string }[]>([]);
     const [fileErrors, setFileErrors] = useState<string[]>([]);
 
     const { data, setData, post, processing, errors, reset } = useForm({
         title: '',
         description: '',
-        department_id: 0 || null,
+        department_id: null as number | null,
         state_id: auth.user?.city?.state_id || null,
         city_id: auth.user?.city?.id || null,
         neighborhood_id: auth.user?.neighborhood?.id || null,
@@ -58,6 +63,7 @@ export default function CreateComplaints() {
             forceFormData: true,
             onSuccess: () => {
                 reset();
+                setDepartmentChosenByUser(false);
                 setPreviews([]);
                 setFileErrors([]);
             },
@@ -150,6 +156,9 @@ export default function CreateComplaints() {
 
             axios.get(route('cities.departments', { city: data.city_id })).then((response: any) => {
                 setDepartments(response.data);
+                // Departamentos de outra cidade: a escolha anterior não vale mais.
+                setData('department_id', null);
+                setDepartmentChosenByUser(false);
             });
         } else {
             setNeighborhoods([]);
@@ -158,6 +167,40 @@ export default function CreateComplaints() {
             setData('department_id', null);
         }
     }, [data.city_id]);
+
+    useEffect(() => {
+        const suggestion = suggestDepartment(`${data.title}
+${data.description}`, departments);
+        setSuggestedDepartmentId(suggestion?.id ?? null);
+        if (!departmentChosenByUser && (suggestion?.id ?? null) !== data.department_id) {
+            setData('department_id', suggestion?.id ?? null);
+        }
+    }, [data.title, data.description, departments, departmentChosenByUser]);
+
+    const selectedDepartment = departments.find((department) => department.id === data.department_id);
+    const isSuggested = !departmentChosenByUser && !!selectedDepartment && selectedDepartment.id === suggestedDepartmentId;
+
+    // Cada opção do select com o "?" explicando o que deve ser enviado para aquele departamento.
+    const departmentOptionTemplate = (department: DepartmentOption) => (
+        <div className="flex w-full items-center justify-between gap-2">
+            <span>{department.name}</span>
+            {department.description && (
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <span
+                            className="text-muted-foreground hover:text-foreground inline-flex"
+                            aria-label={`O que vai para ${department.name}`}
+                        >
+                            <CircleHelp size={16} />
+                        </span>
+                    </TooltipTrigger>
+                    <TooltipContent side="right" className="z-[2000] max-w-xs text-sm leading-snug">
+                        {department.description}
+                    </TooltipContent>
+                </Tooltip>
+            )}
+        </div>
+    );
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -352,10 +395,15 @@ export default function CreateComplaints() {
                                     <Dropdown
                                         id="department_id"
                                         value={data.department_id}
-                                        options={(departments as any) || []}
+                                        options={departments}
                                         optionLabel="name"
                                         optionValue="id"
-                                        onChange={(e) => setData('department_id', e.value)}
+                                        itemTemplate={departmentOptionTemplate}
+                                        onChange={(e) => {
+                                            setData('department_id', e.value);
+                                            // Limpar o campo devolve a escolha para a sugestão automática.
+                                            setDepartmentChosenByUser(e.value != null);
+                                        }}
                                         placeholder="Selecione o departamento"
                                         filter
                                         showClear
@@ -364,6 +412,15 @@ export default function CreateComplaints() {
                                         required
                                         disabled={!data.city_id}
                                     />
+                                    {isSuggested && (
+                                        <span className="text-primary flex items-center gap-1.5 text-sm">
+                                            <Sparkles size={14} />
+                                            Sugerido pelo texto da reclamação. Se não for o certo, é só trocar.
+                                        </span>
+                                    )}
+                                    {selectedDepartment?.description && (
+                                        <p className="text-muted-foreground text-sm">{selectedDepartment.description}</p>
+                                    )}
                                 </div>
                                 {/* Mostra qualquer erro de validação que não foi exibido inline */}
                                 {Object.keys(errors).length > 0 && (

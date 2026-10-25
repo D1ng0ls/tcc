@@ -7,19 +7,20 @@ use App\Models\Complaint;
 use App\Models\ComplaintDispute;
 use App\Support\ComplaintEventLogger;
 use App\Support\ComplaintNotifier;
+use App\Support\Panel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class ComplaintDisputeController extends Controller
 {
     /**
-     * Contestação: a Prefeitura (do departamento da complaint) abre o pedido
+     * Contestação: a Prefeitura (master ou quem é do departamento da complaint) abre o pedido
      * de revisão ao administrador depois que o cidadão marcou como
      * NÃO resolvida.
      */
     public function store(Request $request, Complaint $complaint)
     {
-        $municipality = auth('municipality')->user();
+        $municipality = Panel::municipality();
         if (! $municipality) {
             abort(403, 'Apenas a prefeitura pode abrir uma contestação.');
         }
@@ -27,6 +28,9 @@ class ComplaintDisputeController extends Controller
         $complaint->loadMissing('department');
         if (! $complaint->department || $complaint->department->municipality_id !== $municipality->id) {
             abort(403, 'Esta reclamação não pertence à sua prefeitura.');
+        }
+        if (! Panel::handles($complaint)) {
+            abort(403, 'Esta reclamação é de outro departamento.');
         }
 
         if ($complaint->status_id !== ComplaintStatus::REJECTED) {

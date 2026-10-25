@@ -1,13 +1,15 @@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
     AlertCircle,
+    Bell,
     BarChart3,
     Check,
     Clock,
     FileWarning,
     Hourglass,
+    Inbox,
     Layers,
     MapPin,
     Radar,
@@ -47,8 +49,34 @@ const formatRelativeTime = (iso: string) => {
     return `há ${Math.floor(diff / 86400)} dias`;
 };
 
+type PanelNotificationItem = {
+    id: number;
+    type: string;
+    title: string;
+    body: string | null;
+    link: string | null;
+    read_at: string | null;
+    created_at: string;
+};
+
 export default function MunicipalityDashboard() {
-    const { auth, stats, resolutionRate, pendingActions, byDepartment, cityRanking } = usePage().props as any;
+    const { auth, stats, resolutionRate, pendingActions, byDepartment, cityRanking, notifications, unreadCount } = usePage().props as any;
+    const member = auth?.member;
+    const notificationList: PanelNotificationItem[] = notifications || [];
+    const unread: number = unreadCount || 0;
+
+    const handleNotificationClick = (n: PanelNotificationItem) => {
+        if (!n.read_at) {
+            router.patch(route('municipality.notifications.read', n.id), {}, { preserveScroll: true, preserveState: true });
+        }
+        if (n.link) {
+            router.visit(n.link);
+        }
+    };
+
+    const markAllRead = () => {
+        router.patch(route('municipality.notifications.readAll'), {}, { preserveScroll: true });
+    };
     const s: Stats = stats;
     const pending: PendingItem[] = pendingActions || [];
     const deptTotals: DepartmentTotal[] = byDepartment || [];
@@ -75,11 +103,13 @@ export default function MunicipalityDashboard() {
             <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
                 <div className="border-border bg-primary-foreground flex flex-row flex-wrap items-center justify-between gap-4 rounded-xl border p-8">
                     <div>
-                        <h1 className="text-2xl font-bold">Bem vindo, {auth.user.name as string}! 🏛️</h1>
+                        <h1 className="text-2xl font-bold">Bem vindo, {(member?.name ?? auth.user.name) as string}! 🏛️</h1>
                         <p className="text-md text-muted-foreground">
                             {s.open === 0
                                 ? 'Nenhuma reclamação aguardando análise no momento.'
-                                : `Sua prefeitura tem ${s.open} reclamação(ões) aguardando análise.`}
+                                : member
+                                  ? `O departamento ${member.department_name} tem ${s.open} reclamação(ões) aguardando análise.`
+                                  : `Sua prefeitura tem ${s.open} reclamação(ões) aguardando análise.`}
                         </p>
                     </div>
                     <div className="flex items-center gap-3">
@@ -92,6 +122,47 @@ export default function MunicipalityDashboard() {
                             Ver reclamações
                         </Link>
                     </div>
+                </div>
+
+                <div className="border-border bg-primary-foreground rounded-xl border p-6">
+                    <div className="border-border flex items-center justify-between border-b pb-2">
+                        <h2 className="flex items-center gap-2 text-xl font-bold">
+                            <Bell className="h-5 w-5 text-blue-500" />
+                            Notificações
+                            {unread > 0 && (
+                                <span className="rounded-full bg-blue-500 px-2 py-0.5 text-xs font-semibold text-white">{unread}</span>
+                            )}
+                        </h2>
+                        {unread > 0 && (
+                            <button onClick={markAllRead} className="cursor-pointer text-xs text-blue-500 hover:underline">
+                                Marcar todas como lidas
+                            </button>
+                        )}
+                    </div>
+
+                    {notificationList.length === 0 ? (
+                        <p className="text-muted-foreground py-6 text-center text-sm">Nenhuma notificação nova.</p>
+                    ) : (
+                        <div className="mt-4 flex max-h-72 flex-col gap-2 overflow-y-auto pr-1">
+                            {notificationList.map((n) => (
+                                <button
+                                    key={n.id}
+                                    onClick={() => handleNotificationClick(n)}
+                                    className="border-border hover:bg-muted/40 flex w-full cursor-pointer flex-col gap-1 rounded-lg border border-blue-500/60 bg-blue-500/5 p-3 text-left transition-colors"
+                                >
+                                    <div className="flex items-start gap-2">
+                                        <Inbox className="mt-0.5 h-4 w-4 flex-shrink-0 text-blue-500" />
+                                        <div className="min-w-0 flex-1">
+                                            <p className="text-sm font-semibold">{n.title}</p>
+                                            {n.body && <p className="text-muted-foreground line-clamp-2 text-xs">{n.body}</p>}
+                                            <p className="text-muted-foreground mt-1 text-[10px]">{formatRelativeTime(n.created_at)}</p>
+                                        </div>
+                                        <span className="mt-1 h-2 w-2 flex-shrink-0 rounded-full bg-blue-500" />
+                                    </div>
+                                </button>
+                            ))}
+                        </div>
+                    )}
                 </div>
 
                 <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-4">

@@ -16,6 +16,10 @@ class ComplaintMessage extends Model
         'author_name',
         'is_admin',
         'body',
+        'member_id',
+        'member_name',
+        'member_department_id',
+        'member_department_name',
     ];
 
     protected $casts = [

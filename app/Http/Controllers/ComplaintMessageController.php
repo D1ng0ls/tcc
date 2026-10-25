@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Complaint;
 use App\Models\ComplaintMessage;
 use App\Models\UserNotification;
+use App\Support\ComplaintEventLogger;
+use App\Support\Panel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -16,7 +18,7 @@ class ComplaintMessageController extends Controller
      * Autor pode ser:
      * - cidadão dono da complaint
      * - admin (qualquer complaint)
-     * - municipality dona do departamento da complaint
+     * - municipality dona do departamento da complaint (master ou usuário daquele departamento)
      */
     public function store(Request $request, Complaint $complaint)
     {
@@ -37,7 +39,7 @@ class ComplaintMessageController extends Controller
         }
 
         $user = auth('web')->user();
-        $municipality = auth('municipality')->user();
+        $municipality = Panel::municipality();
 
         if ($user) {
             $isOwner = $user->id === $complaint->user_id;
@@ -60,6 +62,9 @@ class ComplaintMessageController extends Controller
             if (! $complaint->department || $complaint->department->municipality_id !== $municipality->id) {
                 abort(403, 'Esta reclamação não pertence à sua prefeitura.');
             }
+            if (! Panel::handles($complaint)) {
+                abort(403, 'Esta reclamação é de outro departamento.');
+            }
 
             $message = ComplaintMessage::create([
                 'complaint_id' => $complaint->id,
@@ -68,6 +73,7 @@ class ComplaintMessageController extends Controller
                 'author_name' => $municipality->name,
                 'is_admin' => false,
                 'body' => $request->input('body'),
+                ...ComplaintEventLogger::memberColumns(),
             ]);
 
             // Notifica o cidadão dono da complaint

@@ -36,4 +36,9 @@ class Municipality extends Authenticatable
     {
         return $this->hasMany(Department::class);
     }
+
+    public function departmentUsers()
+    {
+        return $this->hasMany(DepartmentUser::class);
+    }
 }

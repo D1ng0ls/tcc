@@ -25,7 +25,19 @@ class CreateRequest extends FormRequest
         return [
             'title' => 'required|string|max:255',
             'description' => 'required|string|max:65535',
-            'department_id' => 'required|exists:departments,id',
+            'department_id' => [
+                'required',
+                'exists:departments,id',
+                // O departamento precisa ser da prefeitura da cidade escolhida.
+                function ($attribute, $value, $fail) {
+                    $belongs = \App\Models\Department::whereKey($value)
+                        ->whereHas('municipality', fn ($q) => $q->where('city_id', (int) $this->city_id))
+                        ->exists();
+                    if (! $belongs) {
+                        $fail('O departamento selecionado não pertence à prefeitura desta cidade.');
+                    }
+                },
+            ],
             'state_id' => 'required|exists:states,id',
             'city_id' => 'required|exists:cities,id',
             'address' => 'required|string|max:255',

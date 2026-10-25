@@ -8,23 +8,13 @@ use Illuminate\Support\Str;
 use App\Models\City;
 use App\Models\Municipality;
 use App\Models\Department;
+use App\Support\DepartmentDefaults;
 
 class MunicipalitySeeder extends Seeder
 {
     public function run(): void
     {
-        $departmentsList = [
-            'Meio Ambiente',
-            'Saúde',
-            'Infraestrutura',
-            'Segurança Pública',
-            'Educação',
-            'Economia',
-            'Justiça',
-            'Cultura',
-            'Esporte',
-            'Outros',
-        ];
+        $departmentsList = DepartmentDefaults::DEPARTMENTS;
 
         $now = now();
 
@@ -60,9 +50,11 @@ class MunicipalitySeeder extends Seeder
 
             $allDepartments = [];
             foreach ($municipalityIds as $mId) {
-                foreach ($departmentsList as $depName) {
+                foreach ($departmentsList as $depName => $texts) {
                     $allDepartments[] = [
                         'name'            => $depName,
+                        'description'     => $texts['description'],
+                        'keywords'        => $texts['keywords'],
                         'municipality_id' => $mId,
                         'is_default'      => true,
                         'created_at'      => $now,

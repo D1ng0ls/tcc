@@ -61,4 +61,22 @@ class ComplaintNotifier
             'link' => '/complaints/show/' . $complaint->id,
         ]);
     }
+
+    /**
+     * Avisa o cidadão que a prefeitura encaminhou a reclamação para outro departamento.
+     */
+    public static function departmentChanged(Complaint $complaint, string $to): void
+    {
+        if (! $complaint->user_id) {
+            return;
+        }
+
+        UserNotification::create([
+            'user_id' => $complaint->user_id,
+            'type' => 'department_changed',
+            'title' => "Sua reclamação #{$complaint->id} foi encaminhada para o departamento {$to}",
+            'body' => $complaint->title ? Str::limit($complaint->title, 140) : null,
+            'link' => '/complaints/show/' . $complaint->id,
+        ]);
+    }
 }

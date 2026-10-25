@@ -21,6 +21,27 @@ class DepartmentController extends Controller
         }
     }
 
+    private function rules(bool $nameRequired = true): array
+    {
+        return [
+            'name' => $nameRequired ? 'required|string|max:255' : 'nullable',
+            'description' => 'nullable|string|max:500',
+            'keywords' => 'nullable|string|max:2000',
+        ];
+    }
+
+    /** Palavras-chave separadas por vírgula, sem espaços sobrando nem repetidas. */
+    private function normalizeKeywords(?string $keywords): ?string
+    {
+        $list = collect(explode(',', (string) $keywords))
+            ->map(fn ($word) => trim(preg_replace('/\s+/', ' ', $word)))
+            ->filter()
+            ->unique(fn ($word) => mb_strtolower($word))
+            ->values();
+
+        return $list->isEmpty() ? null : $list->implode(', ');
+    }
+
     public function index()
     {
         $departmentIds = auth()->guard('municipality')
@@ -29,7 +50,7 @@ class DepartmentController extends Controller
             ->pluck('id');
 
         $departments = Department::whereIn('id', $departmentIds)
-            ->withCount('complaints')
+            ->withCount(['complaints', 'users'])
             ->get();
 
         return Inertia::render('municipality/departments', [
@@ -39,9 +60,7 @@ class DepartmentController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-        ]);
+        $request->validate($this->rules());
 
         if(Department::where('name', $request->name)->where('municipality_id', auth()->guard('municipality')->user()->id)->exists()){
             return redirect()->back()->withErrors('Departamento já existe!');
@@ -49,7 +68,11 @@ class DepartmentController extends Controller
 
         $municipality = auth()->guard('municipality')->user();
 
-        $municipality->departments()->create($request->only('name'));
+        $municipality->departments()->create([
+            'name' => $request->name,
+            'description' => $request->description,
+            'keywords' => $this->normalizeKeywords($request->keywords),
+        ]);
 
         return redirect()->route('municipality.departments.index')->with('success', 'Departamento criado com sucesso!');
     }
@@ -58,13 +81,19 @@ class DepartmentController extends Controller
     {
         $this->authorizeDepartment($department);
 
+        // Departamento padrão: o nome é fixo, mas a prefeitura pode ajustar a descrição e as palavras-chave.
         if($department->is_default){
-            return redirect()->back()->withErrors('Não é possível editar um departamento padrão!');
+            $request->validate($this->rules(nameRequired: false));
+
+            $department->update([
+                'description' => $request->description,
+                'keywords' => $this->normalizeKeywords($request->keywords),
+            ]);
+
+            return redirect()->route('municipality.departments.index')->with('success', 'Departamento atualizado com sucesso!');
         }
 
-        $request->validate([
-            'name' => 'required|string|max:255',
-        ]);
+        $request->validate($this->rules());
 
         $duplicate = Department::where('municipality_id', $department->municipality_id)
             ->where('name', $request->name)
@@ -74,7 +103,11 @@ class DepartmentController extends Controller
             return redirect()->back()->withErrors('Departamento já existe!');
         }
 
-        $department->update($request->only('name'));
+        $department->update([
+            'name' => $request->name,
+            'description' => $request->description,
+            'keywords' => $this->normalizeKeywords($request->keywords),
+        ]);
 
         return redirect()->route('municipality.departments.index')->with('success', 'Departamento atualizado com sucesso!');
     }
@@ -85,6 +118,10 @@ class DepartmentController extends Controller
 
         if($department->is_default){
             return redirect()->back()->withErrors('Não é possível excluir um departamento padrão!');
+        }
+
+        if ($department->users()->exists()) {
+            return redirect()->back()->withErrors('Este departamento tem usuários. Mude-os de departamento ou remova-os em Usuários antes de excluir.');
         }
 
         // Destino das reclamações realocadas (RF005): o departamento padrão "Outros" da mesma prefeitura.

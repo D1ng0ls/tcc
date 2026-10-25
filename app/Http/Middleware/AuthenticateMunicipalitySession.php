@@ -20,23 +20,31 @@ class AuthenticateMunicipalitySession
 {
     public const SESSION_KEY = 'password_hash_municipality';
 
+    /** Mesmo controle para os usuários de departamento (senha trocada por eles ou pelo master). */
+    public const MEMBER_SESSION_KEY = 'password_hash_department';
+
     public function handle(Request $request, Closure $next): Response
     {
-        $guard = Auth::guard('municipality');
-
-        if (! $request->hasSession() || ! $guard->check()) {
+        if (! $request->hasSession()) {
             return $next($request);
         }
 
-        $currentHash = $guard->user()->getAuthPassword();
+        foreach (['municipality' => self::SESSION_KEY, 'department' => self::MEMBER_SESSION_KEY] as $guardName => $key) {
+            $guard = Auth::guard($guardName);
+            if (! $guard->check()) {
+                continue;
+            }
 
-        if (! $request->session()->has(self::SESSION_KEY)) {
-            $request->session()->put(self::SESSION_KEY, $currentHash);
-        } elseif (! hash_equals($request->session()->get(self::SESSION_KEY), $currentHash)) {
-            $guard->logout();
-            $request->session()->flush();
+            $currentHash = $guard->user()->getAuthPassword();
 
-            abort(redirect()->guest(route('municipality.login')));
+            if (! $request->session()->has($key)) {
+                $request->session()->put($key, $currentHash);
+            } elseif (! hash_equals($request->session()->get($key), $currentHash)) {
+                $guard->logout();
+                $request->session()->flush();
+
+                abort(redirect()->guest(route('municipality.login')));
+            }
         }
 
         return $next($request);

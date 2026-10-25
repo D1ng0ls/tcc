@@ -2,6 +2,7 @@ import AppLayout from '@/layouts/app-layout';
 import { BreadcrumbItem } from '@/types';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import { InputText } from 'primereact/inputtext';
+import { InputTextarea } from 'primereact/inputtextarea';
 import { LoaderCircle, Plus, Search } from 'lucide-react';
 import { FormEvent, useState } from 'react';
 import { Button } from 'primereact/button';
@@ -24,6 +25,8 @@ export default function Department() {
 
     const { data, setData, processing, errors, reset } = useForm({
         name: '',
+        description: '',
+        keywords: '',
     });
 
     const handleSubmit = (e?: FormEvent) => {
@@ -37,7 +40,7 @@ export default function Department() {
     };
 
     // Formulário próprio do diálogo "Modificar": editar não apaga o rascunho do campo Adicionar.
-    const editForm = useForm({ name: '' });
+    const editForm = useForm({ name: '', description: '', keywords: '' });
 
     const handleUpdate = (e?: FormEvent) => {
         e?.preventDefault();
@@ -103,6 +106,12 @@ export default function Department() {
                                         />
                                         <Button type="submit" label={processing || loading ? "Salvando..." : "Salvar"} className="w-xs" disabled={processing || loading} />
                                     </div>
+                                    <DepartmentTextsFields
+                                        description={data.description}
+                                        keywords={data.keywords}
+                                        onDescription={(value) => setData('description', value)}
+                                        onKeywords={(value) => setData('keywords', value)}
+                                    />
                                 </form>
                             </div>
                         )}
@@ -115,27 +124,38 @@ export default function Department() {
                                     <tr>
                                         <th className="px-6 py-3 text-left text-xs font-medium uppercase w-1/2">Departamento</th>
                                         <th className="px-6 py-3 text-center text-xs font-medium uppercase">Reclamações</th>
+                                        <th className="px-6 py-3 text-center text-xs font-medium uppercase">Pessoas</th>
                                         <th className="px-6 py-3 text-left text-xs font-medium uppercase"></th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-muted dark:divide-muted-foreground">
                                     {(departmentsFiltered as any || []).map((department: any) => (
                                         <tr key={department.id || department.name} className="hover:bg-muted/50 transition-colors w-full group cursor-pointer">
-                                            <td className="px-6 py-4 whitespace-nowrap font-medium">{department.name}</td>
+                                            <td className="px-6 py-4">
+                                                <p className="font-medium">{department.name}</p>
+                                                {department.description && (
+                                                    <p className="text-muted-foreground mt-0.5 text-sm">{department.description}</p>
+                                                )}
+                                            </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-muted-foreground text-center">{department.complaints_count}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-muted-foreground text-center">{department.users_count}</td>
                                             <td className="px-6 py-4 whitespace-nowrap flex justify-center items-center gap-2 group-hover:opacity-100 opacity-0">
+                                                <button
+                                                    onClick={() => {
+                                                        setSelectedDepartment(department);
+                                                        editForm.setData({
+                                                            name: department.name || '',
+                                                            description: department.description || '',
+                                                            keywords: department.keywords || '',
+                                                        });
+                                                        setVisible(true);
+                                                    }}
+                                                    disabled={processing || loading}
+                                                    className="px-3 py-1 rounded text-sm bg-primary-foreground text-primary cursor-pointer hover:bg-primary hover:text-primary-foreground">
+                                                    Editar
+                                                </button>
                                                 {!department.is_default ? (
                                                     <>
-                                                        <button
-                                                            onClick={() => {
-                                                                setSelectedDepartment(department);
-                                                                editForm.setData('name', department.name || '');
-                                                                setVisible(true);
-                                                            }}
-                                                            disabled={processing || loading}
-                                                            className="px-3 py-1 rounded text-sm bg-primary-foreground text-primary cursor-pointer hover:bg-primary hover:text-primary-foreground">
-                                                            Editar
-                                                        </button>
                                                         <button
                                                             onClick={() => handleDeleteConfirm(department)}
                                                             disabled={processing || loading}
@@ -175,6 +195,16 @@ export default function Department() {
                             value={editForm.data.name}
                             onChange={(e) => editForm.setData('name', e.target.value)}
                             placeholder="Nome"
+                            disabled={selectedDepartment?.is_default}
+                        />
+                        {selectedDepartment?.is_default && (
+                            <p className="text-muted-foreground -mt-2 text-sm">O nome de um departamento padrão não pode ser alterado.</p>
+                        )}
+                        <DepartmentTextsFields
+                            description={editForm.data.description}
+                            keywords={editForm.data.keywords}
+                            onDescription={(value) => editForm.setData('description', value)}
+                            onKeywords={(value) => editForm.setData('keywords', value)}
                         />
                     </div>
                     <Button
@@ -187,5 +217,50 @@ export default function Department() {
                 </form>
             </Dialog>
         </AppLayout>
+    );
+}
+
+// Texto do "?" que o cidadão vê ao escolher o departamento e as palavras usadas para sugeri-lo.
+function DepartmentTextsFields({
+    description,
+    keywords,
+    onDescription,
+    onKeywords,
+}: {
+    description: string;
+    keywords: string;
+    onDescription: (value: string) => void;
+    onKeywords: (value: string) => void;
+}) {
+    return (
+        <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium">O que deve ser enviado para este departamento</label>
+                <InputTextarea
+                    value={description}
+                    onChange={(e) => onDescription(e.target.value)}
+                    placeholder="Ex: Postes apagados, lâmpadas queimadas e ruas escuras."
+                    rows={2}
+                    maxLength={500}
+                    style={{ resize: 'none' }}
+                />
+                <p className="text-muted-foreground text-xs">Aparece no "?" ao lado do departamento quando o cidadão abre a reclamação.</p>
+            </div>
+            <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium">Palavras-chave</label>
+                <InputTextarea
+                    value={keywords}
+                    onChange={(e) => onKeywords(e.target.value)}
+                    placeholder="Ex: poste, lâmpada, apagad*, escur*"
+                    rows={3}
+                    maxLength={2000}
+                    style={{ resize: 'none' }}
+                />
+                <p className="text-muted-foreground text-xs">
+                    Separe por vírgula. Se o texto da reclamação tiver essas palavras, este departamento é sugerido. Use * no fim para pegar
+                    as variações (alag* pega alagamento, alagado, alagou).
+                </p>
+            </div>
+        </div>
     );
 }

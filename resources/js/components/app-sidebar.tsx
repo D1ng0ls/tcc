@@ -2,7 +2,7 @@ import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { Link, usePage } from '@inertiajs/react';
-import { AlertCircle, Award, FileText, Files, Inbox, Landmark, Layers, LayoutDashboard, LucideHome, Mails, MapPin, Plus } from 'lucide-react';
+import { AlertCircle, Award, FileText, Files, Inbox, Landmark, Layers, LayoutDashboard, LucideHome, Mails, MapPin, Plus, Users } from 'lucide-react';
 import AppLogo from './app-logo';
 
 const mainNavItems: any[] = [
@@ -83,11 +83,19 @@ const mainNavItems: any[] = [
                 title: 'Bairros',
                 href: route('municipality.neighborhoods.index'),
                 icon: MapPin,
+                masterOnly: true,
             },
             {
                 title: 'Departamentos',
                 href: route('municipality.departments.index'),
                 icon: Layers,
+                masterOnly: true,
+            },
+            {
+                title: 'Usuários',
+                href: route('municipality.users.index'),
+                icon: Users,
+                masterOnly: true,
             },
         ],
     },
@@ -104,21 +112,26 @@ const mainNavItems: any[] = [
 export function AppSidebar() {
     const { auth } = usePage().props as any;
 
-    const navItems = mainNavItems.filter((menu) => {
-        if (menu.category === 'Admin' && auth?.user?.role !== 'admin') {
-            return false;
-        }
+    // Usuário de departamento não vê os cadastros da prefeitura (só o master).
+    const isMember = !!auth?.member;
 
-        if (menu.category === 'Painel Municipal' && !!auth?.user?.role) {
-            return false;
-        }
+    const navItems = mainNavItems
+        .map((menu) => ({ ...menu, items: menu.items.filter((item: any) => !(item.masterOnly && isMember)) }))
+        .filter((menu) => {
+            if (menu.category === 'Admin' && auth?.user?.role !== 'admin') {
+                return false;
+            }
 
-        if (menu.category === 'Painel' && !auth?.user?.role) {
-            return false;
-        }
+            if (menu.category === 'Painel Municipal' && !!auth?.user?.role) {
+                return false;
+            }
 
-        return true;
-    });
+            if (menu.category === 'Painel' && !auth?.user?.role) {
+                return false;
+            }
+
+            return true;
+        });
 
     return (
         <Sidebar collapsible="icon" variant="inset">

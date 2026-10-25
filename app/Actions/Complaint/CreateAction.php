@@ -7,6 +7,7 @@ use App\Http\Requests\Complaint\CreateRequest;
 use App\Models\NeighborhoodSuggestion;
 use App\Models\User;
 use App\Support\ComplaintEventLogger;
+use App\Support\PanelNotifier;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -78,6 +79,7 @@ class CreateAction
             }
 
             ComplaintEventLogger::logCreated($complaint);
+            PanelNotifier::newComplaint($complaint);
 
             return $complaint;
         });
