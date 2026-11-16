@@ -5,10 +5,8 @@ namespace App\Http\Controllers\Municipality;
 use App\ComplaintStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Complaint;
-use App\Models\PanelNotification;
 use App\Models\Ranking;
 use App\Support\ComplaintPrivacy;
-use App\Support\Panel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -16,10 +14,9 @@ class DashboardController extends Controller
 {
     public function index(Request $request)
     {
-        $municipality = Panel::municipality();
+        $municipality = $request->user('municipality');
 
-        // Master: a prefeitura inteira; usuário de departamento: só o departamento dele.
-        $departmentIds = Panel::departmentIds();
+        $departmentIds = $municipality->departments()->pluck('id');
 
         $base = Complaint::whereIn('department_id', $departmentIds);
 
@@ -67,42 +64,12 @@ class DashboardController extends Controller
             }
         }
 
-        $notifications = self::notificationsQuery()->whereNull('read_at')->orderByDesc('id')->take(10)->get();
-        $unreadCount = self::notificationsQuery()->whereNull('read_at')->count();
-
         return Inertia::render('municipality/dashboard', [
-            'notifications' => $notifications,
-            'unreadCount' => $unreadCount,
             'stats' => $stats,
             'resolutionRate' => $resolutionRate,
             'pendingActions' => $pendingActions,
             'byDepartment' => $byDepartment,
             'cityRanking' => $cityRanking,
         ]);
-    }
-
-    /** Avisos de quem está logado: os da pessoa do departamento ou, para o master, os da prefeitura. */
-    public static function notificationsQuery()
-    {
-        return PanelNotification::where('municipality_id', Panel::municipality()->id)
-            ->where('department_user_id', Panel::member()?->id);
-    }
-
-    public function markAsRead(PanelNotification $notification)
-    {
-        abort_unless(self::notificationsQuery()->whereKey($notification->id)->exists(), 403);
-
-        if (! $notification->read_at) {
-            $notification->update(['read_at' => now()]);
-        }
-
-        return redirect()->back();
-    }
-
-    public function markAllAsRead()
-    {
-        self::notificationsQuery()->whereNull('read_at')->update(['read_at' => now()]);
-
-        return redirect()->back();
     }
 }

@@ -50,7 +50,7 @@ class DepartmentController extends Controller
             ->pluck('id');
 
         $departments = Department::whereIn('id', $departmentIds)
-            ->withCount(['complaints', 'users'])
+            ->withCount('complaints')
             ->get();
 
         return Inertia::render('municipality/departments', [
@@ -118,10 +118,6 @@ class DepartmentController extends Controller
 
         if($department->is_default){
             return redirect()->back()->withErrors('Não é possível excluir um departamento padrão!');
-        }
-
-        if ($department->users()->exists()) {
-            return redirect()->back()->withErrors('Este departamento tem usuários. Mude-os de departamento ou remova-os em Usuários antes de excluir.');
         }
 
         // Destino das reclamações realocadas (RF005): o departamento padrão "Outros" da mesma prefeitura.

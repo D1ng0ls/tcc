@@ -40,13 +40,6 @@ const ACTOR_LABELS: Record<string, string> = {
     system: 'Sistema',
 };
 
-// Ação feita por um usuário de departamento: o departamento é público; o nome da pessoa só
-// chega do servidor para o master, para o mesmo departamento e para o admin.
-function memberLabel(row: { member_department_name?: string | null; member_name?: string | null }) {
-    if (!row.member_department_name) return '';
-    return ` · ${row.member_department_name}${row.member_name ? ` (${row.member_name})` : ''}`;
-}
-
 /**
  * Single da complaint é pública: visitantes (sem login) também acessam.
  * AppLayout (com sidebar) para autenticados; GuestLayout para visitantes.
@@ -142,11 +135,7 @@ export default function ShowComplaint() {
     const isMunicipalityCtx = auth?.guard === 'municipality';
     const isAdmin = auth?.user?.role === 'admin';
     const isOwner = auth?.guard === 'web' && auth?.user?.id === complaint?.user_id;
-    // Usuário de departamento só atende o próprio departamento; o master, a prefeitura inteira.
-    const isMunicipalityOfComplaint =
-        isMunicipalityCtx &&
-        auth?.user?.id === complaint?.department?.municipality_id &&
-        (!auth?.member || auth.member.department_id === complaint?.department_id);
+    const isMunicipalityOfComplaint = isMunicipalityCtx && auth?.user?.id === complaint?.department?.municipality_id;
     const canPostMessage = isOwner || isAdmin || isMunicipalityOfComplaint;
 
     const messageForm = useForm({ body: '' });
@@ -254,8 +243,6 @@ export default function ShowComplaint() {
         to_status: number | null;
         actor_type: string;
         actor_name: string | null;
-        member_name?: string | null;
-        member_department_name?: string | null;
         note: string | null;
         created_at: string;
     }>;
@@ -645,7 +632,6 @@ export default function ShowComplaint() {
                                             <p className="text-muted-foreground mt-1 text-xs">
                                                 Por: <span className="font-medium">{ACTOR_LABELS[ev.actor_type] ?? ev.actor_type}</span>
                                                 {ev.actor_name && <> — {ev.actor_name}</>}
-                                                {memberLabel(ev)}
                                             </p>
                                             {ev.note && ev.type !== 'department_changed' && (
                                                 <p className="text-muted-foreground mt-1 text-xs italic">"{ev.note}"</p>
@@ -683,7 +669,6 @@ export default function ShowComplaint() {
                                                 {messageIconFor(m)}
                                                 <span className="text-foreground text-sm font-semibold">
                                                     {m.author_name ?? ACTOR_LABELS[m.author_type] ?? 'Cidadão'}
-                                                    {memberLabel(m)}
                                                 </span>
                                                 {m.is_admin && (
                                                     <span className="rounded-full bg-purple-500/20 px-2 py-0.5 text-[10px] font-semibold text-purple-700 dark:text-purple-300">

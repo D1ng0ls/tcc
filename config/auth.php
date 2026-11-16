@@ -44,11 +44,6 @@ return [
             'driver' => 'session',
             'provider' => 'municipalities',
         ],
-        // Usuários de departamento da prefeitura (o login da prefeitura é o master).
-        'department' => [
-            'driver' => 'session',
-            'provider' => 'department_users',
-        ],
     ],
 
     /*
@@ -76,10 +71,6 @@ return [
         'municipalities' => [
             'driver' => 'eloquent',
             'model' => App\Models\Municipality::class,
-        ],
-        'department_users' => [
-            'driver' => 'eloquent',
-            'model' => App\Models\DepartmentUser::class,
         ],
         // 'users' => [
         //     'driver' => 'database',

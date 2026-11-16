@@ -5,7 +5,6 @@ use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\CustomRedirectIfAuthenticated;
 use App\Http\Middleware\EnsureUserIsAdmin;
 use App\Http\Middleware\AuthenticateMunicipalitySession;
-use App\Http\Middleware\EnsurePanelMaster;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -30,8 +29,6 @@ return Application::configure(basePath: dirname(__DIR__))
             'guest:municipality' => CustomRedirectIfAuthenticated::class,
             'admin' => EnsureUserIsAdmin::class,
             'municipality.session' => AuthenticateMunicipalitySession::class,
-            'panel.guest' => CustomRedirectIfAuthenticated::class,
-            'panel.master' => EnsurePanelMaster::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

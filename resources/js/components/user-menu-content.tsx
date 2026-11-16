@@ -14,12 +14,7 @@ export function UserMenuContent({ user }: UserMenuContentProps) {
     const { auth } = usePage().props as any;
     const isMunicipality = auth?.guard === 'municipality';
 
-    const isMember = !!auth?.member;
-    const settingsRoute = isMember
-        ? route('municipality.account.edit')
-        : isMunicipality
-          ? route('municipality.settings.edit')
-          : route('profile.edit');
+    const settingsRoute = isMunicipality ? route('municipality.settings.edit') : route('profile.edit');
     const logoutRoute = isMunicipality ? route('municipality.logout') : route('logout');
 
     const handleLogout = () => {
@@ -39,7 +34,7 @@ export function UserMenuContent({ user }: UserMenuContentProps) {
                 <DropdownMenuItem asChild>
                     <Link className="block w-full" href={settingsRoute} as="button" prefetch onClick={cleanup}>
                         <Settings className="mr-2" />
-                        {isMember ? 'Minha conta' : 'Configurações'}
+                        Configurações
                     </Link>
                 </DropdownMenuItem>
             </DropdownMenuGroup>

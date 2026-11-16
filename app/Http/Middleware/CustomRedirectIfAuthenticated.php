@@ -22,7 +22,6 @@ class CustomRedirectIfAuthenticated
             if (Auth::guard($guard)->check()) {
                 switch ($guard) {
                     case 'municipality':
-                    case 'department':
                         return redirect()->route('municipality.dashboard');
 
                     default:

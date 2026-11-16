@@ -25,9 +25,4 @@ class Department extends Model
     {
         return $this->hasMany(Complaint::class);
     }
-
-    public function users()
-    {
-        return $this->hasMany(DepartmentUser::class);
-    }
 }

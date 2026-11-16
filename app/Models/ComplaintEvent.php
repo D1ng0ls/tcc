@@ -15,10 +15,6 @@ class ComplaintEvent extends Model
         'actor_id',
         'actor_name',
         'note',
-        'member_id',
-        'member_name',
-        'member_department_id',
-        'member_department_name',
     ];
 
     public function complaint()

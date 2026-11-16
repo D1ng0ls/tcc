@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Municipality;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Municipality\Auth\LoginRequest;
-use App\Models\DepartmentUser;
 use App\Models\Municipality;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Http\Request;
@@ -28,27 +27,20 @@ class AuthController extends Controller
 
         $credentials = $request->only('email', 'password');
 
-        // Mesma tela para os dois acessos: o e-mail da prefeitura entra como master; o de uma
-        // pessoa cadastrada em um departamento entra como usuário daquele departamento.
         $municipality = Municipality::where('email', $request->email)->first();
-        $member = $municipality ? null : DepartmentUser::with('municipality')->where('email', $request->email)->first();
 
-        if (!$municipality && !$member) {
+        if (!$municipality) {
             RateLimiter::hit($this->throttleKey($request));
-            return back()->withErrors('Conta não encontrada.');
+            return back()->withErrors('Município não encontrado.');
         }
 
-        if (!($municipality ?? $member->municipality)->active) {
+        if (!$municipality->active) {
             return back()->withErrors([
                 'email' => 'Essa conta está desativada.',
             ]);
         }
 
-        $guard = $municipality ? 'municipality' : 'department';
-
-        if (Auth::guard($guard)->attempt($credentials, $request->filled('remember'))) {
-            // Um acesso por vez no navegador.
-            Auth::guard($guard === 'municipality' ? 'department' : 'municipality')->logout();
+        if (Auth::guard('municipality')->attempt($credentials, $request->filled('remember'))) {
             RateLimiter::clear($this->throttleKey($request));
             $request->session()->regenerate();
             return redirect()->route('municipality.dashboard');
@@ -90,7 +82,6 @@ class AuthController extends Controller
     public function logout(Request $request)
     {
         Auth::guard('municipality')->logout();
-        Auth::guard('department')->logout();
 
         $request->session()->invalidate();
 

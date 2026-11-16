@@ -42,10 +42,7 @@ class HandleInertiaRequests extends Middleware
     {
         [$message, $author] = str(Inspiring::quotes()->random())->explode('-');
 
-        // No painel, o usuário de departamento usa as telas da prefeitura dele: auth.user é a
-        // prefeitura e auth.member diz quem é a pessoa e de qual departamento.
-        $member = \App\Support\Panel::member();
-        $municipalityUser = auth('municipality')->user() ?? $member?->municipality;
+        $municipalityUser = auth('municipality')->user();
         $webUser = auth('web')->user();
         $authUser = $municipalityUser ?? $webUser;
         $authGuard = $municipalityUser ? 'municipality' : ($webUser ? 'web' : null);
@@ -57,13 +54,6 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $authUser?->loadMissing('city.state'),
                 'guard' => $authGuard,
-                'member' => $member ? [
-                    'id' => $member->id,
-                    'name' => $member->name,
-                    'email' => $member->email,
-                    'department_id' => $member->department_id,
-                    'department_name' => $member->department?->name,
-                ] : null,
             ],
             'ziggy' => fn(): array => [
                 ...(new Ziggy)->toArray(),

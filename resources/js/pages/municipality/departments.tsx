@@ -124,7 +124,6 @@ export default function Department() {
                                     <tr>
                                         <th className="px-6 py-3 text-left text-xs font-medium uppercase w-1/2">Departamento</th>
                                         <th className="px-6 py-3 text-center text-xs font-medium uppercase">Reclamações</th>
-                                        <th className="px-6 py-3 text-center text-xs font-medium uppercase">Pessoas</th>
                                         <th className="px-6 py-3 text-left text-xs font-medium uppercase"></th>
                                     </tr>
                                 </thead>
@@ -138,7 +137,6 @@ export default function Department() {
                                                 )}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-muted-foreground text-center">{department.complaints_count}</td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-muted-foreground text-center">{department.users_count}</td>
                                             <td className="px-6 py-4 whitespace-nowrap flex justify-center items-center gap-2 group-hover:opacity-100 opacity-0">
                                                 <button
                                                     onClick={() => {
