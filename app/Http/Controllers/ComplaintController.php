@@ -192,7 +192,7 @@ class ComplaintController extends Controller
         $images = $request->file('images', []);
 
         try {
-            $createAction->execute($request, $images, $request->user());
+            $createAction->execute($request->validated(), $images, $request->user());
 
             return redirect()->route('complaints.index')->with('success', 'Reclamação enviada com sucesso!');
         } catch (\Exception $e) {

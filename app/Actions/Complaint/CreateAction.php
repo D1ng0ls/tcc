@@ -3,7 +3,6 @@
 namespace App\Actions\Complaint;
 
 use App\ComplaintStatus;
-use App\Http\Requests\Complaint\CreateRequest;
 use App\Models\NeighborhoodSuggestion;
 use App\Models\User;
 use App\Support\ComplaintEventLogger;
@@ -13,21 +12,25 @@ use Illuminate\Support\Str;
 
 class CreateAction
 {
-    public function execute(CreateRequest $request, array $files, User $user)
+    /**
+     * @param array $data dados já validados pela CreateRequest (título, descrição, endereço,
+     *                    departamento, cidade, bairro oficial ou nome livre)
+     */
+    public function execute(array $data, array $files, User $user)
     {
-        return DB::transaction(function () use ($request, $files, $user) {
+        return DB::transaction(function () use ($data, $files, $user) {
 
             // Mantém apenas as colunas presentes no $fillable do Complaint
             // (Complaint::$fillable: title, description, address, user_id, department_id,
             // municipality_id, neighborhood_id, status_id, district).
-            $complaintData = $request->only([
+            $complaintData = array_intersect_key($data, array_flip([
                 'title',
                 'description',
                 'address',
                 'department_id',
                 'neighborhood_id',
                 'district',
-            ]);
+            ]));
             $complaintData['status_id'] = ComplaintStatus::OPEN;
             // Bairro em texto livre já normalizado (UC018), igual ao nome da sugestão criada abaixo.
             if (! empty($complaintData['district'])) {
@@ -50,14 +53,14 @@ class CreateAction
             }
 
             // Se o cidadão usou bairro livre (district), registra como sugestão pra
-            // aprovação da prefeitura. city_id vem do request, fora de $fillable.
+            // aprovação da prefeitura. city_id vem dos dados validados, fora de $fillable.
             if (
                 empty($complaint->neighborhood_id) &&
                 ! empty($complaintData['district']) &&
-                $request->filled('city_id')
+                ! empty($data['city_id'])
             ) {
                 $name = NeighborhoodName::normalize($complaintData['district']);
-                $cityId = (int) $request->input('city_id');
+                $cityId = (int) $data['city_id'];
 
                 $suggestion = NeighborhoodSuggestion::firstOrNew([
                     'city_id' => $cityId,

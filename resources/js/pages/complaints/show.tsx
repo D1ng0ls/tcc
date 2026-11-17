@@ -197,8 +197,9 @@ export default function ShowComplaint() {
 
     // Status informativo (sem botão) pra admin quando ainda não foi contestado,
     // ou pra prefeitura/admin enquanto a disputa rola.
+    // A prefeitura também vê o desfecho quando a contestação dela foi ignorada (UC016).
     const showRejectedInfoAdmin =
-        statusId === STATUS_REJECTED && isAdmin;
+        statusId === STATUS_REJECTED && (isAdmin || (isMunicipalityOfComplaint && hasIgnoredDispute));
 
     const [contestOpen, setContestOpen] = useState(false);
     // O textarea escreve direto no form: chamar setData() logo antes do post() enviava o

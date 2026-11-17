@@ -4,6 +4,7 @@ namespace App\Policies;
 
 use App\Models\Complaint;
 use App\Models\Municipality;
+use App\Models\Status;
 use App\Models\User;
 use App\ComplaintStatus;
 
@@ -35,14 +36,24 @@ class ComplaintPolicy
         return true;
     }
 
+    /*
+     * A política verifica quem pode agir e em que situação; a ação revalida a situação ao executar
+     * (o que permite a exceção do administrador). Quem pode aplicar cada situação vem do "tipo" do
+     * status (Status::podeSerAplicadoPor): 'user' para a avaliação do cidadão, 'municipality' para o
+     * atendimento.
+     */
     public function approve(User $user, Complaint $complaint)
     {
-        return $user->role === 'admin' || ($user->id === $complaint->user_id && $complaint->status_id === ComplaintStatus::ENDED);
+        return $user->role === 'admin' || ($user->id === $complaint->user_id
+            && $complaint->status_id === ComplaintStatus::ENDED
+            && Status::aplicavelPor(ComplaintStatus::SOLVED, 'user'));
     }
 
     public function reject(User $user, Complaint $complaint)
     {
-        return $user->role === 'admin' || ($user->id === $complaint->user_id && $complaint->status_id === ComplaintStatus::ENDED);
+        return $user->role === 'admin' || ($user->id === $complaint->user_id
+            && $complaint->status_id === ComplaintStatus::ENDED
+            && Status::aplicavelPor(ComplaintStatus::REJECTED, 'user'));
     }
 
     public function delete(User $user, Complaint $complaint)
@@ -57,7 +68,9 @@ class ComplaintPolicy
         }
 
         if ($auth instanceof \App\Models\Municipality) {
-            return $auth->id === $complaint->department->municipality_id && $complaint->status_id === ComplaintStatus::OPEN;
+            return $auth->id === $complaint->department->municipality_id
+                && $complaint->status_id === ComplaintStatus::OPEN
+                && Status::aplicavelPor(ComplaintStatus::IN_PROGRESS, 'municipality');
         }
 
         return false;
@@ -70,7 +83,9 @@ class ComplaintPolicy
         }
 
         if ($auth instanceof \App\Models\Municipality) {
-            return $auth->id === $complaint->department->municipality_id && $complaint->status_id === ComplaintStatus::IN_PROGRESS;
+            return $auth->id === $complaint->department->municipality_id
+                && $complaint->status_id === ComplaintStatus::IN_PROGRESS
+                && Status::aplicavelPor(ComplaintStatus::ENDED, 'municipality');
         }
 
         return false;

@@ -23,6 +23,16 @@ class ComplaintEvent extends Model
         static::created(function (ComplaintEvent $event) {
             $event->complaint?->registerActivity($event->actor_type);
         });
+
+        // Histórico imutável (RNF011): um evento registrado não é alterado nem apagado pelo sistema.
+        // A única exceção é a anonimização do nome do autor quando a conta é excluída (LGPD), feita
+        // por atualização direta em User::anonymizeAndDelete().
+        static::updating(function () {
+            throw new \LogicException('Eventos do histórico da reclamação não podem ser alterados.');
+        });
+        static::deleting(function () {
+            throw new \LogicException('Eventos do histórico da reclamação não podem ser apagados.');
+        });
     }
 
     public function complaint()

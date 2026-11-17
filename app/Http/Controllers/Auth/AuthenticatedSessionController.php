@@ -33,7 +33,10 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        // Painel correspondente ao perfil (UC002): administrador no painel admin, cidadão no dashboard.
+        $home = $request->user()->role === 'admin' ? route('admin.dashboard', absolute: false) : route('dashboard', absolute: false);
+
+        return redirect()->intended($home);
     }
 
     /**
