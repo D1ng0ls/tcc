@@ -15,10 +15,13 @@ class CityRequest extends Model
         'email',
         'requester',
         'status',
+        'decided_by',
+        'decided_at',
     ];
 
     protected $casts = [
         'status' => RequestEnum::class,
+        'decided_at' => 'datetime',
     ];
 
     protected $attributes = [
@@ -28,6 +31,11 @@ class CityRequest extends Model
     public function city()
     {
         return $this->belongsTo(City::class);
+    }
+
+    public function decider()
+    {
+        return $this->belongsTo(User::class, 'decided_by');
     }
 
     public function user()

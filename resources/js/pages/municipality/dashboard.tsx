@@ -11,6 +11,7 @@ import {
     Layers,
     MapPin,
     Radar,
+    ThumbsDown,
     ThumbsUp,
     Trophy,
 } from 'lucide-react';
@@ -21,6 +22,8 @@ type Stats = {
     in_progress: number;
     ended: number;
     solved: number;
+    rejected: number;
+    novelty: number;
 };
 
 type PendingItem = {
@@ -65,6 +68,8 @@ export default function MunicipalityDashboard() {
         { title: 'Aguardando análise', value: s.open, icon: AlertCircle, color: 'bg-red-500' },
         { title: 'Em andamento', value: s.in_progress, icon: Hourglass, color: 'bg-yellow-500' },
         { title: 'Aguardando avaliação', value: s.ended, icon: Radar, color: 'bg-violet-500' },
+        { title: 'Resolvidas', value: s.solved, icon: Check, color: 'bg-green-500' },
+        { title: 'Não resolvidas', value: s.rejected, icon: ThumbsDown, color: 'bg-rose-600' },
     ];
 
     const maxDeptTotal = Math.max(1, ...deptTotals.map((d) => d.total));
@@ -80,6 +85,7 @@ export default function MunicipalityDashboard() {
                             {s.open === 0
                                 ? 'Nenhuma reclamação aguardando análise no momento.'
                                 : `Sua prefeitura tem ${s.open} reclamação(ões) aguardando análise.`}
+                            {s.novelty > 0 && ` ${s.novelty} reclamação(ões) com novidade.`}
                         </p>
                     </div>
                     <div className="flex items-center gap-3">
@@ -94,7 +100,7 @@ export default function MunicipalityDashboard() {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-4">
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3">
                     {cards.map((card) => {
                         const Icon = card.icon;
                         return (

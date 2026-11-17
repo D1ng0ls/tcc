@@ -1,6 +1,6 @@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Head, Link, router, usePage } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import { Award, Bell, Check, Clock, FileWarning, Hourglass, MapPin, MessageSquare, Plus, Radar, ThumbsUp, Trophy } from 'lucide-react';
 
 type ComplaintItem = {
@@ -46,35 +46,19 @@ const formatRelativeTime = (iso: string) => {
     return `há ${Math.floor(diff / 86400)} dias`;
 };
 
-type NotificationItem = {
+type NoveltyItem = {
     id: number;
-    type: string;
     title: string;
-    body: string | null;
-    link: string | null;
-    read_at: string | null;
-    created_at: string;
+    latest_novelty: string | null;
 };
 
 export default function Dashboard() {
-    const { auth, stats, recent, cityRanking, notifications, unreadCount } = usePage().props as any;
+    const { auth, stats, recent, cityRanking, novelties, noveltyCount } = usePage().props as any;
     const s: StatsShape = stats;
     const recentItems: ComplaintItem[] = recent || [];
-    const notificationList: NotificationItem[] = notifications || [];
-    const unread: number = unreadCount || 0;
-
-    const handleNotificationClick = (n: NotificationItem) => {
-        if (!n.read_at) {
-            router.patch(route('notifications.read', n.id), {}, { preserveScroll: true, preserveState: true });
-        }
-        if (n.link) {
-            router.visit(n.link);
-        }
-    };
-
-    const markAllRead = () => {
-        router.patch(route('notifications.readAll'), {}, { preserveScroll: true });
-    };
+    // Novidades (RF060): reclamações com notificação não lida; somem ao abrir a reclamação.
+    const noveltyList: NoveltyItem[] = novelties || [];
+    const noveltyTotal: number = noveltyCount || 0;
 
     const breadcrumbs: BreadcrumbItem[] = [
         {
@@ -188,48 +172,40 @@ export default function Dashboard() {
                         <div className="border-border flex items-center justify-between border-b pb-2">
                             <h2 className="text-xl font-bold flex items-center gap-2">
                                 <Bell className="h-5 w-5 text-blue-500" />
-                                Notificações
-                                {unread > 0 && (
-                                    <span className="ml-1 rounded-full bg-red-500 px-2 py-0.5 text-xs font-semibold text-white">
-                                        {unread}
+                                Novidades
+                                {noveltyTotal > 0 && (
+                                    <span className="ml-1 rounded-full bg-blue-600 px-2 py-0.5 text-xs font-semibold text-white">
+                                        {noveltyTotal}
                                     </span>
                                 )}
                             </h2>
-                            {unread > 0 && (
-                                <button
-                                    onClick={markAllRead}
-                                    className="text-blue-500 hover:underline text-xs cursor-pointer"
-                                >
-                                    Marcar todas como lidas
-                                </button>
-                            )}
                         </div>
+                        <p className="text-muted-foreground mt-2 text-xs">
+                            Reclamações com atualizações desde a última vez que você as abriu.
+                        </p>
 
-                        {notificationList.length === 0 ? (
+                        {noveltyList.length === 0 ? (
                             <div className="text-muted-foreground flex flex-col items-center justify-center gap-2 py-8 text-center text-sm">
                                 <Bell className="text-muted-foreground/60 h-10 w-10" />
-                                Nenhuma notificação por aqui.
+                                Nenhuma novidade nas suas reclamações.
                             </div>
                         ) : (
                             <div className="mt-4 flex max-h-72 flex-col gap-2 overflow-y-auto pr-1">
-                                {notificationList.map((n) => (
-                                    <button
-                                        key={n.id}
-                                        onClick={() => handleNotificationClick(n)}
-                                        className={`border-border hover:bg-muted/40 flex w-full flex-col gap-1 rounded-lg border p-3 text-left cursor-pointer transition-colors ${
-                                            !n.read_at ? 'border-blue-500/60 bg-blue-500/5' : ''
-                                        }`}
+                                {noveltyList.map((c) => (
+                                    <Link
+                                        key={c.id}
+                                        href={route('complaints.show', c.id)}
+                                        className="border-border hover:bg-muted/40 flex w-full flex-col gap-1 rounded-lg border border-blue-500/60 bg-blue-500/5 p-3 text-left transition-colors"
                                     >
                                         <div className="flex items-start gap-2">
                                             <MessageSquare className="text-blue-500 mt-0.5 h-4 w-4 flex-shrink-0" />
                                             <div className="min-w-0 flex-1">
-                                                <p className="text-sm font-semibold">{n.title}</p>
-                                                {n.body && <p className="text-muted-foreground text-xs line-clamp-2">{n.body}</p>}
-                                                <p className="text-muted-foreground mt-1 text-[10px]">{formatRelativeTime(n.created_at)}</p>
+                                                <p className="text-sm font-semibold">#{c.id} · {c.title}</p>
+                                                {c.latest_novelty && <p className="text-muted-foreground text-xs line-clamp-2">{c.latest_novelty}</p>}
                                             </div>
-                                            {!n.read_at && <span className="bg-blue-500 mt-1 h-2 w-2 flex-shrink-0 rounded-full" />}
+                                            <span className="bg-blue-600 mt-1 h-2 w-2 flex-shrink-0 rounded-full" />
                                         </div>
-                                    </button>
+                                    </Link>
                                 ))}
                             </div>
                         )}

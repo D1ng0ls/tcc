@@ -11,7 +11,7 @@ import ComplaintCard from '@/components/complaint-card';
 
 export default function Complaints() {
 
-    const { complaints, status, auth, viewMode, filters: initialFilters, stats, departments, cities } = usePage().props as any;
+    const { complaints, status, auth, viewMode, filters: initialFilters, stats, departments, departmentNames, cities } = usePage().props as any;
     const isAdminView = viewMode === 'admin';
     const isMunicipalityView = viewMode === 'municipality';
     // Agora todos os controllers devolvem um paginator
@@ -39,6 +39,7 @@ export default function Complaints() {
         status: number | null;
         search: string;
         department_id: number | null;
+        department_name: string | null;
         city_id: number | null;
         date_from: string;
         date_to: string;
@@ -48,6 +49,7 @@ export default function Complaints() {
         status: initialFilters?.status ? Number(initialFilters.status) : null,
         search: initialFilters?.search ?? '',
         department_id: initialFilters?.department_id ? Number(initialFilters.department_id) : null,
+        department_name: initialFilters?.department_name ?? null,
         city_id: initialFilters?.city_id ? Number(initialFilters.city_id) : null,
         date_from: initialFilters?.date_from ?? '',
         date_to: initialFilters?.date_to ?? '',
@@ -62,6 +64,7 @@ export default function Complaints() {
         const params: Record<string, string> = {};
         if (next.status) params.status = String(next.status);
         if (next.department_id) params.department_id = String(next.department_id);
+        if (next.department_name) params.department_name = next.department_name;
         if (next.city_id) params.city_id = String(next.city_id);
         if (next.date_from) params.date_from = next.date_from;
         if (next.date_to) params.date_to = next.date_to;
@@ -192,7 +195,25 @@ export default function Complaints() {
                             </div>
                         )}
 
-                        {isAdminView && (
+                        {/* Admin filtra por nome de departamento em escala nacional (cada prefeitura tem os seus). */}
+                        {isAdminView && (departmentNames?.length ?? 0) > 0 && (
+                            <div className="flex flex-col min-w-[170px] flex-1">
+                                <label className="text-sm font-medium text-muted-foreground mb-1">Departamento</label>
+                                <Dropdown
+                                    value={filters.department_name}
+                                    options={departmentNames.map((name: string) => ({ name }))}
+                                    optionLabel="name"
+                                    optionValue="name"
+                                    onChange={(e: DropdownChangeEvent) => applyFilter({ department_name: e.value ?? null })}
+                                    placeholder="Todos"
+                                    showClear
+                                    filter
+                                    className="w-full"
+                                />
+                            </div>
+                        )}
+
+                        {!isMunicipalityView && (cities?.length ?? 0) > 0 && (
                             <div className="flex flex-col min-w-[170px] flex-1">
                                 <label className="text-sm font-medium text-muted-foreground mb-1">Cidade</label>
                                 <Dropdown

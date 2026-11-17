@@ -4,9 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Complaint;
 use App\Models\ComplaintMessage;
-use App\Models\UserNotification;
+use App\Support\ComplaintNotifier;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class ComplaintMessageController extends Controller
@@ -55,6 +54,11 @@ class ComplaintMessageController extends Controller
                 'is_admin' => $isAdmin,
                 'body' => $request->input('body'),
             ]);
+
+            // Mensagem do admin avisa o cidadão autor (a do próprio cidadão marca novidade para a prefeitura).
+            if ($isAdmin && $complaint->user_id !== $user->id) {
+                ComplaintNotifier::messageReceived($complaint, 'admin', $request->input('body'));
+            }
         } elseif ($municipality) {
             $complaint->loadMissing('department');
             if (! $complaint->department || $complaint->department->municipality_id !== $municipality->id) {
@@ -70,16 +74,7 @@ class ComplaintMessageController extends Controller
                 'body' => $request->input('body'),
             ]);
 
-            // Notifica o cidadão dono da complaint
-            if ($complaint->user_id) {
-                UserNotification::create([
-                    'user_id' => $complaint->user_id,
-                    'type' => 'message_received',
-                    'title' => "A prefeitura respondeu sua reclamação #{$complaint->id}",
-                    'body' => Str::limit($request->input('body'), 140),
-                    'link' => '/complaints/show/' . $complaint->id,
-                ]);
-            }
+            ComplaintNotifier::messageReceived($complaint, 'municipality', $request->input('body'));
         } else {
             abort(401, 'Faça login para responder.');
         }

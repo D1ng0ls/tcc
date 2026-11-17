@@ -19,7 +19,6 @@ class StatusSeeder extends Seeder
             ['name' => 'Encerrado', 'type' => 'municipality'],
             ['name' => 'Resolvido', 'type' => 'user'],
             ['name' => 'Não resolvido', 'type' => 'user'],
-            ['name' => 'Fechado', 'type' => 'system']
         ];
 
         Status::upsert($status, ['name'], ['type']);

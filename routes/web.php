@@ -11,7 +11,6 @@ use App\Http\Controllers\Municipality\ComplaintController as MunicipalityComplai
 use App\Http\Controllers\RankingController;
 use App\Http\Controllers\CityRequestController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\UserNotificationController;
 use App\Http\Controllers\WelcomeController;
 use App\Models\Complaint;
 
@@ -61,11 +60,6 @@ Route::domain(config('app.domain'))->group(function () {
     // E-mail verificado é exigido para registrar e acompanhar reclamações (UC009) e no painel admin.
     Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
-
-        Route::group(['prefix' => 'notifications', 'as' => 'notifications.'], function () {
-            Route::patch('/{notification}/read', [UserNotificationController::class, 'markAsRead'])->name('read');
-            Route::patch('/read-all', [UserNotificationController::class, 'markAllAsRead'])->name('readAll');
-        });
 
         Route::group([
             'prefix' => 'complaints',

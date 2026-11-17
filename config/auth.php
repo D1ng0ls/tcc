@@ -104,6 +104,22 @@ return [
             'expire' => 60,
             'throttle' => 60,
         ],
+        // Redefinição de senha da prefeitura (RF010/UC004), com tabela de tokens própria.
+        'municipalities' => [
+            'provider' => 'municipalities',
+            'table' => 'municipality_password_reset_tokens',
+            'expire' => 60,
+            'throttle' => 60,
+        ],
+    ],
+
+    /*
+    | Limite de tentativas de login por IP (RNF013), igual para cidadão/admin e prefeitura.
+    | Só tentativas que falham contam; depois do limite, o IP espera a janela acabar.
+    */
+    'login_throttle' => [
+        'max_attempts' => (int) env('LOGIN_MAX_ATTEMPTS', 10),
+        'decay_minutes' => (int) env('LOGIN_DECAY_MINUTES', 15),
     ],
 
     /*

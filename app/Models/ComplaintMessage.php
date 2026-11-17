@@ -22,6 +22,14 @@ class ComplaintMessage extends Model
         'is_admin' => 'boolean',
     ];
 
+    protected static function booted(): void
+    {
+        // Mensagem nova também é novidade na reclamação (RF060).
+        static::created(function (ComplaintMessage $message) {
+            $message->complaint?->registerActivity($message->author_type);
+        });
+    }
+
     public function complaint()
     {
         return $this->belongsTo(Complaint::class);

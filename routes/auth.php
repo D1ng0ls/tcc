@@ -18,8 +18,8 @@ Route::middleware('guest:web')->group(function () {
     Route::get('login', [AuthenticatedSessionController::class, 'create'])
         ->name('login');
 
-    Route::post('login', [AuthenticatedSessionController::class, 'store'])
-        ->middleware(app()->isProduction() ? 'throttle:5,15' : 'throttle:100,1');
+    // Limite de tentativas por IP fica no LoginRequest (RNF013, config/auth.php login_throttle).
+    Route::post('login', [AuthenticatedSessionController::class, 'store']);
 
     Route::get('forgot-password', [PasswordResetLinkController::class, 'create'])
         ->name('password.request');

@@ -42,7 +42,7 @@ class LoginRequest extends FormRequest
         $this->ensureIsNotRateLimited();
 
         if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
-            RateLimiter::hit($this->throttleKey());
+            RateLimiter::hit($this->throttleKey(), 60 * (int) config('auth.login_throttle.decay_minutes'));
 
             throw ValidationException::withMessages([
                 'email' => __('auth.failed'),
@@ -59,7 +59,7 @@ class LoginRequest extends FormRequest
      */
     public function ensureIsNotRateLimited(): void
     {
-        if (! RateLimiter::tooManyAttempts($this->throttleKey(), 5)) {
+        if (! RateLimiter::tooManyAttempts($this->throttleKey(), (int) config('auth.login_throttle.max_attempts'))) {
             return;
         }
 
@@ -76,10 +76,10 @@ class LoginRequest extends FormRequest
     }
 
     /**
-     * Get the rate limiting throttle key for the request.
+     * Limite de tentativas por IP (RNF013); número e janela em config/auth.php (login_throttle).
      */
     public function throttleKey(): string
     {
-        return Str::transliterate(Str::lower($this->string('email')).'|'.$this->ip());
+        return 'login:web|'.$this->ip();
     }
 }

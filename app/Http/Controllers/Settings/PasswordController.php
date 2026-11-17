@@ -36,9 +36,16 @@ class PasswordController extends Controller
             'password.confirmed' => 'As senhas não coincidem.',
         ]);
 
-        $request->user()->update([
+        $user = $request->user();
+        $user->forceFill([
             'password' => Hash::make($validated['password']),
-        ]);
+            // Novo token: o "Lembrar-me" de outros aparelhos deixa de valer (RF012).
+            'remember_token' => \Illuminate\Support\Str::random(60),
+        ])->save();
+
+        // Este aparelho continua logado; se usava "Lembrar-me", recebe o cookie com o token novo.
+        $guard = \Illuminate\Support\Facades\Auth::guard('web');
+        $guard->login($user, $request->hasCookie($guard->getRecallerName()));
 
         // Invalida as demais sessões ativas do usuário (mantém a atual),
         // encerrando o acesso em outros dispositivos após a troca de senha.

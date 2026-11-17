@@ -3,6 +3,7 @@
 use App\Http\Controllers\ComplaintDisputeController;
 use App\Http\Controllers\ComplaintMessageController;
 use App\Http\Controllers\Municipality\AuthController;
+use App\Http\Controllers\Municipality\PasswordController;
 use App\Http\Controllers\Municipality\DepartmentController;
 use App\Http\Controllers\Municipality\ComplaintController;
 use App\Http\Controllers\Municipality\NeighborhoodController;
@@ -19,6 +20,12 @@ Route::domain('cid.' . config('app.domain'))->as('municipality.')->group(functio
 
         Route::get('login', [AuthController::class, 'showLoginForm'])->name('login');
         Route::post('login', [AuthController::class, 'login'])->name('login.post');
+
+        // "Esqueci a senha" da prefeitura (RF010/UC004).
+        Route::get('forgot-password', [PasswordController::class, 'create'])->name('password.request');
+        Route::post('forgot-password', [PasswordController::class, 'store'])->name('password.email')->middleware('throttle:6,1');
+        Route::get('reset-password/{token}', [PasswordController::class, 'edit'])->name('password.reset');
+        Route::post('reset-password', [PasswordController::class, 'update'])->name('password.store');
     });
 
     Route::middleware(['auth:municipality', 'municipality.session'])->group(function () {

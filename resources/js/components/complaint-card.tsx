@@ -28,10 +28,6 @@ export default function ComplaintCard({ complaint, auth }: { complaint: any, aut
             badge: 'bg-red-200 text-red-700',
             border: 'bg-red-500',
         },
-        6: {
-            badge: 'bg-stone-200 text-stone-700',
-            border: 'bg-stone-500',
-        },
     };
 
     return (
@@ -41,7 +37,16 @@ export default function ComplaintCard({ complaint, auth }: { complaint: any, aut
 
             <div className="p-6 pt-8">
                 <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm font-medium text-muted-foreground">#{complaint.id}</span>
+                    <span className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                        #{complaint.id}
+                        {/* Novidade desde a última vez que a reclamação foi aberta (RF060) */}
+                        {!!complaint?.has_novelty && (
+                            <span className="flex items-center gap-1.5 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700 dark:bg-blue-950 dark:text-blue-300">
+                                <span className="h-2 w-2 rounded-full bg-blue-600" />
+                                Novidade
+                            </span>
+                        )}
+                    </span>
                     <span className={`px-3 py-1 text-xs font-semibold rounded-full ${statusStyles[complaint?.status_id]?.badge}`}>
                         {complaint?.status?.name?.toUpperCase()}
                     </span>

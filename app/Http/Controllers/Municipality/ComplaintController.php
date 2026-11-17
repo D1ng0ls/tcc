@@ -45,7 +45,11 @@ class ComplaintController extends Controller
         ];
 
         // Sem a relação 'user': a prefeitura vê o problema, não quem o reportou (RNF006).
-        $query = (clone $base)->with(['status', 'neighborhood', 'department.municipality.city']);
+        // Novidade desde a última vez que a prefeitura abriu a reclamação vai para o topo (RF060).
+        $query = (clone $base)
+            ->with(['status', 'neighborhood', 'department.municipality.city'])
+            ->select('complaints.*')
+            ->selectRaw(Complaint::municipalityNoveltySql() . ' as has_novelty');
 
         if ($status = $request->input('status')) {
             $query->where('status_id', (int) $status);
@@ -67,7 +71,7 @@ class ComplaintController extends Controller
             $query->where('title', 'like', "%{$search}%");
         }
 
-        $complaints = $query->orderByDesc('id')->paginate(20)->withQueryString();
+        $complaints = $query->orderByDesc('has_novelty')->orderByDesc('id')->paginate(20)->withQueryString();
         ComplaintPrivacy::hideAuthors($complaints);
 
         return Inertia::render('complaints/index', [
@@ -99,6 +103,9 @@ class ComplaintController extends Controller
             'events',
             'disputes',
         );
+
+        // Abriu a reclamação: o marcador de novidade some para a prefeitura (RF060).
+        $complaint->markSeenByMunicipality();
 
         // A prefeitura atende o problema sem saber quem o reportou: o autor aparece como "Cidadão".
         ComplaintPrivacy::forViewer($complaint);

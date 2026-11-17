@@ -3,6 +3,7 @@ import { LoaderCircle } from 'lucide-react';
 import { FormEventHandler } from 'react';
 
 import InputError from '@/components/input-error';
+import TextLink from '@/components/text-link';
 import PasswordInput from '@/components/password-input';
 import PasswordRequirements from '@/components/password-requirements';
 import { Button } from '@/components/ui/button';
@@ -13,6 +14,7 @@ import AuthLayout from '@/layouts/auth-layout';
 interface ResetPasswordProps {
     token: string;
     email: string;
+    routes?: { email: string; store: string; request: string; login: string };
 }
 
 type ResetPasswordForm = {
@@ -22,7 +24,7 @@ type ResetPasswordForm = {
     password_confirmation: string;
 };
 
-export default function ResetPassword({ token, email }: ResetPasswordProps) {
+export default function ResetPassword({ token, email, routes }: ResetPasswordProps) {
     const { data, setData, post, processing, errors, reset } = useForm<Required<ResetPasswordForm>>({
         token: token,
         email: email,
@@ -32,7 +34,7 @@ export default function ResetPassword({ token, email }: ResetPasswordProps) {
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
-        post(route('password.store'), {
+        post(route(routes?.store ?? 'password.store'), {
             onFinish: () => reset('password', 'password_confirmation'),
         });
     };
@@ -56,6 +58,12 @@ export default function ResetPassword({ token, email }: ResetPasswordProps) {
                             onChange={(e) => setData('email', e.target.value)}
                         />
                         <InputError message={errors.email} className="mt-2" />
+                        {/* Link expirado ou inválido (UC004): oferece pedir um novo */}
+                        {errors.email && (
+                            <TextLink href={route(routes?.request ?? 'password.request')} className="text-sm">
+                                Solicitar um novo link
+                            </TextLink>
+                        )}
                     </div>
 
                     <div className="grid gap-2">

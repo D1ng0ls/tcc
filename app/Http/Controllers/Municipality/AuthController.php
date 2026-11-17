@@ -8,8 +8,8 @@ use App\Models\Municipality;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
-use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
@@ -18,7 +18,10 @@ class AuthController extends Controller
 {
     public function showLoginForm()
     {
-        return Inertia::render('municipality/auth/login');
+        return Inertia::render('municipality/auth/login', [
+            'canResetPassword' => true,
+            'status' => session('status'),
+        ]);
     }
 
     public function login(LoginRequest $request)
@@ -29,12 +32,17 @@ class AuthController extends Controller
 
         $municipality = Municipality::where('email', $request->email)->first();
 
-        if (!$municipality) {
-            RateLimiter::hit($this->throttleKey($request));
-            return back()->withErrors('Município não encontrado.');
+        // Mensagem genérica (UC002): não revela se o e-mail existe nem qual campo está errado.
+        if (! $municipality || ! Hash::check($request->password, $municipality->password)) {
+            $this->hit($request);
+
+            return back()->withErrors([
+                'email' => 'E-mail ou senha incorretos.',
+            ]);
         }
 
-        if (!$municipality->active) {
+        // Só depois de a senha conferir é que se informa que a conta está desativada.
+        if (! $municipality->active) {
             return back()->withErrors([
                 'email' => 'Essa conta está desativada.',
             ]);
@@ -46,19 +54,19 @@ class AuthController extends Controller
             return redirect()->route('municipality.dashboard');
         }
 
-        RateLimiter::hit($this->throttleKey($request));
+        $this->hit($request);
 
         return back()->withErrors([
-            'email' => 'As credenciais fornecidas não correspondem a nossos registros.',
+            'email' => 'E-mail ou senha incorretos.',
         ]);
     }
 
     /**
-     * Bloqueia após 5 tentativas por e-mail+IP (mesma política do login de cidadão — RNF013).
+     * Limite de tentativas de login por IP, com número e janela configuráveis (RNF013).
      */
     protected function ensureIsNotRateLimited(Request $request): void
     {
-        if (! RateLimiter::tooManyAttempts($this->throttleKey($request), 5)) {
+        if (! RateLimiter::tooManyAttempts($this->throttleKey($request), (int) config('auth.login_throttle.max_attempts'))) {
             return;
         }
 
@@ -74,11 +82,19 @@ class AuthController extends Controller
         ]);
     }
 
-    protected function throttleKey(Request $request): string
+    protected function hit(Request $request): void
     {
-        return Str::transliterate(Str::lower((string) $request->input('email')) . '|' . $request->ip() . '|municipality');
+        RateLimiter::hit($this->throttleKey($request), 60 * (int) config('auth.login_throttle.decay_minutes'));
     }
 
+    protected function throttleKey(Request $request): string
+    {
+        return 'login:municipality|' . $request->ip();
+    }
+
+    /**
+     * Sai do painel e volta para a tela de login do painel (UC003).
+     */
     public function logout(Request $request)
     {
         Auth::guard('municipality')->logout();
@@ -87,6 +103,6 @@ class AuthController extends Controller
 
         $request->session()->regenerateToken();
 
-        return redirect('/');
+        return redirect()->route('municipality.login');
     }
 }

@@ -26,6 +26,9 @@ class DashboardController extends Controller
             'in_progress' => (clone $base)->where('status_id', ComplaintStatus::IN_PROGRESS)->count(),
             'ended' => (clone $base)->where('status_id', ComplaintStatus::ENDED)->count(),
             'solved' => (clone $base)->where('status_id', ComplaintStatus::SOLVED)->count(),
+            'rejected' => (clone $base)->where('status_id', ComplaintStatus::REJECTED)->count(),
+            // Reclamações com novidade desde a última vez que a prefeitura as abriu (RF060).
+            'novelty' => (clone $base)->whereRaw(Complaint::municipalityNoveltySql() . ' = 1')->count(),
         ];
 
         $resolutionRate = $stats['total'] > 0
@@ -45,7 +48,6 @@ class DashboardController extends Controller
             ->groupBy('department_id')
             ->orderByDesc('total')
             ->with('department:id,name')
-            ->take(5)
             ->get();
 
         $cityRanking = null;

@@ -28,6 +28,15 @@ class AuthenticateMunicipalitySession
             return $next($request);
         }
 
+        // Prefeitura desativada pelo administrador (RF019): cai no próximo clique ou recarregamento.
+        if (! $guard->user()->active) {
+            $guard->logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            abort(redirect()->route('municipality.login')->withErrors(['email' => 'Essa conta está desativada.']));
+        }
+
         $currentHash = $guard->user()->getAuthPassword();
 
         if (! $request->session()->has(self::SESSION_KEY)) {

@@ -21,7 +21,7 @@ function makeRejectedComplaintScenario(): array
     // statuses na mesma ordem do StatusSeeder (REJECTED = id 5)
     foreach ([
         ['Aberto', 'municipality'], ['Em andamento', 'municipality'], ['Encerrado', 'municipality'],
-        ['Resolvido', 'user'], ['Não resolvido', 'user'], ['Fechado', 'system'],
+        ['Resolvido', 'user'], ['Não resolvido', 'user'],
     ] as [$name, $type]) {
         Status::create(['name' => $name, 'type' => $type]);
     }

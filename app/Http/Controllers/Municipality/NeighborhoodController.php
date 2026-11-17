@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Complaint;
 use App\Models\Neighborhood;
 use App\Models\NeighborhoodSuggestion;
+use App\Support\NeighborhoodName;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -127,6 +128,7 @@ class NeighborhoodController extends Controller
     public function store(Request $request)
     {
         $city = auth()->guard('municipality')->user()->city;
+        $request->merge(['name' => NeighborhoodName::normalize($request->input('name'))]);
 
         $request->validate([
             'name' => ['required', 'string', 'max:255', Rule::unique('neighborhoods', 'name')->where('city_id', $city->id)],
@@ -143,6 +145,7 @@ class NeighborhoodController extends Controller
     public function update(Request $request, Neighborhood $neighborhood)
     {
         $this->authorizeNeighborhood($neighborhood);
+        $request->merge(['name' => NeighborhoodName::normalize($request->input('name'))]);
 
         $request->validate([
             'name' => [

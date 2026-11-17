@@ -98,9 +98,31 @@ export default function AdminMunicipalities() {
         if (page < municipalities.last_page) setPage(page + 1);
     };
 
-    const handleToggle = (id: number) => {
-        router.get(route('admin.municipalities.toggle', id), {}, {
-            onSuccess: () => municipalitiesAll(),
+    const handleToggle = (target: { id: number; active: boolean; city: any }) => {
+        const cityName = `${target.city?.name ?? ''}${target.city?.state?.uf ? ' - ' + target.city.state.uf : ''}`;
+        confirmDialog({
+            message: target.active ? (
+                <div>
+                    <p>
+                        Desativar o acesso da prefeitura de <u>{cityName}</u>?
+                    </p>
+                    <p className="mt-2 text-sm text-amber-600 dark:text-amber-400">
+                        ⚠ Se ela estiver usando o painel, será desconectada no próximo clique.
+                    </p>
+                </div>
+            ) : (
+                <p>
+                    Ativar o acesso da prefeitura de <u>{cityName}</u> ao painel?
+                </p>
+            ),
+            header: target.active ? 'Desativar prefeitura' : 'Ativar prefeitura',
+            acceptLabel: target.active ? 'Desativar' : 'Ativar',
+            rejectLabel: 'Cancelar',
+            accept: () =>
+                router.get(route('admin.municipalities.toggle', target.id), {}, {
+                    onSuccess: () => municipalitiesAll(),
+                }),
+            reject: () => {},
         });
     };
 
@@ -161,10 +183,12 @@ export default function AdminMunicipalities() {
                         Você está prestes a alterar <strong>{changesList.join(' e ')}</strong> da prefeitura de{' '}
                         <u>{municipality.city?.name}</u>.
                     </p>
-                    <p className="mt-2 text-sm text-amber-600 dark:text-amber-400">
-                        ⚠ Isso vai encerrar a sessão atual dela. O responsável precisará usar as novas credenciais
-                        para acessar o painel da cidade.
-                    </p>
+                    {passwordProvided && (
+                        <p className="mt-2 text-sm text-amber-600 dark:text-amber-400">
+                            ⚠ A troca de senha encerra as sessões abertas da prefeitura. O responsável precisará usar a
+                            nova senha para acessar o painel da cidade.
+                        </p>
+                    )}
                 </div>
             ),
             header: 'Confirmar alteração',
@@ -223,6 +247,7 @@ export default function AdminMunicipalities() {
                                                 <SortIcon field="status" />
                                             </button>
                                         </th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium uppercase">E-mail de acesso</th>
                                         <th className="px-6 py-3 text-center text-xs font-medium uppercase">Usuários</th>
                                         <th className="px-6 py-3 text-center text-xs font-medium uppercase">
                                             <button
@@ -252,7 +277,7 @@ export default function AdminMunicipalities() {
                                         (municipality: {
                                             id: number;
                                             city: any;
-                                            active: true;
+                                            active: boolean;
                                             users_count: number;
                                             complaints_count: number;
                                             efficiency: number | null;
@@ -270,6 +295,7 @@ export default function AdminMunicipalities() {
                                                     </span>
                                                 </td>
 
+                                                <td className="text-muted-foreground px-6 py-4 whitespace-nowrap">{municipality.email}</td>
                                                 <td className="text-muted-foreground px-6 py-4 text-center whitespace-nowrap">
                                                     {municipality.users_count ?? 0}
                                                 </td>
@@ -318,7 +344,7 @@ export default function AdminMunicipalities() {
                                                         </button>
                                                         <button
                                                             className={`text-primary hover:bg-primary hover:text-primary-foreground cursor-pointer rounded px-3 py-1 text-sm ${!!municipality.active ? 'bg-red-600' : 'bg-green-600'}`}
-                                                            onClick={() => handleToggle(municipality.id)}
+                                                            onClick={() => handleToggle(municipality)}
                                                         >
                                                             {municipality.active ? 'Desativar' : 'Ativar'}
                                                         </button>
@@ -329,7 +355,7 @@ export default function AdminMunicipalities() {
                                     )}
                                     {((municipalities?.data as any) || []).length === 0 && (
                                         <tr>
-                                            <td colSpan={6} className="text-muted-foreground px-6 py-12 text-center whitespace-nowrap">
+                                            <td colSpan={7} className="text-muted-foreground px-6 py-12 text-center whitespace-nowrap">
                                                 {search ? (
                                                     <>
                                                         Nenhuma cidade encontrada para "

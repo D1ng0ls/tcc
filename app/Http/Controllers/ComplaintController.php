@@ -31,6 +31,11 @@ class ComplaintController extends Controller
             $query->where('department_id', (int) $departmentId);
         }
 
+        // Admin: departamento pelo nome, em todas as prefeituras (ex.: "Saúde" no país inteiro).
+        if ($departmentName = trim((string) $request->input('department_name', ''))) {
+            $query->whereHas('department', fn ($q) => $q->where('name', $departmentName));
+        }
+
         if ($cityId = $request->input('city_id')) {
             $query->whereHas('department.municipality', fn ($q) => $q->where('city_id', (int) $cityId));
         }
@@ -58,6 +63,7 @@ class ComplaintController extends Controller
         return [
             'status'        => $request->input('status'),
             'department_id' => $request->input('department_id'),
+            'department_name' => $request->input('department_name'),
             'city_id'       => $request->input('city_id'),
             'date_from'     => $request->input('date_from'),
             'date_to'       => $request->input('date_to'),
@@ -80,10 +86,18 @@ class ComplaintController extends Controller
             'solved' => (clone $base)->where('status_id', \App\ComplaintStatus::SOLVED)->count(),
         ];
 
-        $query = (clone $base)->with(['status', 'neighborhood', 'department.municipality.city']);
+        // Novidade (RF060): reclamação com notificação ainda não lida vai para o topo, com marcador.
+        $query = (clone $base)
+            ->with(['status', 'neighborhood', 'department.municipality.city'])
+            ->withExists(['notifications as has_novelty' => fn ($q) => $q->where('user_id', $user->id)->whereNull('read_at')]);
         $this->applyFilters($query, $request);
 
-        $complaints = $query->orderByDesc('id')->paginate(20)->withQueryString();
+        $complaints = $query->orderByDesc('has_novelty')->orderByDesc('id')->paginate(20)->withQueryString();
+
+        // Cidades das reclamações do próprio cidadão (fonte do filtro por cidade).
+        $cities = \App\Models\City::whereHas('municipality.departments.complaints', fn ($q) => $q->where('user_id', $user->id))
+            ->orderBy('name')
+            ->get(['id', 'name']);
 
         // Departamentos que aparecem nas reclamações do próprio cidadão (fonte do filtro).
         $departments = \App\Models\Department::whereIn(
@@ -95,6 +109,7 @@ class ComplaintController extends Controller
             'complaints'  => $complaints,
             'stats'       => $stats,
             'departments' => $departments,
+            'cities'      => $cities,
             'status'      => Status::all(),
             'filters'     => $this->filterState($request),
             'viewMode'    => 'mine',
@@ -128,6 +143,8 @@ class ComplaintController extends Controller
             'complaints'  => $complaints,
             'stats'       => $stats,
             'departments' => collect(),
+            // Nomes de departamento que têm reclamações (filtro nacional por departamento).
+            'departmentNames' => \App\Models\Department::whereHas('complaints')->distinct()->orderBy('name')->pluck('name'),
             'cities'      => $cities,
             'status'      => Status::all(),
             'filters'     => $this->filterState($request),
@@ -150,6 +167,12 @@ class ComplaintController extends Controller
             'events',
             'disputes',
         );
+
+        // O autor abriu a reclamação: as notificações dela ficam lidas e o marcador some (RF060).
+        $viewer = auth('web')->user();
+        if ($viewer && $viewer->id === $complaint->user_id) {
+            $complaint->notifications()->where('user_id', $viewer->id)->whereNull('read_at')->update(['read_at' => now()]);
+        }
 
         // Identidade do autor só para ele mesmo e para o admin; os demais veem "Cidadão".
         ComplaintPrivacy::forViewer($complaint);

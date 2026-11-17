@@ -155,7 +155,7 @@ class AdminController extends Controller
             ])
             ->orderBy('created_at', 'desc')
             ->get()
-            ->load('city.state'); // UF: há centenas de cidades homônimas entre estados
+            ->load('city.state', 'decider:id,name'); // UF: há centenas de cidades homônimas entre estados
         return Inertia::render('admin/solicitations', compact('cityRequests'));
     }
 
@@ -289,33 +289,75 @@ class AdminController extends Controller
             $updates['password'] = \Illuminate\Support\Facades\Hash::make($request->password);
         }
 
-        // Encerra sessão existente da prefeitura regenerando o remember_token
-        $updates['remember_token'] = \Illuminate\Support\Str::random(60);
+        // Troca de senha encerra as sessões abertas da prefeitura: o middleware municipality.session
+        // compara o hash da senha a cada requisição, e o novo remember_token invalida o "Lembrar-me".
+        // Trocar só o e-mail não encerra sessão (RF020).
+        if ($passwordProvided) {
+            $updates['remember_token'] = \Illuminate\Support\Str::random(60);
+        }
 
-        $municipality->update($updates);
+        // forceFill: remember_token não é preenchível em massa (um update() o ignorava em silêncio).
+        $municipality->forceFill($updates)->save();
 
         return redirect()->back()->with(
             'success',
-            'Credenciais atualizadas. A sessão anterior da prefeitura foi encerrada.'
+            $passwordProvided
+                ? 'Credenciais atualizadas. As sessões abertas da prefeitura foram encerradas.'
+                : 'E-mail da prefeitura atualizado.'
         );
     }
 
+    /**
+     * Aprova a solicitação de acesso (UC019). Só decide solicitações pendentes, não aprova
+     * quando a cidade já tem prefeitura ativa (fica só a rejeição) e registra quem decidiu e quando.
+     */
     public function approve(CityRequest $cityRequest)
     {
-        $cityRequest->update([
-            'status' => RequestEnum::APPROVED,
-        ]);
+        if ($error = $this->ensurePending($cityRequest)) {
+            return $error;
+        }
+
+        $hasActiveMunicipality = Municipality::where('city_id', $cityRequest->city_id)->where('active', true)->exists();
+        if ($hasActiveMunicipality) {
+            return redirect()->back()->withErrors([
+                'general' => 'Esta cidade já possui uma prefeitura ativa. A solicitação só pode ser rejeitada.',
+            ]);
+        }
+
+        $this->decide($cityRequest, RequestEnum::APPROVED);
 
         return redirect()->back()->with('success', 'Solicitação aprovada com sucesso');
     }
 
     public function reject(CityRequest $cityRequest)
     {
-        $cityRequest->update([
-            'status' => RequestEnum::REJECTED,
-        ]);
+        if ($error = $this->ensurePending($cityRequest)) {
+            return $error;
+        }
+
+        $this->decide($cityRequest, RequestEnum::REJECTED);
 
         return redirect()->back()->with('success', 'Solicitação rejeitada com sucesso');
+    }
+
+    private function ensurePending(CityRequest $cityRequest)
+    {
+        if ($cityRequest->status !== RequestEnum::PENDING) {
+            return redirect()->back()->withErrors([
+                'general' => 'Esta solicitação já foi analisada.',
+            ]);
+        }
+
+        return null;
+    }
+
+    private function decide(CityRequest $cityRequest, RequestEnum $status): void
+    {
+        $cityRequest->update([
+            'status' => $status,
+            'decided_by' => auth('web')->id(),
+            'decided_at' => now(),
+        ]);
     }
 
     /**
@@ -356,8 +398,8 @@ class AdminController extends Controller
             abort(403, 'Não é permitido excluir contas de administrador.');
         }
 
-        $user->delete();
+        $user->anonymizeAndDelete();
 
-        return redirect()->back()->with('success', 'Conta de cidadão excluída com sucesso.');
+        return redirect()->back()->with('success', 'Conta de cidadão excluída com sucesso. Os dados pessoais foram anonimizados.');
     }
 }

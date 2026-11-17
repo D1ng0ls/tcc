@@ -9,5 +9,4 @@ enum ComplaintStatus
     public const ENDED = 3;
     public const SOLVED = 4;
     public const REJECTED = 5;
-    public const CLOSED = 6;
 }

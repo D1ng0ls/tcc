@@ -2,7 +2,7 @@ import AppLayout from '@/layouts/app-layout';
 import GuestLayout from '@/layouts/guest-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { ChevronLeft, ChevronRight, MapPin, Search, SearchX, Trophy } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Info, MapPin, Search, SearchX, Trophy } from 'lucide-react';
 import { InputText } from 'primereact/inputtext';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 
@@ -95,6 +95,26 @@ export default function Ranking() {
         <PageShell isAuthenticated={isAuthenticated} breadcrumbs={breadcrumbs}>
             <div className="grid grid-cols-1 gap-6 p-4 lg:grid-cols-3">
                 <div className="order-2 flex flex-col gap-6 lg:order-1 lg:col-span-2">
+                    {/* Metodologia do índice de resolução, pública (UC014) */}
+                    <details className="border-border group rounded-xl border bg-gray-100 p-4 text-sm dark:bg-zinc-900">
+                        <summary className="text-foreground flex cursor-pointer list-none items-center gap-2 font-medium">
+                            <Info size={18} className="text-blue-500" />
+                            Como o ranking é calculado
+                        </summary>
+                        <div className="text-muted-foreground mt-3 flex flex-col gap-2">
+                            <p>
+                                O <strong>índice de resolução</strong> de cada cidade é a porcentagem de reclamações marcadas como
+                                resolvidas em relação ao total de reclamações registradas na cidade, desde o início. Reclamações
+                                ainda abertas ou não resolvidas continuam contando no total.
+                            </p>
+                            <p>
+                                Em caso de empate, fica à frente a cidade com mais reclamações registradas e, depois, a ordem
+                                alfabética. O ranking dos estados usa a média do índice das suas cidades.
+                            </p>
+                            <p>O cálculo é refeito automaticamente todos os dias, à meia-noite.</p>
+                        </div>
+                    </details>
+
                     {!city && (
                         <div className="border-border flex items-center gap-3 rounded-xl border bg-gray-100 p-4 dark:bg-zinc-900">
                             <Search size={18} className="text-muted-foreground flex-shrink-0" />

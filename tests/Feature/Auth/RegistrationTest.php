@@ -17,7 +17,7 @@ function newCitizenPayload(int $cityId): array
         'email' => 'test@example.com',
         'password' => 'Senha@1234',
         'password_confirmation' => 'Senha@1234',
-        'cpf' => '123.456.789-01',
+        'cpf' => '529.982.247-25',
         'birth_date' => '2000-01-01',
         'city_id' => $cityId,
         'address' => 'Rua Teste, 100',

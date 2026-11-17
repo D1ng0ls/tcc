@@ -10,7 +10,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AuthLayout from '@/layouts/auth-layout';
 
-export default function ForgotPassword({ status }: { status?: string }) {
+type PasswordRoutes = { email: string; store: string; request: string; login: string };
+
+export default function ForgotPassword({ status, routes }: { status?: string; routes?: PasswordRoutes }) {
     const { data, setData, post, processing, errors } = useForm<Required<{ email: string }>>({
         email: '',
     });
@@ -18,7 +20,7 @@ export default function ForgotPassword({ status }: { status?: string }) {
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
 
-        post(route('password.email'));
+        post(route(routes?.email ?? 'password.email'));
     };
 
     return (
@@ -55,7 +57,7 @@ export default function ForgotPassword({ status }: { status?: string }) {
 
                 <div className="text-muted-foreground space-x-1 text-center text-sm">
                     <span>Ou, volte para o</span>
-                    <TextLink href={route('login')}>login</TextLink>
+                    <TextLink href={route(routes?.login ?? 'login')}>login</TextLink>
                 </div>
             </div>
         </AuthLayout>

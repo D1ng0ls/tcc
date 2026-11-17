@@ -41,9 +41,10 @@ class CreateRequest extends FormRequest
             'state_id' => 'required|exists:states,id',
             'city_id' => 'required|exists:cities,id',
             'address' => 'required|string|max:255',
+            // Bairro oficial precisa ser da cidade escolhida (a tela só lista os dessa cidade).
             'neighborhood_id' => [
                 'nullable',
-                'exists:neighborhoods,id',
+                Rule::exists('neighborhoods', 'id')->where('city_id', (int) $this->city_id),
             ],
             'district' => [
                 'nullable',

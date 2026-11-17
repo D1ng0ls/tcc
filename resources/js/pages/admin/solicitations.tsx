@@ -85,6 +85,12 @@ export default function AdminSolicitations() {
                                             <td className="px-6 py-4 whitespace-nowrap text-muted-foreground">{new Date(request.created_at).toLocaleDateString()}</td>
                                             <td className="px-6 py-4 whitespace-nowrap text-center">
                                                 <span className={`font-medium ${request.status === 'approved' ? 'text-green-700 bg-green-100' : request.status === 'rejected' ? 'text-red-700 bg-red-100' : 'text-amber-700 bg-yellow-100' } px-2 py-1 rounded-full text-xs`}>{STATUS_LABELS[request.status] ?? request.status}</span>
+                                                {/* Quem decidiu e quando (UC019) */}
+                                                {request.decided_at && (
+                                                    <p className="text-muted-foreground mt-1 text-xs">
+                                                        {request.decider?.name ? `por ${request.decider.name} ` : ''}em {new Date(request.decided_at).toLocaleDateString()}
+                                                    </p>
+                                                )}
                                             </td>
                                             {request.status === 'pending' && (
                                                 <td className="px-6 py-4 whitespace-nowrap flex items-center justify-center gap-2 group-hover:opacity-100 opacity-0">

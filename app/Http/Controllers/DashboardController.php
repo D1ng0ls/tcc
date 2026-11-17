@@ -45,16 +45,27 @@ class DashboardController extends Controller
             }
         }
 
-        // Apenas notificações ainda não lidas; ao clicar elas somem da lista.
-        $notifications = $user->userNotifications()->whereNull('read_at')->take(10)->get();
-        $unreadCount = $user->userNotifications()->whereNull('read_at')->count();
+        // Novidades (RF060): reclamações do cidadão com notificação ainda não lida. Ao abrir a
+        // reclamação as notificações dela ficam lidas e ela sai daqui.
+        $withNovelty = (clone $userComplaints)
+            ->whereHas('notifications', fn ($q) => $q->where('user_id', $user->id)->whereNull('read_at'));
+        $noveltyCount = (clone $withNovelty)->count();
+        $novelties = (clone $withNovelty)
+            ->orderByDesc('last_activity_at')
+            ->take(10)
+            ->get(['id', 'title'])
+            ->map(fn ($c) => [
+                'id' => $c->id,
+                'title' => $c->title,
+                'latest_novelty' => $c->notifications()->where('user_id', $user->id)->whereNull('read_at')->latest('id')->value('title'),
+            ]);
 
         return Inertia::render('dashboard', [
             'stats' => $stats,
             'recent' => $recent,
             'cityRanking' => $cityRanking,
-            'notifications' => $notifications,
-            'unreadCount' => $unreadCount,
+            'novelties' => $novelties,
+            'noveltyCount' => $noveltyCount,
         ]);
     }
 }

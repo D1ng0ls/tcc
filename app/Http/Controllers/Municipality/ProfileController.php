@@ -25,11 +25,22 @@ class ProfileController extends Controller
     public function update(Request $request): RedirectResponse
     {
         $municipality = $request->user('municipality');
+        // CNPJ sempre com a mesma máscara antes de checar a unicidade (UC005).
+        if ($request->filled('cnpj')) {
+            $request->merge(['cnpj' => \App\Support\Documents::formatCnpj($request->input('cnpj'))]);
+        }
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => ['required', 'email', 'max:255', Rule::unique('municipalities', 'email')->ignore($municipality->id)],
-            'cnpj' => ['nullable', 'string', 'max:18', Rule::unique('municipalities', 'cnpj')->ignore($municipality->id)],
+            'cnpj' => [
+                'nullable', 'string', 'max:18', Rule::unique('municipalities', 'cnpj')->ignore($municipality->id),
+                function ($attribute, $value, $fail) {
+                    if (! \App\Support\Documents::isValidCnpj($value)) {
+                        $fail('O CNPJ informado não é válido.');
+                    }
+                },
+            ],
             'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
         ], [
             'name.required' => 'O nome é obrigatório.',
@@ -115,9 +126,15 @@ class ProfileController extends Controller
             'password.confirmed' => 'As senhas não coincidem.',
         ]);
 
-        $municipality->update([
+        $municipality->forceFill([
             'password' => Hash::make($validated['password']),
-        ]);
+            // Novo token: o "Lembrar-me" de outros aparelhos deixa de valer (RF012).
+            'remember_token' => \Illuminate\Support\Str::random(60),
+        ])->save();
+
+        // Este aparelho continua logado; se usava "Lembrar-me", recebe o cookie com o token novo.
+        $guard = \Illuminate\Support\Facades\Auth::guard('municipality');
+        $guard->login($municipality, $request->hasCookie($guard->getRecallerName()));
 
         // Mantém a sessão atual válida (atualiza o hash guardado) e encerra as
         // demais sessões da prefeitura — que ainda têm o hash antigo — no próximo

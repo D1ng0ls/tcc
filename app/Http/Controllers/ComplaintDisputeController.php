@@ -121,6 +121,7 @@ class ComplaintDisputeController extends Controller
             case 'ignored':
                 // mantém REJECTED
                 ComplaintEventLogger::log($complaint, 'dispute_resolved', 'Contestação ignorada pelo administrador');
+                ComplaintNotifier::disputeIgnored($complaint);
                 break;
         }
 

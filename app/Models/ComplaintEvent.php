@@ -17,6 +17,14 @@ class ComplaintEvent extends Model
         'note',
     ];
 
+    protected static function booted(): void
+    {
+        // Todo evento do histórico é uma novidade na reclamação (RF060).
+        static::created(function (ComplaintEvent $event) {
+            $event->complaint?->registerActivity($event->actor_type);
+        });
+    }
+
     public function complaint()
     {
         return $this->belongsTo(Complaint::class);

@@ -53,7 +53,7 @@ function seedComplaintStatuses(): void
 {
     foreach ([
         ['Aberto', 'municipality'], ['Em andamento', 'municipality'], ['Encerrado', 'municipality'],
-        ['Resolvido', 'user'], ['Não resolvido', 'user'], ['Fechado', 'system'],
+        ['Resolvido', 'user'], ['Não resolvido', 'user'],
     ] as [$name, $type]) {
         \App\Models\Status::firstOrCreate(['name' => $name], ['type' => $type]);
     }

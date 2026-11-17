@@ -2,7 +2,7 @@ import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { Link, usePage } from '@inertiajs/react';
-import { AlertCircle, Award, FileText, Files, Inbox, Landmark, Layers, LayoutDashboard, LucideHome, Mails, MapPin, Plus } from 'lucide-react';
+import { AlertCircle, Award, FileText, Files, Inbox, Landmark, Layers, LayoutDashboard, LucideHome, Mails, MapPin, Plus, Users } from 'lucide-react';
 import AppLogo from './app-logo';
 
 const mainNavItems: any[] = [
@@ -63,6 +63,11 @@ const mainNavItems: any[] = [
                 title: 'Contestações',
                 href: route('admin.disputes.index'),
                 icon: AlertCircle,
+            },
+            {
+                title: 'Usuários',
+                href: route('admin.users.index'),
+                icon: Users,
             },
         ],
     },

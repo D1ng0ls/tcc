@@ -148,7 +148,7 @@ export default function CreateComplaints() {
                 setNeighborhoods([
                     ...response.data,
                     {
-                        name: 'Outro',
+                        name: 'Outros',
                         id: null,
                     },
                 ]);

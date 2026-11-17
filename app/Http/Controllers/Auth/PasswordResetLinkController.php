@@ -35,9 +35,15 @@ class PasswordResetLinkController extends Controller
             'email.email' => 'O email informado não é válido.',
         ]);
 
-        Password::sendResetLink(
-            $request->only('email')
-        );
+        try {
+            Password::sendResetLink(
+                $request->only('email')
+            );
+        } catch (\Throwable $e) {
+            report($e);
+
+            return back()->with('error', 'Não foi possível enviar o e-mail agora. Tente novamente em instantes.');
+        }
 
         return back()->with('status', __('Um link para redefinição de senha será enviado caso a conta exista.'));
     }

@@ -35,11 +35,21 @@ class RegisteredUserController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        // CPF sempre com a mesma máscara antes de checar a unicidade (RF006).
+        $request->merge(['cpf' => \App\Support\Documents::formatCpf($request->input('cpf'))]);
+
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            'cpf' => 'required|string|max:14|unique:'.User::class,
+            'cpf' => [
+                'required', 'string', 'max:14', 'unique:'.User::class,
+                function ($attribute, $value, $fail) {
+                    if (! \App\Support\Documents::isValidCpf($value)) {
+                        $fail('O CPF informado não é válido.');
+                    }
+                },
+            ],
             'birth_date' => 'required|date',
             'city_id' => 'required|exists:cities,id',
             'address' => 'required|string|max:255',

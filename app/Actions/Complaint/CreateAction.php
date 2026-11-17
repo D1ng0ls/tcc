@@ -7,6 +7,7 @@ use App\Http\Requests\Complaint\CreateRequest;
 use App\Models\NeighborhoodSuggestion;
 use App\Models\User;
 use App\Support\ComplaintEventLogger;
+use App\Support\NeighborhoodName;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -28,6 +29,10 @@ class CreateAction
                 'district',
             ]);
             $complaintData['status_id'] = ComplaintStatus::OPEN;
+            // Bairro em texto livre já normalizado (UC018), igual ao nome da sugestão criada abaixo.
+            if (! empty($complaintData['district'])) {
+                $complaintData['district'] = NeighborhoodName::normalize($complaintData['district']);
+            }
 
             $complaint = $user->complaints()->create($complaintData);
 
@@ -51,7 +56,7 @@ class CreateAction
                 ! empty($complaintData['district']) &&
                 $request->filled('city_id')
             ) {
-                $name = trim($complaintData['district']);
+                $name = NeighborhoodName::normalize($complaintData['district']);
                 $cityId = (int) $request->input('city_id');
 
                 $suggestion = NeighborhoodSuggestion::firstOrNew([

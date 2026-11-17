@@ -27,6 +27,12 @@ class Municipality extends Authenticatable
         'remember_token',
     ];
 
+    /** Link de redefinição aponta para o painel da prefeitura (RF010/UC004). */
+    public function sendPasswordResetNotification($token): void
+    {
+        $this->notify(new \App\Support\Notifications\MunicipalityResetPasswordNotification($token));
+    }
+
     public function city()
     {
         return $this->belongsTo(City::class);
