@@ -5,9 +5,6 @@ import {
     AlertCircle,
     BarChart3,
     Check,
-    Clock,
-    ExternalLink,
-    FileWarning,
     Flag,
     Inbox,
     Map,
@@ -17,7 +14,6 @@ import {
     ShieldCheck,
     TrendingUp,
     Trophy,
-    User,
     Users,
 } from 'lucide-react';
 
@@ -52,13 +48,6 @@ type PendingRequest = {
     city: { name: string; state: { uf: string } };
 };
 
-type ActivityItem = {
-    type: 'city_request' | 'user' | 'complaint';
-    title: string;
-    subtitle: string;
-    at: string;
-};
-
 const medalClass = (rank: number) => {
     switch (rank) {
         case 1:
@@ -69,17 +58,6 @@ const medalClass = (rank: number) => {
             return 'bg-orange-400/20 text-orange-700 dark:text-orange-300 border-orange-500/40';
         default:
             return 'bg-blue-400/10 text-blue-700 dark:text-blue-300 border-blue-500/30';
-    }
-};
-
-const activityIcon = (type: ActivityItem['type']) => {
-    switch (type) {
-        case 'city_request':
-            return { Icon: Inbox, color: 'bg-blue-100 text-blue-500 dark:bg-blue-500/20 dark:text-blue-300' };
-        case 'user':
-            return { Icon: User, color: 'bg-green-100 text-green-500 dark:bg-green-500/20 dark:text-green-300' };
-        case 'complaint':
-            return { Icon: FileWarning, color: 'bg-amber-100 text-amber-600 dark:bg-amber-500/20 dark:text-amber-300' };
     }
 };
 
@@ -101,7 +79,6 @@ export default function AdminIndex() {
         municipalities,
         cityRequests,
         topCities,
-        recentActivity,
         newUsers30d,
         newComplaints30d,
         statusBuckets,
@@ -123,7 +100,6 @@ export default function AdminIndex() {
     const buckets: StatusBucket[] = statusBuckets || [];
     const states: TopState[] = topStates || [];
     const pending: PendingRequest[] = pendingRequests || [];
-    const activity: ActivityItem[] = recentActivity || [];
 
     const totalForBuckets = Math.max(1, buckets.reduce((acc, b) => acc + b.count, 0));
     const maxState = Math.max(1, ...states.map((s) => s.total));
@@ -435,45 +411,6 @@ export default function AdminIndex() {
                             </div>
                         )}
                     </div>
-                </div>
-
-                {/* Atividade recente */}
-                <div className="border-border bg-primary-foreground rounded-xl border p-6">
-                    <div className="border-border flex items-center justify-between border-b pb-3">
-                        <div className="flex items-center gap-2">
-                            <Clock className="h-5 w-5 text-purple-500" />
-                            <h2 className="text-lg font-bold">Atividade recente</h2>
-                        </div>
-                    </div>
-
-                    {activity.length === 0 ? (
-                        <div className="text-muted-foreground flex flex-col items-center justify-center gap-2 py-8 text-center text-sm">
-                            <Clock className="text-muted-foreground/60 h-10 w-10" />
-                            Nenhuma atividade registrada ainda.
-                        </div>
-                    ) : (
-                        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-2">
-                            {activity.map((item, idx) => {
-                                const { Icon, color } = activityIcon(item.type);
-                                return (
-                                    <div
-                                        key={idx}
-                                        className="border-border flex flex-row items-center gap-3 rounded-lg border p-3"
-                                    >
-                                        <div className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full ${color}`}>
-                                            <Icon className="h-4 w-4" />
-                                        </div>
-                                        <div className="min-w-0 flex-1">
-                                            <p className="truncate text-sm font-semibold">{item.title}</p>
-                                            <p className="text-muted-foreground truncate text-xs">
-                                                {item.subtitle} {item.at && <>• {formatRelativeTime(item.at)}</>}
-                                            </p>
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    )}
                 </div>
             </div>
         </AppLayout>

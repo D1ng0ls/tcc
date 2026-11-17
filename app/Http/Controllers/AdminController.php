@@ -83,53 +83,12 @@ class AdminController extends Controller
             ->take(5)
             ->get();
 
-        // Atividade recente
-        $recentRequests = CityRequest::with('city.state')
-            ->orderByDesc('id')
-            ->take(3)
-            ->get()
-            ->map(fn($r) => [
-                'type' => 'city_request',
-                'title' => 'Solicitação de acesso para ' . ($r->city->name ?? 'cidade'),
-                'subtitle' => ($r->city->state->uf ?? '') . ' • ' . $r->status->value,
-                'at' => $r->created_at,
-            ]);
-
-        $recentUsers = User::orderByDesc('id')
-            ->take(3)
-            ->get()
-            ->map(fn($u) => [
-                'type' => 'user',
-                'title' => 'Novo usuário: ' . $u->name,
-                'subtitle' => $u->email,
-                'at' => $u->created_at,
-            ]);
-
-        $recentComplaints = Complaint::with('department.municipality.city')
-            ->orderByDesc('id')
-            ->take(3)
-            ->get()
-            ->map(fn($c) => [
-                'type' => 'complaint',
-                'title' => 'Nova reclamação: ' . $c->title,
-                'subtitle' => $c->department->municipality->city->name ?? 'Sem cidade',
-                'at' => $c->created_at,
-            ]);
-
-        $recentActivity = $recentRequests
-            ->concat($recentUsers)
-            ->concat($recentComplaints)
-            ->sortByDesc('at')
-            ->values()
-            ->take(8);
-
         return Inertia::render('admin/index', compact(
             'users',
             'complaints',
             'municipalities',
             'cityRequests',
             'topCities',
-            'recentActivity',
             'newUsers30d',
             'newComplaints30d',
             'statusBuckets',
