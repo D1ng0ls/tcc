@@ -33,7 +33,7 @@ Route::domain(config('app.domain'))->group(function () {
     Route::group([
         'prefix' => 'solicitation-form',
         'as' => 'solicitation-form.',
-        'middleware' => 'auth:web',
+        'middleware' => ['auth:web', 'citizen'],
     ], function () {
         Route::get('/', [CityRequestController::class, 'index'])->name('index');
         Route::post('/', [CityRequestController::class, 'store'])->name('store')->middleware('throttle:5,60,solicitation'); // prefixo: contador próprio (sem ele, divide a chave com o reenvio de e-mail)
@@ -59,15 +59,16 @@ Route::domain(config('app.domain'))->group(function () {
 
     // E-mail verificado é exigido para registrar e acompanhar reclamações (UC009) e no painel admin.
     Route::middleware(['auth:web', 'verified'])->group(function () {
-        Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
+        // Dashboard, "Minhas reclamações" e registro são do cidadão; o admin vai para o painel dele.
+        Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard')->middleware('citizen');
 
         Route::group([
             'prefix' => 'complaints',
             'as' => 'complaints.',
         ], function () {
-            Route::get('/', [ComplaintController::class, 'index'])->name('index');
-            Route::get('/create', [ComplaintController::class, 'create'])->name('create');
-            Route::post('/create', [ComplaintController::class, 'store'])->name('store');
+            Route::get('/', [ComplaintController::class, 'index'])->name('index')->middleware('citizen');
+            Route::get('/create', [ComplaintController::class, 'create'])->name('create')->middleware('citizen');
+            Route::post('/create', [ComplaintController::class, 'store'])->name('store')->middleware('citizen');
             Route::patch('/approve/{complaint}', [ComplaintController::class, 'approve'])->name('approve');
             Route::patch('/reject/{complaint}', [ComplaintController::class, 'reject'])->name('reject');
             Route::patch('/start/{complaint}', [ComplaintController::class, 'start'])->name('start');

@@ -196,7 +196,10 @@ class ComplaintController extends Controller
 
             return redirect()->route('complaints.index')->with('success', 'Reclamação enviada com sucesso!');
         } catch (\Exception $e) {
-            return redirect()->route('complaints.create')->with('error', 'Erro ao enviar reclamação: ' . $e->getMessage());
+            // Registra no log (antes o erro era engolido) e devolve o formulário preenchido.
+            report($e);
+
+            return back()->withInput()->with('error', 'Não foi possível enviar a reclamação. Tente novamente em instantes.');
         }
     }
 

@@ -109,6 +109,8 @@ const mainNavItems: any[] = [
 export function AppSidebar() {
     const { auth } = usePage().props as any;
 
+    const isAdmin = auth?.user?.role === 'admin';
+
     const navItems = mainNavItems.filter((menu) => {
         if (menu.category === 'Admin' && auth?.user?.role !== 'admin') {
             return false;
@@ -123,7 +125,10 @@ export function AppSidebar() {
         }
 
         return true;
-    });
+    })
+        // O administrador não registra reclamação nem pede perfil de gestor (UC008/UC009):
+        // do grupo do cidadão ele vê só o ranking, que é público (UC014).
+        .map((menu) => (isAdmin && menu.category === 'Painel' ? { ...menu, items: menu.items.filter((item: any) => item.title === 'Ranking') } : menu));
 
     return (
         <Sidebar collapsible="icon" variant="inset">

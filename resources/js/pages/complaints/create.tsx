@@ -61,7 +61,10 @@ export default function CreateComplaints() {
         e.preventDefault();
         post(route('complaints.store'), {
             forceFormData: true,
-            onSuccess: () => {
+            // Só limpa o formulário quando o envio deu certo e o sistema levou para a listagem;
+            // se o servidor devolveu para esta mesma tela (erro), os dados digitados ficam.
+            onSuccess: (page) => {
+                if (page.component === 'complaints/create') return;
                 reset();
                 setDepartmentChosenByUser(false);
                 setPreviews([]);
