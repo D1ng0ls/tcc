@@ -81,20 +81,37 @@
     }
 
     .swiper-button-next:not(.swiper-button-disabled):hover {
+        background-image: url("data:image/svg+xml,%3Csvg width='12' height='10' viewBox='0 0 12 10' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7.04935 1L11 5M11 5L7.04935 9M11 5H1' stroke='white' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    }
+
+    .dark .swiper-button-next:not(.swiper-button-disabled):hover {
         background-image: url("data:image/svg+xml,%3Csvg width='12' height='10' viewBox='0 0 12 10' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7.04935 1L11 5M11 5L7.04935 9M11 5H1' stroke='black' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
     }
 
     .swiper-button-prev:not(.swiper-button-disabled):hover {
+        background-image: url("data:image/svg+xml,%3Csvg width='12' height='10' viewBox='0 0 12 10' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4.95065 1L1 5M1 5L4.95065 9M1 5H11' stroke='white' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    }
+
+    .dark .swiper-button-prev:not(.swiper-button-disabled):hover {
         background-image: url("data:image/svg+xml,%3Csvg width='12' height='10' viewBox='0 0 12 10' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4.95065 1L1 5M1 5L4.95065 9M1 5H11' stroke='black' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
     }
     
     .swiper-button-prev {
         left: 10px !important;
-        background-image: url("data:image/svg+xml,%3Csvg width='12' height='10' viewBox='0 0 12 10' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4.95065 1L1 5M1 5L4.95065 9M1 5H11' stroke='white' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+        background-image: url("data:image/svg+xml,%3Csvg width='12' height='10' viewBox='0 0 12 10' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4.95065 1L1 5M1 5L4.95065 9M1 5H11' stroke='black' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
     }
 
     .swiper-button-next {
         right: 10px !important;
+        background-image: url("data:image/svg+xml,%3Csvg width='12' height='10' viewBox='0 0 12 10' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7.04935 1L11 5M11 5L7.04935 9M11 5H1' stroke='black' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    }
+
+    /* Tema escuro: card escuro, seta branca */
+    .dark .swiper-button-prev {
+        background-image: url("data:image/svg+xml,%3Csvg width='12' height='10' viewBox='0 0 12 10' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4.95065 1L1 5M1 5L4.95065 9M1 5H11' stroke='white' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    }
+
+    .dark .swiper-button-next {
         background-image: url("data:image/svg+xml,%3Csvg width='12' height='10' viewBox='0 0 12 10' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7.04935 1L11 5M11 5L7.04935 9M11 5H1' stroke='white' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
     }
 
@@ -118,7 +135,7 @@
     }
 
     .swiper-pagination .swiper-pagination-bullet-active {
-        background-color: #FFF !important;
+        background-color: var(--foreground) !important;
         border-radius: 50%;
     }
 }

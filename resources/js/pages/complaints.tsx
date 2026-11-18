@@ -123,8 +123,9 @@ export default function Complaints() {
                                 />
                             ) : null}
                             <h1 className="text-center text-4xl font-bold tracking-tight sm:text-4xl">
-                                {city.name} -{' '}
-                                {ranking?.rank == 1 ? '🥇' : ranking?.rank == 2 ? '🥈' : ranking?.rank == 3 ? '🥉' : ranking?.rank + 'º'}
+                                {city.name}
+                                {/* Sem posição calculada (cidade fora do ranking ainda), mostra só o nome. */}
+                                {ranking?.rank ? <> - {ranking.rank == 1 ? '🥇' : ranking.rank == 2 ? '🥈' : ranking.rank == 3 ? '🥉' : ranking.rank + 'º'}</> : null}
                             </h1>
                         </div>
                         <div className="flex justify-center gap-2">

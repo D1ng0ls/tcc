@@ -6,8 +6,26 @@
     import { initializeTheme } from './hooks/use-appearance';
     
     import 'primereact/resources/primereact.min.css';
+    import { addLocale, locale } from 'primereact/api';
 
-    const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
+    // Calendários e componentes do PrimeReact em português.
+    addLocale('pt-BR', {
+        firstDayOfWeek: 0,
+        dayNames: ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado'],
+        dayNamesShort: ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'],
+        dayNamesMin: ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'],
+        monthNames: ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'],
+        monthNamesShort: ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'],
+        today: 'Hoje',
+        clear: 'Limpar',
+        accept: 'Sim',
+        reject: 'Não',
+        emptyMessage: 'Nenhum resultado encontrado',
+        emptyFilterMessage: 'Nenhum resultado encontrado',
+    });
+    locale('pt-BR');
+
+    const appName = import.meta.env.VITE_APP_NAME || 'Cidade Inteligente';
 
     createInertiaApp({
         title: (title) => `${title} - ${appName}`,

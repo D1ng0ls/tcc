@@ -390,7 +390,7 @@ export default function ShowComplaint() {
                 </div>
             )}
 
-            <div className="border border-border rounded-xl bg-zinc-900 m-4 p-4">
+            <div className="border border-border rounded-xl bg-gray-100 dark:bg-zinc-900 m-4 p-4">
                 <div className="border border-border bg-primary-foreground rounded-xl p-4 w-full">
                     <div className="flex justify-between items-start mb-4">
                         <button
